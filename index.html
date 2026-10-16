@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0e1a17">
+<title>무인도 생존기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: full-bleed canvas world, HUD floats on top, thumbs own the bottom corners. */
+:root{
+  --ink:#0e1a17;
+  --ink-2:#15251f;
+  --panel:rgba(12,22,19,.78);
+  --line:rgba(239,230,210,.18);
+  --bone:#efe6d2;
+  --dim:#9fae9f;
+  --ember:#ff8a3d;
+  --amber:#f2b84b;
+  --moss:#8fd16a;
+  --sea:#4fb0e0;
+  --blood:#ec5a4d;
+  --font-display:'Black Han Sans','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --font-body:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;word-break:keep-all;background:var(--ink);color:var(--bone);font-family:var(--font-body);overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none;display:flex;flex-direction:column;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+#hud button,#hud .slot{pointer-events:auto}
+.top{display:flex;gap:8px;align-items:flex-start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#stats{flex:1;min-width:0;max-width:320px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:7px 9px 8px}
+.stat label{display:block;font-size:10.5px;line-height:1.2;color:var(--dim);margin-bottom:3px;white-space:nowrap}
+.bar{height:7px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--c);border-radius:4px;transition:width .15s linear}
+.stat.low .bar i{animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+#dayBox{padding:6px 9px 8px;width:104px;flex:none}
+#dayNum{font-family:var(--font-display);font-size:16px;line-height:1.1;display:flex;justify-content:space-between;align-items:baseline}
+#dayNum small{font-family:var(--font-body);font-size:10.5px;color:var(--dim)}
+#clock{position:relative;height:7px;margin-top:6px;border-radius:4px;
+  background:linear-gradient(90deg,#f2c35b 0%,#f2c35b 49%,#e8793a 54%,#2c2f6b 62%,#1b1f4b 89%,#8a6fa8 95%,#f2c35b 100%)}
+#clock i{position:absolute;top:-3px;width:3px;height:13px;margin-left:-1px;background:var(--bone);border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+#menuBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1}
+#inv{display:flex;gap:6px;margin-top:8px}
+.slot{position:relative;width:52px;height:54px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
+.slot .ic{font-size:21px;line-height:1}
+.slot .nm{font-size:9.5px;color:var(--dim);line-height:1.1}
+.slot .n{position:absolute;right:4px;top:2px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.slot.dim{opacity:.4}
+.slot.food:not(.dim){border-color:rgba(143,209,106,.55)}
+#goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
+#goal b{color:var(--amber);font-weight:700}
+#toasts{position:fixed;left:0;right:0;top:calc(max(10px,env(safe-area-inset-top)) + 158px);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:7}
+.toast{max-width:min(86vw,420px);padding:7px 14px;border-radius:999px;background:rgba(10,18,16,.88);border:1px solid var(--line);font-size:13px;text-align:center;animation:tin .2s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.spacer{flex:1}
+@media (max-height:520px){#toasts{top:calc(max(10px,env(safe-area-inset-top)) + 56px);left:auto;right:calc(max(18px,env(safe-area-inset-right)) + 124px);width:min(340px,48vw);align-items:flex-end}}
+
+#btnAct{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(26px,calc(env(safe-area-inset-bottom) + 14px));width:98px;height:98px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.25);background:radial-gradient(circle at 35% 30%,#ffb066,var(--ember) 55%,#d4601c);color:#2a1305;
+  font-family:var(--font-display);font-size:19px;pointer-events:auto;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.45);transition:transform .06s}
+#btnAct.press{transform:scale(.92);filter:brightness(1.12)}
+#btnCraft{position:fixed;right:max(30px,calc(env(safe-area-inset-right) + 12px));bottom:max(138px,calc(env(safe-area-inset-bottom) + 126px));width:62px;height:62px;border-radius:50%;
+  border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:15px;pointer-events:auto;z-index:6}
+#joy{position:fixed;left:0;top:0;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,230,210,.38);background:rgba(239,230,210,.07);pointer-events:none;z-index:6;opacity:0;transition:opacity .12s}
+#joy.on{opacity:1}
+#joyKnob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(239,230,210,.55)}
+
+.modal{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:rgba(5,10,9,.58)}
+.sheet{width:min(540px,100%);max-height:84%;overflow:auto;background:var(--ink-2);border:1px solid var(--line);border-radius:18px 18px 0 0;
+  padding:16px max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));touch-action:pan-y}
+@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:18px}}
+.sheet .head{position:sticky;top:-16px;z-index:1;display:flex;justify-content:space-between;align-items:center;margin:-16px 0 0;padding:16px 0 6px;background:var(--ink-2)}
+.sheet h2{margin:0;font-family:var(--font-display);font-size:22px;font-weight:400}
+.xbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:transparent;font-size:16px;line-height:1}
+.sheet .sub{margin:0 0 12px;font-size:12.5px;color:var(--dim)}
+.recipe{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.recipe b{font-size:15px}
+.recipe p{margin:2px 0 6px;font-size:12.5px;color:var(--dim);line-height:1.4}
+.cost{display:flex;flex-wrap:wrap;gap:5px}
+.cost span{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.07);font-variant-numeric:tabular-nums}
+.cost span.ok{color:var(--moss)}
+.cost span.no{color:var(--blood)}
+.note{display:block;margin-top:5px;font-size:11.5px;color:var(--amber)}
+.btn{border:0;border-radius:12px;padding:12px 20px;font-weight:700;font-size:15px;background:var(--ember);color:#2a1305;min-width:84px}
+.btn:disabled{background:rgba(255,255,255,.1);color:var(--dim);cursor:default}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--bone)}
+.btn.small{padding:9px 14px;font-size:13.5px}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+
+.screen{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;
+  padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  background:radial-gradient(ellipse at 50% 40%,rgba(8,16,14,.45),rgba(5,9,8,.86) 75%);touch-action:pan-y;overflow:auto}
+.screen h1{margin:0;font-family:var(--font-display);font-weight:400;font-size:clamp(40px,12vw,64px);line-height:1.05;letter-spacing:.01em;text-wrap:balance}
+.screen h1 em{font-style:normal;color:var(--ember)}
+.screen .lead{margin:0;max-width:30ch;font-size:15px;line-height:1.55;color:var(--bone);opacity:.92;text-wrap:balance}
+.stack{display:flex;flex-direction:column;gap:9px;width:min(260px,100%);margin-top:6px}
+.how{margin:8px 0 0;padding:12px 16px;max-width:340px;text-align:left;font-size:12.5px;line-height:1.6;color:var(--dim);list-style:none;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.how li+li{margin-top:2px}
+.how b{color:var(--bone);font-weight:500}
+.endstat{font-size:14px;color:var(--dim)}
+.endstat b{color:var(--amber);font-size:20px;font-variant-numeric:tabular-nums}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:40;transition:opacity .45s}
+#fade.on{opacity:1}
+#hurt{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;box-shadow:inset 0 0 110px 26px rgba(236,90,77,.85)}
+@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hurt"></div>
+<div id="joy"><div id="joyKnob"></div></div>
+
+<div id="hud" hidden>
+  <div class="top">
+    <div id="stats" class="panel">
+      <div class="stat" id="st-hp" style="--c:var(--blood)"><label>체력</label><div class="bar"><i></i></div></div>
+      <div class="stat" id="st-hunger" style="--c:var(--amber)"><label>배고픔</label><div class="bar"><i></i></div></div>
+      <div class="stat" id="st-thirst" style="--c:var(--sea)"><label>갈증</label><div class="bar"><i></i></div></div>
+      <div class="stat" id="st-warmth" style="--c:var(--ember)"><label>체온</label><div class="bar"><i></i></div></div>
+    </div>
+    <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div></div>
+    <button id="menuBtn" aria-label="메뉴">☰</button>
+  </div>
+  <div id="inv"></div>
+  <div id="goal" class="panel"></div>
+  <div class="spacer"></div>
+  <button id="btnCraft">제작</button>
+  <button id="btnAct"><span id="actLabel">행동</span></button>
+</div>
+<div id="toasts"></div>
+
+<div id="craft" class="modal" hidden>
+  <div class="sheet">
+    <div class="head"><h2>제작</h2><button class="xbtn" id="craftClose" aria-label="닫기">✕</button></div>
+    <p class="sub">재료를 모아 도구와 시설을 만드세요.</p>
+    <div id="craftList"></div>
+  </div>
+</div>
+
+<div id="menu" class="modal" hidden>
+  <div class="sheet">
+    <h2>일시정지</h2>
+    <p class="sub">진행 상황은 자동으로 저장됩니다.</p>
+    <div class="stack" style="width:100%;margin:0">
+      <button class="btn" id="menuResume">계속하기</button>
+      <button class="btn ghost" id="menuTitle">처음 화면으로</button>
+    </div>
+  </div>
+</div>
+
+<div id="title" class="screen">
+  <h1>무인도<br><em>생존기</em></h1>
+  <p class="lead">폭풍에 휩쓸려 혼자 남은 섬. 5일을 버텨 뗏목을 만들고 탈출하세요.</p>
+  <div class="stack">
+    <button class="btn" id="btnContinue" hidden>이어하기</button>
+    <button class="btn" id="btnNew">새 게임</button>
+  </div>
+  <ul class="how">
+    <li><b>이동</b> 화면을 누른 채 드래그 (키보드 WASD)</li>
+    <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
+    <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
+    <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li>밤에는 <b>늑대</b>가 옵니다. 모닥불 안에서 버티세요.</li>
+  </ul>
+</div>
+
+<div id="end" class="screen" hidden>
+  <h1 id="endTitle"></h1>
+  <p class="lead" id="endText"></p>
+  <p class="endstat" id="endStat"></p>
+  <div class="stack">
+    <button class="btn" id="btnAgain">다시 시작</button>
+    <button class="btn ghost" id="btnHome">처음 화면으로</button>
+  </div>
+</div>
+<div id="fade"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= constants ================= */
+const WORLD = 2400, ISL_M = 24, ISL_R = 230;      // island = rounded square
+const DAY_LEN = 240, RAFT_DAY = 5;
+const PLAYER_R = 11, SPEED = 125;
+const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
+const CELL = 128, GN = Math.ceil(WORLD / CELL);
+const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
+const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1 };
+
+const ITEMS = {
+  wood:   { name: '나무',   icon: '🪵' },
+  stone:  { name: '돌',     icon: '🪨' },
+  berry:  { name: '열매',   icon: '🍒', food: 1 },
+  meat:   { name: '생고기', icon: '🥩', food: 1 },
+  cooked: { name: '구운고기', icon: '🍖', food: 1 }
+};
+const SPECS = {
+  rabbit: { hp: 3,  r: 7,  speed: 55,  flee: 140, drop: { meat: 1 } },
+  boar:   { hp: 10, r: 12, speed: 45,  dmg: 12,   drop: { meat: 3 } },
+  wolf:   { hp: 14, r: 11, speed: 106, drop: { meat: 1 } }
+};
+const RECIPES = [
+  { id: 'axe',     name: '돌도끼', desc: '나무를 2배 빨리 베고 공격력이 2가 됩니다.', cost: { wood: 3, stone: 2 }, tool: 'axe' },
+  { id: 'spear',   name: '나무 창', desc: '공격력 4, 더 멀리 찌를 수 있습니다.', cost: { wood: 4, stone: 2 }, tool: 'spear' },
+  { id: 'pickaxe', name: '곡괭이', desc: '돌을 한 번에 3개씩 캡니다.', cost: { wood: 3, stone: 3 }, tool: 'pickaxe' },
+  { id: 'fire',    name: '모닥불', desc: '빛과 온기를 주고 늑대를 막습니다. 고기도 구울 수 있어요.', cost: { wood: 5, stone: 2 }, place: 'fire' },
+  { id: 'shelter', name: '움막', desc: '낮은 안전지대. 밤에 잠을 자서 아침까지 건너뜁니다.', cost: { wood: 12, stone: 5 }, place: 'shelter' },
+  { id: 'raft',    name: '탈출 뗏목', desc: RAFT_DAY + '일차부터 해안에서 만들 수 있습니다. 완성하면 탈출!', cost: { wood: 30, stone: 10, cooked: 3 }, raft: true }
+];
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rand = (a, b) => a + Math.random() * (b - a);
+const TAU = Math.PI * 2;
+function josa(w, pair){ const c = w.charCodeAt(w.length - 1) - 0xAC00, [a, b] = pair.split('/'); return w + (c >= 0 && c < 11172 && c % 28 ? a : b); }
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function makeNoise(){
+  const N = 64, g = new Float32Array(N * N);
+  for (let i = 0; i < g.length; i++) g[i] = Math.random();
+  return (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = g[(yi & 63) * N + (xi & 63)], b = g[(yi & 63) * N + ((xi + 1) & 63)];
+    const c = g[((yi + 1) & 63) * N + (xi & 63)], d = g[((yi + 1) & 63) * N + ((xi + 1) & 63)];
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  };
+}
+
+/* ================= state ================= */
+const cv = $('cv'), ctx = cv.getContext('2d');
+const lc = document.createElement('canvas'), lx = lc.getContext('2d');   // darkness layer (half res)
+let W = 0, H = 0, dpr = 1, zoom = 1;
+const cam = { x: 0, y: 0 };
+let objs = [], grid = [], structs = [], creatures = [], floaters = [];
+let P = null, T = 0;
+let running = false, paused = false, sleeping = false, anim = 0;
+let target = null, actHeld = false;
+let hurtT = 0, shakeT = 0, lastDay = 1, lastPhase = '', lastLabel = '';
+let wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0;
+const keys = {};
+const joy = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
+
+/* ================= world ================= */
+function gridIdx(x, y){ return clamp(Math.floor(y / CELL), 0, GN - 1) * GN + clamp(Math.floor(x / CELL), 0, GN - 1); }
+function gridAdd(o){ const i = gridIdx(o.x, o.y); (grid[i] || (grid[i] = [])).push(o); }
+function gridRemove(o){ const a = grid[gridIdx(o.x, o.y)]; if (a){ const k = a.indexOf(o); if (k >= 0) a.splice(k, 1); } }
+function gridQuery(x0, y0, x1, y1, fn){
+  const cx0 = Math.max(0, Math.floor(x0 / CELL)), cx1 = Math.min(GN - 1, Math.floor(x1 / CELL));
+  const cy0 = Math.max(0, Math.floor(y0 / CELL)), cy1 = Math.min(GN - 1, Math.floor(y1 / CELL));
+  for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++){
+    const a = grid[cy * GN + cx];
+    if (a) for (let i = 0; i < a.length; i++) fn(a[i]);
+  }
+}
+function addObj(o){ objs.push(o); gridAdd(o); if (o.t === 'fire' || o.t === 'shelter') structs.push(o); return o; }
+function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); }
+
+// distance to the coast, measured inward (positive = on the island)
+function inside(x, y){
+  const lo = ISL_M + ISL_R, hi = WORLD - ISL_M - ISL_R;
+  return ISL_R - Math.hypot(x - clamp(x, lo, hi), y - clamp(y, lo, hi));
+}
+function clampIsland(e, pad){
+  const lo = ISL_M + ISL_R, hi = WORLD - ISL_M - ISL_R;
+  const cx = clamp(e.x, lo, hi), cy = clamp(e.y, lo, hi);
+  const dx = e.x - cx, dy = e.y - cy, d = Math.hypot(dx, dy), lim = ISL_R - pad;
+  if (d > lim){ e.x = cx + dx / d * lim; e.y = cy + dy / d * lim; }
+}
+function blocked(x, y, r){
+  let b = false;
+  gridQuery(x - r - 100, y - r - 100, x + r + 100, y + r + 100, o => {
+    if (!b && SOLID[o.t] && Math.hypot(o.x - x, o.y - y) < o.r + r) b = true;
+  });
+  return b;
+}
+function collide(e, r){
+  for (let pass = 0; pass < 2; pass++)
+    gridQuery(e.x - 110, e.y - 110, e.x + 110, e.y + 110, o => {
+      if (!SOLID[o.t]) return;
+      const dx = e.x - o.x, dy = e.y - o.y, min = r + o.r, d2 = dx * dx + dy * dy;
+      if (d2 < min * min){ const d = Math.sqrt(d2) || .001; e.x = o.x + dx / d * min; e.y = o.y + dy / d * min; }
+    });
+}
+
+function genWorld(){
+  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = [];
+  const C = WORLD / 2, noise = makeNoise();
+  const tooClose = (x, y, d) => { let c = false; gridQuery(x - d - 100, y - d - 100, x + d + 100, y + d + 100, o => { if (!c && Math.hypot(o.x - x, o.y - y) < d + o.r) c = true; }); return c; };
+
+  // lakes (one guaranteed near the start)
+  const centers = [[C + 250, C - 110]];
+  for (let n = 0; n < 6; n++) for (let k = 0; k < 40; k++){
+    const x = rand(280, WORLD - 280), y = rand(280, WORLD - 280);
+    if (inside(x, y) < 230 || Math.hypot(x - C, y - C) < 430) continue;
+    if (centers.every(c => Math.hypot(c[0] - x, c[1] - y) > 430)){ centers.push([x, y]); break; }
+  }
+  centers.forEach(([cx, cy]) => {
+    const k = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < k; i++){
+      const a = rand(0, TAU), d = i ? rand(30, 58) : 0;
+      addObj({ t: 'water', x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, r: rand(38, 78) });
+    }
+  });
+
+  const scatter = (count, d, make, test) => {
+    for (let n = 0, tries = 0; n < count && tries < 30000; tries++){
+      const x = rand(50, WORLD - 50), y = rand(50, WORLD - 50);
+      if (inside(x, y) < 75 || Math.hypot(x - C, y - C) < 80) continue;
+      if (test && !test(x, y)) continue;
+      if (tooClose(x, y, d)) continue;
+      addObj(make(x, y)); n++;
+    }
+  };
+  const tree = (x, y) => ({ t: 'tree', x, y, r: 11, amt: 6, v: Math.random(), shake: 0 });
+  const rock = (x, y) => ({ t: 'rock', x, y, r: 15, amt: 8, v: Math.random() });
+  const bush = (x, y) => ({ t: 'bush', x, y, r: 13, amt: 3, v: Math.random(), regrow: 0 });
+  scatter(430, 22, tree, (x, y) => { const f = noise(x / 240, y / 240); return Math.random() < (f > .52 ? .95 : f > .4 ? .3 : .04); });
+  scatter(95, 26, rock);
+  scatter(70, 28, bush);
+
+  // starter supplies around the spawn point
+  const starter = (n, make) => { for (let i = 0, k = 0; i < n && k < 200; k++){
+    const a = rand(0, TAU), d = rand(110, 270), x = C + Math.cos(a) * d, y = C + Math.sin(a) * d;
+    if (!tooClose(x, y, 26)){ addObj(make(x, y)); i++; }
+  } };
+  starter(4, tree); starter(3, rock); starter(2, bush);
+
+  P = newPlayer();
+  for (let i = 0; i < 40; i++) spawnCreature('rabbit', 300);
+  for (let i = 0; i < 8; i++) spawnCreature('boar', 300);
+}
+
+function newPlayer(){
+  return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0 }, tools: { axe: false, pickaxe: false, spear: false },
+    built: { fire: false, shelter: false }, cd: 0, swing: 0, step: 0, moving: false };
+}
+
+function spawnCreature(kind, minD, maxD){
+  const sp = SPECS[kind];
+  for (let i = 0; i < 24; i++){
+    let x, y;
+    if (maxD){ const a = rand(0, TAU), d = rand(minD, maxD); x = P.x + Math.cos(a) * d; y = P.y + Math.sin(a) * d; }
+    else { x = rand(60, WORLD - 60); y = rand(60, WORLD - 60); }
+    if (inside(x, y) < 70 || Math.hypot(x - P.x, y - P.y) < minD || blocked(x, y, sp.r + 6)) continue;
+    const c = { k: kind, x, y, hp: sp.hp, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6) };
+    creatures.push(c); return c;
+  }
+  return null;
+}
+
+/* ================= time ================= */
+const dayOf = () => Math.floor(T / DAY_LEN) + 1;
+const dayT = () => (T % DAY_LEN) / DAY_LEN;
+function darkness(t){ return t < .5 ? 0 : t < .62 ? (t - .5) / .12 : t < .9 ? 1 : 1 - (t - .9) / .1; }
+const isNight = () => darkness(dayT()) > .5;
+function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '밤' : '새벽'; }
+
+/* ================= input ================= */
+const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
+addEventListener('keydown', e => {
+  if (e.repeat && (e.key === 'c' || e.key === 'e' || e.key === 'Escape')) return;
+  const k = KEYMAP[e.key];
+  if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
+  if (!running) return;
+  if (e.key === 'c' || e.key === 'C') toggleCraft();
+  else if (e.key === 'e' || e.key === 'E'){ if (!paused) eatBest(); }
+  else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
+});
+addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; actHeld = false; resetJoy(); });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+function resetJoy(){ joy.active = false; joy.x = joy.y = 0; $('joy').classList.remove('on'); }
+cv.addEventListener('pointerdown', e => {
+  if (!running || paused || joy.active) return;
+  joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
+  const j = $('joy'); j.style.left = joy.ox + 'px'; j.style.top = joy.oy + 'px'; j.classList.add('on');
+  $('joyKnob').style.transform = 'translate(0,0)';
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+});
+cv.addEventListener('pointermove', e => {
+  if (!joy.active || e.pointerId !== joy.id) return;
+  let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const d = Math.hypot(dx, dy), R = 52;
+  if (d > R){ dx = dx / d * R; dy = dy / d * R; }
+  joy.x = dx / R; joy.y = dy / R;
+  $('joyKnob').style.transform = `translate(${dx}px,${dy}px)`;
+});
+const endJoy = e => { if (joy.active && e.pointerId === joy.id) resetJoy(); };
+cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
+
+const btnAct = $('btnAct');
+btnAct.addEventListener('pointerdown', e => { e.preventDefault(); actHeld = true; btnAct.classList.add('press'); try { btnAct.setPointerCapture(e.pointerId); } catch (_) {} });
+const relAct = () => { actHeld = false; btnAct.classList.remove('press'); };
+btnAct.addEventListener('pointerup', relAct); btnAct.addEventListener('pointercancel', relAct); btnAct.addEventListener('lostpointercapture', relAct);
+$('btnCraft').addEventListener('click', toggleCraft);
+$('menuBtn').addEventListener('click', openMenu);
+$('inv').addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
+
+/* ================= actions ================= */
+function floater(x, y, text, color){ floaters.push({ x: x + rand(-6, 6), y, text, color: color || '#fff', t: 0 }); }
+function gain(k, n){ P.inv[k] += n; floater(P.x, P.y - 26, '+' + n + ' ' + ITEMS[k].icon); }
+
+function findTarget(){
+  const reach = 34 + (P.tools.spear ? 12 : 0);
+  let best = null, bs = 1e9;
+  for (const c of creatures){
+    const d = Math.hypot(c.x - P.x, c.y - P.y) - c.r;
+    if (d < reach && d - 40 < bs){ bs = d - 40; best = { kind: 'creature', o: c }; }
+  }
+  gridQuery(P.x - 120, P.y - 120, P.x + 120, P.y + 120, o => {
+    if (o.t === 'bush' && o.amt <= 0) return;
+    const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r;
+    if (d < (o.t === 'water' ? 22 : 27) && d < bs){ bs = d; best = { kind: 'obj', o }; }
+  });
+  return best;
+}
+
+function labelFor(tg){
+  if (!tg) return '행동';
+  if (tg.kind === 'creature') return '공격';
+  const o = tg.o;
+  switch (o.t){
+    case 'tree': return '베기';
+    case 'rock': return '캐기';
+    case 'bush': return '따기';
+    case 'water': return '마시기';
+    case 'fire': return o.fuel > 0 && P.inv.meat > 0 ? '굽기' : '장작';
+    case 'shelter': return isNight() ? '잠자기' : '움막';
+  }
+  return '행동';
+}
+
+function act(){
+  if (P.cd > 0 || sleeping) return;
+  const tg = target;
+  if (!tg){ P.cd = .3; P.swing = .18; return; }
+  const o = tg.o, dx = o.x - P.x, dy = o.y - P.y, d = Math.hypot(dx, dy) || 1;
+  P.fx = dx / d; P.fy = dy / d; if (Math.abs(P.fx) > .2) P.flip = P.fx < 0 ? -1 : 1;
+  P.swing = .18;
+  if (tg.kind === 'creature'){ attack(o); return; }
+  switch (o.t){
+    case 'tree': { const n = Math.min(o.amt, P.tools.axe ? 2 : 1); gain('wood', n); o.amt -= n; o.shake = .22; P.cd = P.tools.axe ? .38 : .55; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { const n = Math.min(o.amt, P.tools.pickaxe ? 3 : 1); gain('stone', n); o.amt -= n; o.shake = .15; P.cd = P.tools.pickaxe ? .42 : .6; if (o.amt <= 0) removeObj(o); break; }
+    case 'bush': { o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
+    case 'water': { P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y - 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
+    case 'fire':
+      P.cd = .35;
+      if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y - 26, '구웠어요 🍖'); }
+      else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + 45); floater(P.x, P.y - 26, '장작 -1 🪵'); }
+      else toast('장작이 필요해요');
+      break;
+    case 'shelter':
+      P.cd = .5;
+      if (dayT() >= .55) sleep(); else toast('밤에만 잘 수 있어요');
+      break;
+  }
+}
+
+function attack(c){
+  const dmg = P.tools.spear ? 4 : P.tools.axe ? 2 : 1;
+  c.hp -= dmg; c.hit = .18; P.cd = P.tools.spear ? .5 : .4;
+  const dx = c.x - P.x, dy = c.y - P.y, d = Math.hypot(dx, dy) || 1;
+  c.kvx = dx / d * 170; c.kvy = dy / d * 170;
+  floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
+  if (c.k === 'boar' && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
+  if (c.hp <= 0){
+    const drop = SPECS[c.k].drop; for (const k in drop) gain(k, drop[k]);
+    creatures.splice(creatures.indexOf(c), 1);
+  }
+}
+
+function hurt(n){
+  P.hp -= n; hurtT = .45; shakeT = .25;
+  floater(P.x, P.y - 28, '-' + Math.round(n), '#ff6b5e');
+  try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
+  if (P.hp <= 0) endGame(false);
+}
+
+function useItem(k){
+  if (!ITEMS[k].food) return;
+  if (P.inv[k] <= 0){ toast(josa(ITEMS[k].name, '이/가') + ' 없어요'); return; }
+  if (P.hunger >= 98 && k !== 'meat'){ toast('배가 부릅니다'); return; }
+  P.inv[k]--;
+  if (k === 'berry'){ P.hunger = Math.min(100, P.hunger + 12); floater(P.x, P.y - 26, '+12 배고픔', '#f2b84b'); }
+  else if (k === 'cooked'){ P.hunger = Math.min(100, P.hunger + 40); P.hp = Math.min(100, P.hp + 10); floater(P.x, P.y - 26, '+40 배고픔', '#f2b84b'); }
+  else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6); }
+}
+function eatBest(){
+  for (const k of ['cooked', 'berry', 'meat']) if (P.inv[k] > 0){ useItem(k); return; }
+  toast('먹을 것이 없어요');
+}
+
+function sleep(){
+  if (P.hunger < 20 || P.thirst < 20){ toast('너무 배고프거나 목말라서 잠들 수 없어요'); return; }
+  sleeping = true; $('fade').classList.add('on');
+  setTimeout(() => {
+    T = (Math.floor(T / DAY_LEN) + 1) * DAY_LEN + DAY_LEN * .01;
+    P.hunger = Math.max(1, P.hunger - 15); P.thirst = Math.max(1, P.thirst - 20);
+    P.hp = Math.min(100, P.hp + 25); P.warmth = 100;
+    creatures = creatures.filter(c => c.k !== 'wolf');
+  }, 480);
+  setTimeout(() => { $('fade').classList.remove('on'); sleeping = false; toast('푹 잤어요. 체력이 회복됐습니다.'); }, 1250);
+}
+
+/* ================= crafting ================= */
+function nearCoast(){
+  if (inside(P.x, P.y) < 120) return true;
+  let n = false;
+  gridQuery(P.x - 200, P.y - 200, P.x + 200, P.y + 200, o => { if (o.t === 'water' && Math.hypot(o.x - P.x, o.y - P.y) - o.r < 45) n = true; });
+  return n;
+}
+function craftBlock(r){
+  for (const k in r.cost) if (P.inv[k] < r.cost[k]) return '재료가 부족해요';
+  if (r.tool && P.tools[r.tool]) return '이미 가지고 있어요';
+  if (r.raft){
+    if (dayOf() < RAFT_DAY) return RAFT_DAY + '일차부터 가능해요 (지금 ' + dayOf() + '일차)';
+    if (!nearCoast()) return '해안이나 호숫가에서 만들 수 있어요';
+  }
+  return '';
+}
+function placeSpot(r){
+  const rad = r.place === 'shelter' ? 26 : 9, base = Math.atan2(P.fy, P.fx), d = PLAYER_R + rad + 8;
+  for (const a of [0, .8, -.8, 1.6, -1.6, 2.4, -2.4, 3.14]){
+    const x = P.x + Math.cos(base + a) * d, y = P.y + Math.sin(base + a) * d;
+    if (!blocked(x, y, rad + 4) && inside(x, y) > 70) return { x, y, rad };
+  }
+  return null;
+}
+function craft(r){
+  if (craftBlock(r)) return;
+  let spot = null;
+  if (r.place){ spot = placeSpot(r); if (!spot){ toast('여기에는 놓을 수 없어요'); return; } }
+  for (const k in r.cost) P.inv[k] -= r.cost[k];
+  if (r.tool){ P.tools[r.tool] = true; toast(josa(r.name, '을/를') + ' 만들었어요!'); }
+  else if (r.place === 'fire'){ addObj({ t: 'fire', x: spot.x, y: spot.y, r: 9, fuel: 140 }); P.built.fire = true; toast('모닥불을 피웠어요. 가까이에서 몸을 녹이세요.'); }
+  else if (r.place === 'shelter'){ addObj({ t: 'shelter', x: spot.x, y: spot.y, r: 26 }); P.built.shelter = true; toast('움막을 지었어요. 밤에 잘 수 있어요.'); }
+  else if (r.raft){ closeCraft(); setTimeout(() => endGame(true), 700); return; }
+  renderCraft();
+}
+function renderCraft(){
+  const list = $('craftList'); list.innerHTML = '';
+  RECIPES.forEach(r => {
+    const why = craftBlock(r), owned = r.tool && P.tools[r.tool];
+    const cost = Object.keys(r.cost).map(k => `<span class="${P.inv[k] >= r.cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${r.cost[k]}</span>`).join('');
+    const div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${why && !owned && r.raft ? `<span class="note">${why}</span>` : ''}</div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = owned ? '보유 중' : '제작'; b.disabled = !!why;
+    b.addEventListener('click', () => craft(r)); div.appendChild(b); list.appendChild(div);
+  });
+}
+function toggleCraft(){ if (!running) return; $('craft').hidden ? openCraft() : closeCraft(); }
+function openCraft(){ if (sleeping) return; paused = true; actHeld = false; resetJoy(); renderCraft(); $('craft').hidden = false; }
+function closeCraft(){ $('craft').hidden = true; paused = false; }
+function openMenu(){ if (!running || sleeping) return; paused = true; actHeld = false; resetJoy(); $('menu').hidden = false; }
+function closeMenu(){ $('menu').hidden = true; paused = false; }
+
+/* ================= UI ================= */
+function toast(msg){
+  const box = $('toasts');
+  while (box.children.length >= 2) box.removeChild(box.firstChild);
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; box.appendChild(d);
+  setTimeout(() => d.remove(), 2500);
+}
+const invEl = $('inv');
+for (const k in ITEMS){
+  const b = document.createElement('button'); b.className = 'slot' + (ITEMS[k].food ? ' food' : ''); b.dataset.k = k;
+  b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`;
+  invEl.appendChild(b);
+}
+function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
+function updateHUD(){
+  for (const [id, v] of [['hp', P.hp], ['hunger', P.hunger], ['thirst', P.thirst], ['warmth', P.warmth]]){
+    const el = $('st-' + id), pct = Math.round(clamp(v, 0, 100));
+    if (el._p !== pct){ el._p = pct; el.firstElementChild.nextElementSibling.firstElementChild.style.width = pct + '%'; el.classList.toggle('low', pct < 25); }
+  }
+  setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT()));
+  $('clockHand').style.left = (dayT() * 100).toFixed(1) + '%';
+  invEl.querySelectorAll('.slot').forEach(s => {
+    const n = P.inv[s.dataset.k]; setText(s.querySelector('.n'), String(n));
+    s.classList.toggle('dim', n === 0);
+  });
+  const lab = labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
+}
+function objective(){
+  const day = dayOf();
+  if (!P.tools.axe) return '<b>목표</b> 나무 3 · 돌 2를 모아 <b>돌도끼</b> 만들기';
+  if (!P.tools.spear) return '<b>목표</b> 나무 4 · 돌 2로 <b>나무 창</b> 만들기';
+  if (!P.built.fire) return '<b>목표</b> 해가 지기 전에 <b>모닥불</b> 피우기';
+  if (!P.built.shelter) return '<b>목표</b> 나무 12 · 돌 5로 <b>움막</b> 짓기';
+  if (day < RAFT_DAY) return `<b>목표</b> ${RAFT_DAY}일차까지 생존 (뗏목 재료: 나무 30 · 돌 10 · 구운고기 3)`;
+  return '<b>목표</b> 해안에서 <b>탈출 뗏목</b>을 만드세요!';
+}
+
+/* ================= update ================= */
+function wander(c){
+  if (c.timer <= 0){
+    if (Math.random() < .5){ c.dx = c.dy = 0; c.timer = rand(1, 3); }
+    else { const a = rand(0, TAU); c.dx = Math.cos(a); c.dy = Math.sin(a); c.timer = rand(1, 2.5); }
+  }
+}
+function updateCreatures(dt){
+  const night = isNight(), day = dayOf();
+  for (let i = creatures.length - 1; i >= 0; i--){
+    const c = creatures[i], sp = SPECS[c.k];
+    const dx = P.x - c.x, dy = P.y - c.y, d = Math.hypot(dx, dy) || 1;
+    c.hit = Math.max(0, c.hit - dt); c.atk = Math.max(0, c.atk - dt); c.timer -= dt;
+    let sx = 0, sy = 0, spd = 0;
+    if (c.k === 'rabbit'){
+      if (d < sp.flee){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 2.4; c.hop += dt * 16; }
+      else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; if (sx || sy) c.hop += dt * 9; }
+    } else if (c.k === 'boar'){
+      if (c.state === 'angry'){
+        c.angry -= dt; sx = dx / d; sy = dy / d; spd = sp.speed * 2.2;
+        if (d < c.r + PLAYER_R + 5 && c.atk <= 0){ hurt(sp.dmg); c.atk = 1.3; }
+        if (c.angry <= 0 || d > 520) c.state = 'idle';
+      } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
+    } else {
+      if (!night){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > 650){ creatures.splice(i, 1); continue; } }
+      else if (d < 480){
+        sx = dx / d; sy = dy / d; spd = sp.speed;
+        if (d < c.r + PLAYER_R + 5 && c.atk <= 0){ hurt(Math.min(14, 6 + day)); c.atk = 1; }
+      } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
+    }
+    if (sx > .1) c.fx = 1; else if (sx < -.1) c.fx = -1;
+    c.x += (sx * spd + c.kvx) * dt; c.y += (sy * spd + c.kvy) * dt;
+    c.kvx *= Math.max(0, 1 - 7 * dt); c.kvy *= Math.max(0, 1 - 7 * dt);
+    collide(c, c.r); clampIsland(c, c.r + 30);
+    if (c.k === 'wolf'){
+      for (const s of structs){
+        const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_SAFE : 0) : SHELTER_SAFE;
+        const ex = c.x - s.x, ey = c.y - s.y, ed = Math.hypot(ex, ey) || 1;
+        if (lim && ed < lim){ c.x = s.x + ex / ed * lim; c.y = s.y + ey / ed * lim; }
+      }
+    }
+  }
+}
+
+function update(dt){
+  T += dt;
+  const day = dayOf(), t = dayT(), ph = phaseOf(t);
+  if (ph !== lastPhase){
+    lastPhase = ph;
+    if (ph === '해질녘') toast('해가 저물고 있어요. 모닥불을 준비하세요!');
+    else if (ph === '밤') toast('밤이 되었습니다. 늑대를 조심하세요.');
+    else if (ph === '새벽') toast('동이 틉니다…');
+  }
+  if (day !== lastDay){
+    lastDay = day; toast(day + '일차 아침이 밝았습니다');
+    if (day === RAFT_DAY) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
+  }
+
+  // movement
+  let ix = (joy.active ? joy.x : 0) + (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+  let iy = (joy.active ? joy.y : 0) + (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+  const m = Math.hypot(ix, iy);
+  P.cd = Math.max(0, P.cd - dt); P.swing = Math.max(0, P.swing - dt);
+  P.moving = m > .1;
+  if (P.moving){
+    P.fx = ix / m; P.fy = iy / m; if (Math.abs(P.fx) > .2) P.flip = P.fx < 0 ? -1 : 1;
+    const sp = SPEED * Math.min(1, m);
+    P.x += P.fx * sp * dt; P.y += P.fy * sp * dt; P.step += dt * 11;
+  }
+  collide(P, PLAYER_R); clampIsland(P, PLAYER_R + 4);
+
+  // survival stats
+  const dark = darkness(t);
+  P.hunger = Math.max(0, P.hunger - .18 * dt);
+  P.thirst = Math.max(0, P.thirst - .28 * dt);
+  let warm = false;
+  for (const s of structs){
+    const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
+    if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim){ warm = true; break; }
+  }
+  if (warm) P.warmth += 8 * dt;
+  else if (dark > .3) P.warmth -= (.7 + .12 * day) * dark * dt;
+  else P.warmth += 1.6 * dt;
+  P.warmth = clamp(P.warmth, 0, 100);
+  const zeros = (P.hunger <= 0) + (P.thirst <= 0) + (P.warmth <= 0);
+  if (zeros){ P.hp -= 1.8 * zeros * dt; hurtT = Math.max(hurtT, .22); if (P.hp <= 0){ P.hp = 0; endGame(false); return; } }
+  else if (P.hunger > 50 && P.thirst > 50 && P.warmth > 40) P.hp = Math.min(100, P.hp + .8 * dt);
+
+  // world
+  for (const o of objs){
+    if (o.shake > 0) o.shake -= dt;
+    if (o.t === 'bush' && o.regrow > 0){ o.regrow -= dt; if (o.regrow <= 0) o.amt = 3; }
+    else if (o.t === 'fire' && o.fuel > 0){ o.fuel -= dt; if (o.fuel <= 0) toast('모닥불이 꺼졌어요. 장작을 넣어 다시 피우세요.'); }
+  }
+  target = findTarget();
+  if ((actHeld || keys.act) && !paused) act();
+  updateCreatures(dt);
+
+  if (isNight()){
+    wolfTimer -= dt;
+    const want = Math.min(7, 1 + day);
+    if (wolfTimer <= 0 && creatures.filter(c => c.k === 'wolf').length < want){ spawnCreature('wolf', 420, 560); wolfTimer = 2.5; }
+  }
+  respawnTimer -= dt;
+  if (respawnTimer <= 0){
+    respawnTimer = 5;
+    let r = 0, b = 0; for (const c of creatures){ if (c.k === 'rabbit') r++; else if (c.k === 'boar') b++; }
+    if (r < 36) spawnCreature('rabbit', 560); if (b < 7) spawnCreature('boar', 560);
+  }
+
+  for (let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.t += dt; f.y -= 24 * dt; if (f.t > 1) floaters.splice(i, 1); }
+  hurtT = Math.max(0, hurtT - dt); shakeT = Math.max(0, shakeT - dt);
+
+  const k = Math.min(1, dt * 7);
+  cam.x += (P.x - W / zoom / 2 - cam.x) * k; cam.y += (P.y - H / zoom / 2 - cam.y) * k;
+
+  goalTimer -= dt; if (goalTimer <= 0){ goalTimer = .4; $('goal').innerHTML = objective(); }
+  saveTimer -= dt; if (saveTimer <= 0){ saveTimer = 8; save(); }
+  updateHUD();
+}
+
+/* ================= save / load ================= */
+function save(){
+  if (!running || !P) return;
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, built: P.built },
+      objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0)])
+    }));
+  } catch (_) {}
+}
+function readSave(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
+function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
+function loadGame(s){
+  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = [];
+  for (const a of s.objs){
+    const o = { t: a[0], x: a[1], y: a[2], r: a[3], v: a[5] };
+    if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush') o.amt = a[4];
+    if (o.t === 'tree' || o.t === 'rock') o.shake = 0;
+    if (o.t === 'bush') o.regrow = a[7];
+    if (o.t === 'fire') o.fuel = a[6];
+    addObj(o);
+  }
+  P = Object.assign(newPlayer(), s.p); T = s.T;
+  for (let i = 0; i < 36; i++) spawnCreature('rabbit', 300);
+  for (let i = 0; i < 7; i++) spawnCreature('boar', 300);
+}
+
+/* ================= game flow ================= */
+function startRun(){
+  running = true; paused = false; sleeping = false; actHeld = false; resetJoy();
+  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; saveTimer = 8; goalTimer = 0; target = null; lastLabel = '';
+  cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zoom / 2;
+  $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
+  $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
+  updateHUD(); save();
+}
+function newGame(){ clearSave(); genWorld(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.'); setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200); }
+function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try { loadGame(s); startRun(); toast(dayOf() + '일차, 다시 시작합니다.'); } catch (_) { newGame(); } }
+function endGame(win){
+  if (!running) return;
+  running = false; paused = false; actHeld = false; resetJoy(); clearSave();
+  const days = dayOf(); let best = 0;
+  try { best = +localStorage.getItem(BEST_KEY) || 0; if (!win && days > best){ best = days; localStorage.setItem(BEST_KEY, String(days)); } } catch (_) {}
+  $('endTitle').innerHTML = win ? '탈출 <em>성공!</em>' : '<em>쓰러졌습니다</em>';
+  $('endText').textContent = win ? '뗏목이 파도를 가르며 섬에서 멀어집니다. 살아서 돌아가는 거예요.' : (P.hp <= 0 && isNight() ? '어둠 속에서 힘이 다했습니다.' : '섬은 만만치 않았습니다.');
+  $('endStat').innerHTML = win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`;
+  $('hud').hidden = true; $('end').hidden = false;
+}
+function toTitle(){
+  save(); running = false; paused = false;
+  $('hud').hidden = true; $('end').hidden = true; $('craft').hidden = true; $('menu').hidden = true; $('title').hidden = false;
+  refreshTitle(); demoWorld();
+}
+let confirmNew = false;
+function refreshTitle(){
+  const s = readSave(); confirmNew = false;
+  $('btnContinue').hidden = !s; $('btnNew').textContent = '새 게임';
+  if (s) $('btnContinue').textContent = '이어하기 (' + (Math.floor(s.T / DAY_LEN) + 1) + '일차)';
+}
+function demoWorld(){
+  genWorld(); T = DAY_LEN * .6;
+  addObj({ t: 'fire', x: P.x + 40, y: P.y + 24, r: 9, fuel: 1e9 });
+  creatures = []; cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zoom / 2;
+}
+$('btnNew').addEventListener('click', () => {
+  if (readSave() && !confirmNew){ confirmNew = true; $('btnNew').textContent = '저장 기록이 지워져요. 한 번 더 누르세요'; return; }
+  newGame();
+});
+$('btnContinue').addEventListener('click', continueGame);
+$('btnAgain').addEventListener('click', newGame);
+$('btnHome').addEventListener('click', toTitle);
+$('craftClose').addEventListener('click', closeCraft);
+$('craft').addEventListener('click', e => { if (e.target === $('craft')) closeCraft(); });
+$('menu').addEventListener('click', e => { if (e.target === $('menu')) closeMenu(); });
+$('menuResume').addEventListener('click', closeMenu);
+$('menuTitle').addEventListener('click', toTitle);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('pagehide', save);
+
+/* ================= rendering ================= */
+function makeGrassTile(){
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(7);
+  g.fillStyle = '#4e9a47'; g.fillRect(0, 0, 256, 256);
+  const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 30; i++){
+    const x = r() * 256, y = r() * 256, rx = 22 + r() * 30, ry = rx * (.6 + r() * .4), light = r() < .5;
+    g.fillStyle = light ? 'rgba(118,182,76,.25)' : 'rgba(52,114,56,.28)';
+    wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); });
+  }
+  g.lineCap = 'round';
+  for (let i = 0; i < 170; i++){
+    const x = r() * 256, y = r() * 256, s = 2 + r() * 3; g.strokeStyle = r() < .5 ? 'rgba(36,96,44,.55)' : 'rgba(140,204,92,.5)'; g.lineWidth = 1.2;
+    wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox - 2, y + oy); g.lineTo(x + ox - 3, y + oy - s); g.moveTo(x + ox, y + oy); g.lineTo(x + ox, y + oy - s - 1); g.moveTo(x + ox + 2, y + oy); g.lineTo(x + ox + 3, y + oy - s); g.stroke(); });
+  }
+  for (let i = 0; i < 14; i++){ g.fillStyle = r() < .5 ? '#f4efe0' : '#f2d36b'; const x = r() * 256, y = r() * 256; g.beginPath(); g.arc(x, y, 1.6, 0, TAU); g.fill(); }
+  return c;
+}
+let grassPat = null;
+function rrPath(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const ell = (x, y, rx, ry, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); ctx.fill(); };
+const circ = (x, y, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); };
+
+function drawIsland(){
+  const M = ISL_M, S = WORLD - 2 * M;
+  rrPath(M - 40, M - 40, S + 80, S + 80, ISL_R + 40); ctx.fillStyle = '#4aa7cc'; ctx.fill();
+  rrPath(M - 14, M - 14, S + 28, S + 28, ISL_R + 14); ctx.fillStyle = '#7cc4de'; ctx.fill();
+  rrPath(M - 40 - Math.sin(anim * 1.4) * 4, M - 40 - Math.sin(anim * 1.4) * 4, S + 80 + Math.sin(anim * 1.4) * 8, S + 80 + Math.sin(anim * 1.4) * 8, ISL_R + 40);
+  ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 3; ctx.setLineDash([16, 20]); ctx.lineDashOffset = -anim * 12; ctx.stroke(); ctx.setLineDash([]);
+  rrPath(M, M, S, S, ISL_R); ctx.fillStyle = '#dcc790'; ctx.fill();
+  rrPath(M + 42, M + 42, S - 84, S - 84, ISL_R - 42); ctx.fillStyle = grassPat; ctx.fill();
+  rrPath(M + 42, M + 42, S - 84, S - 84, ISL_R - 42); ctx.strokeStyle = 'rgba(60,110,50,.5)'; ctx.lineWidth = 3; ctx.stroke();
+}
+function drawLakes(lakes){
+  for (const o of lakes) circ(o.x, o.y, o.r + 8, '#d3c48f');
+  for (const o of lakes) circ(o.x, o.y, o.r + 3, '#6bb7d8');
+  for (const o of lakes) circ(o.x, o.y, o.r, '#3d8fc2');
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2;
+  for (const o of lakes){
+    const k = (anim * .4 + o.x * .01) % 1;
+    ctx.globalAlpha = 1 - k; ctx.beginPath(); ctx.arc(o.x, o.y, o.r * (.35 + k * .5), 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+}
+function drawTree(o){
+  const s = .85 + o.v * .35, sh = o.shake > 0 ? Math.sin(o.shake * 70) * 2.5 : 0, k = .75 + .25 * o.amt / 6;
+  ell(o.x, o.y + 4, 19 * s, 7 * s, 'rgba(0,0,0,.22)');
+  ctx.fillStyle = '#6e4a2a'; ctx.fillRect(o.x - 4 * s, o.y - 20 * s, 8 * s, 23 * s);
+  const x = o.x + sh, y = o.y - 28 * s;
+  circ(x, y + 6 * s, 25 * s * k, '#2c6a39'); circ(x - 11 * s, y + 13 * s, 17 * s * k, '#2f7240'); circ(x + 12 * s, y + 11 * s, 17 * s * k, '#2f7240');
+  circ(x, y - 4 * s, 21 * s * k, '#3b8a48'); circ(x - 6 * s, y - 9 * s, 12 * s * k, '#4aa055');
+}
+function drawRock(o){
+  const s = (.9 + o.v * .3) * (.6 + .4 * o.amt / 8), x = o.x + (o.shake > 0 ? Math.sin(o.shake * 70) * 1.5 : 0), y = o.y;
+  ell(x, y + 4, 18 * s, 6 * s, 'rgba(0,0,0,.22)');
+  ctx.fillStyle = '#868b90'; ctx.beginPath(); ctx.moveTo(x - 15 * s, y + 3); ctx.lineTo(x - 10 * s, y - 12 * s); ctx.lineTo(x + 2 * s, y - 17 * s); ctx.lineTo(x + 14 * s, y - 8 * s); ctx.lineTo(x + 16 * s, y + 3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#aab0b4'; ctx.beginPath(); ctx.moveTo(x - 10 * s, y - 12 * s); ctx.lineTo(x + 2 * s, y - 17 * s); ctx.lineTo(x + 14 * s, y - 8 * s); ctx.lineTo(x + 2 * s, y - 5 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.beginPath(); ctx.moveTo(x - 15 * s, y + 3); ctx.lineTo(x - 2 * s, y - 4 * s); ctx.lineTo(x + 16 * s, y + 3); ctx.closePath(); ctx.fill();
+}
+function drawBush(o){
+  ell(o.x, o.y + 3, 16, 6, 'rgba(0,0,0,.2)');
+  circ(o.x - 8, o.y - 4, 10, '#3d8845'); circ(o.x + 8, o.y - 4, 10, '#37803f'); circ(o.x, o.y - 9, 11, '#4a9a52');
+  if (o.amt > 0){ const sp = [[-8, -7], [7, -4], [0, -13]]; for (let i = 0; i < o.amt; i++) circ(o.x + sp[i][0], o.y + sp[i][1], 3, '#d9384a'); }
+}
+function drawFire(o){
+  ctx.fillStyle = '#6f757a'; for (let i = 0; i < 7; i++){ const a = i / 7 * TAU; ctx.beginPath(); ctx.arc(o.x + Math.cos(a) * 12, o.y + 2 + Math.sin(a) * 7, 3.2, 0, TAU); ctx.fill(); }
+  ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(o.x - 9, o.y + 3); ctx.lineTo(o.x + 9, o.y - 3); ctx.moveTo(o.x - 9, o.y - 3); ctx.lineTo(o.x + 9, o.y + 3); ctx.stroke();
+  if (o.fuel > 0){
+    const f = Math.sin(anim * 15 + o.x) * 2.5, g = Math.sin(anim * 21 + o.y) * 1.5;
+    ctx.fillStyle = '#ff6a1f'; ctx.beginPath(); ctx.moveTo(o.x - 8, o.y); ctx.quadraticCurveTo(o.x - 7, o.y - 13 + f, o.x + g, o.y - 24 + f); ctx.quadraticCurveTo(o.x + 7, o.y - 13, o.x + 8, o.y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffc247'; ctx.beginPath(); ctx.moveTo(o.x - 4, o.y); ctx.quadraticCurveTo(o.x - 4, o.y - 8, o.x + g * .5, o.y - 14 + f * .6); ctx.quadraticCurveTo(o.x + 4, o.y - 8, o.x + 4, o.y); ctx.closePath(); ctx.fill();
+  } else ell(o.x, o.y, 8, 4, '#3a3d40');
+}
+function drawShelter(o){
+  ell(o.x, o.y + 8, 30, 8, 'rgba(0,0,0,.25)');
+  ctx.fillStyle = '#b8935a'; ctx.beginPath(); ctx.moveTo(o.x - 28, o.y + 9); ctx.lineTo(o.x, o.y - 36); ctx.lineTo(o.x + 28, o.y + 9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d3ad72'; ctx.beginPath(); ctx.moveTo(o.x, o.y - 36); ctx.lineTo(o.x + 28, o.y + 9); ctx.lineTo(o.x + 4, o.y + 9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#2b2118'; ctx.beginPath(); ctx.moveTo(o.x - 8, o.y + 9); ctx.lineTo(o.x, o.y - 12); ctx.lineTo(o.x + 8, o.y + 9); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#6a4a28'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(o.x, o.y - 36); ctx.lineTo(o.x, o.y - 44); ctx.stroke();
+}
+function drawCreature(c){
+  const flash = c.hit > 0, hop = Math.abs(Math.sin(c.hop)) * (c.k === 'rabbit' ? 4 : 1.2);
+  ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.fx, 1);
+  ell(0, 3, c.r + 3, 4, 'rgba(0,0,0,.22)'); ctx.translate(0, -hop);
+  if (c.k === 'rabbit'){
+    ell(0, -5, 8, 6, flash ? '#fff' : '#e6dac2'); circ(6, -9, 4.5, flash ? '#fff' : '#efe5cf');
+    ell(5, -16, 1.8, 5, '#efe5cf'); ell(8, -15, 1.8, 4.5, '#e2d6bd'); circ(-8, -6, 2.6, '#fff'); circ(7.5, -9.5, 1, '#222');
+  } else if (c.k === 'boar'){
+    ell(0, -8, 15, 10, flash ? '#fff' : '#6a4630'); circ(13, -8, 7, flash ? '#fff' : '#5b3b27');
+    ctx.fillStyle = '#f2ead5'; ctx.fillRect(17, -6, 4, 2); circ(15, -11, 1.4, '#111');
+    ctx.fillStyle = '#4a2f1f'; ctx.fillRect(-9, -2, 3, 6); ctx.fillRect(5, -2, 3, 6);
+    ctx.fillStyle = '#3d2618'; ctx.beginPath(); ctx.moveTo(-8, -15); ctx.lineTo(-2, -20); ctx.lineTo(5, -15); ctx.closePath(); ctx.fill();
+  } else {
+    const run = Math.sin(c.hop) * 2; c.hop += .22;
+    ell(0, -9, 15, 7, flash ? '#fff' : '#737a84'); circ(14, -11, 6.5, flash ? '#fff' : '#808792');
+    ctx.fillStyle = '#6a717a'; ctx.beginPath(); ctx.moveTo(11, -16); ctx.lineTo(13, -22); ctx.lineTo(16, -16); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#737a84'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-14, -10); ctx.quadraticCurveTo(-22, -12 + run, -24, -6); ctx.stroke();
+    ctx.fillStyle = '#5d646c'; ctx.fillRect(-8, -4, 3, 6 + run * .3); ctx.fillRect(6, -4, 3, 6 - run * .3);
+    circ(17, -12, 1.6, '#ff3b30'); ctx.fillStyle = '#eee'; ctx.fillRect(18, -8, 2, 2);
+  }
+  ctx.restore();
+}
+function drawPlayer(){
+  const x = P.x, y = P.y, run = P.moving ? Math.sin(P.step) : 0;
+  ell(x, y + 3, 15, 6, 'rgba(0,0,0,.26)');
+  ctx.save(); ctx.translate(x, y); ctx.scale(P.flip * 1.25, 1.25);
+  ctx.fillStyle = '#2f3555'; ctx.fillRect(-6 + run * 2, -8, 5, 10 + run); ctx.fillRect(1 - run * 2, -8, 5, 10 - run);
+  ctx.fillStyle = '#d65a3a'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -22, 18, 17, 5) : ctx.rect(-9, -22, 18, 17); ctx.fill();
+  ctx.fillStyle = '#b8472c'; ctx.fillRect(-9, -9, 18, 3);
+  circ(0, -28, 8, '#f0c9a0'); ctx.fillStyle = '#3a2a1e'; ctx.beginPath(); ctx.arc(0, -30, 8.2, Math.PI, TAU); ctx.fill(); circ(3.5, -27.5, 1.2, '#222');
+  // held tool
+  const tool = P.tools.spear ? 'spear' : P.tools.axe ? 'axe' : P.tools.pickaxe ? 'pickaxe' : null;
+  ctx.save(); ctx.translate(8, -15);
+  ctx.rotate(P.swing > 0 ? -1.3 + (1 - P.swing / .18) * 2.3 : -.5 + run * .15);
+  ctx.strokeStyle = '#7a5530'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  if (tool === 'spear'){ ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, -26); ctx.stroke(); ctx.fillStyle = '#cfd4d8'; ctx.beginPath(); ctx.moveTo(-3, -26); ctx.lineTo(0, -35); ctx.lineTo(3, -26); ctx.closePath(); ctx.fill(); }
+  else if (tool){ ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, -16); ctx.stroke(); ctx.fillStyle = '#9aa0a5'; if (tool === 'axe') ctx.fillRect(0, -18, 8, 8); else { ctx.fillRect(-7, -18, 14, 3); } }
+  else { circ(0, 0, 3, '#f0c9a0'); }
+  ctx.restore(); ctx.restore();
+  if (P.swing > 0){
+    const a = Math.atan2(P.fy, P.fx), k = P.swing / .18;
+    ctx.strokeStyle = `rgba(255,255,255,${.7 * k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y - 14, 30 + (P.tools.spear ? 8 : 0), a - .7, a + .7); ctx.stroke();
+  }
+}
+
+function resize(){
+  dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  lc.width = Math.ceil(W / 2); lc.height = Math.ceil(H / 2);
+  zoom = clamp(Math.min(W, H) / 500, .85, 1.7);
+}
+addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
+
+function punch(x, y, r){
+  const k = zoom * .5, cx = (x - cam.x) * k, cy = (y - cam.y) * k, R = r * k;
+  const g = lx.createRadialGradient(cx, cy, R * .12, cx, cy, R);
+  g.addColorStop(0, 'rgba(0,0,0,.96)'); g.addColorStop(.55, 'rgba(0,0,0,.6)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  lx.fillStyle = g; lx.beginPath(); lx.arc(cx, cy, R, 0, TAU); lx.fill();
+}
+
+function render(){
+  if (!P) return;
+  const sc = dpr * zoom, shx = shakeT > 0 ? (Math.random() - .5) * 7 * (shakeT / .25) : 0, shy = shakeT > 0 ? (Math.random() - .5) * 7 * (shakeT / .25) : 0;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2f86ad'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(sc, 0, 0, sc, (-cam.x + shx) * sc, (-cam.y + shy) * sc);
+  const vx0 = cam.x, vy0 = cam.y, vx1 = cam.x + W / zoom, vy1 = cam.y + H / zoom;
+  drawIsland();
+
+  const lakes = [], list = [];
+  gridQuery(vx0 - 110, vy0 - 110, vx1 + 110, vy1 + 130, o => { if (o.t === 'water') lakes.push(o); else if (o.y > vy0 - 20 && o.y < vy1 + 80 && o.x > vx0 - 70 && o.x < vx1 + 70) list.push(o); });
+  drawLakes(lakes);
+
+  // ground markers: safe zones, target ring
+  for (const s of structs){
+    const rad = s.t === 'fire' ? (s.fuel > 0 ? FIRE_SAFE : 0) : SHELTER_SAFE;
+    if (rad && s.x > vx0 - rad && s.x < vx1 + rad && s.y > vy0 - rad && s.y < vy1 + rad){
+      ctx.strokeStyle = 'rgba(255,200,120,.28)'; ctx.lineWidth = 2; ctx.setLineDash([6, 8]); ctx.lineDashOffset = -anim * 6;
+      ctx.beginPath(); ctx.ellipse(s.x, s.y + 2, rad, rad * .8, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  if (running && target){
+    const o = target.o; let tx = o.x, ty = o.y + 3, rr = o.r + 8;
+    if (o.t === 'water'){ const d = Math.hypot(P.x - o.x, P.y - o.y) || 1; tx = o.x + (P.x - o.x) / d * o.r; ty = o.y + (P.y - o.y) / d * o.r; rr = 14; }
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.lineDashOffset = -anim * 14;
+    ctx.beginPath(); ctx.ellipse(tx, ty, rr, rr * .55, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  const draws = list.map(o => ({ y: o.y, o }));
+  for (const c of creatures) if (c.x > vx0 - 40 && c.x < vx1 + 40 && c.y > vy0 - 30 && c.y < vy1 + 40) draws.push({ y: c.y, c });
+  if (running) draws.push({ y: P.y, p: 1 });
+  draws.sort((a, b) => a.y - b.y);
+  for (const d of draws){
+    if (d.p){ drawPlayer(); continue; }
+    if (d.c){ drawCreature(d.c); continue; }
+    switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; }
+  }
+
+  // floating texts
+  ctx.textAlign = 'center'; ctx.font = '700 13px "Noto Sans KR",sans-serif'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+  for (const f of floaters){ ctx.globalAlpha = 1 - f.t * f.t; ctx.strokeStyle = 'rgba(0,0,0,.65)'; ctx.strokeText(f.text, f.x, f.y); ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y); }
+  ctx.globalAlpha = 1;
+
+  // fire glow + darkness
+  const dk = darkness(dayT());
+  if (dk > .01){
+    for (const s of structs){
+      if (s.t !== 'fire' || s.fuel <= 0 || s.x < vx0 - 260 || s.x > vx1 + 260 || s.y < vy0 - 260 || s.y > vy1 + 260) continue;
+      const R = 170 + Math.sin(anim * 9 + s.x) * 6, g = ctx.createRadialGradient(s.x, s.y - 6, 4, s.x, s.y - 6, R);
+      g.addColorStop(0, `rgba(255,150,60,${.4 * dk})`); g.addColorStop(1, 'rgba(255,120,30,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y - 6, R, 0, TAU); ctx.fill();
+    }
+    lx.globalCompositeOperation = 'source-over'; lx.setTransform(1, 0, 0, 1, 0, 0); lx.clearRect(0, 0, lc.width, lc.height);
+    lx.fillStyle = `rgba(5,9,28,${.86 * dk})`; lx.fillRect(0, 0, lc.width, lc.height);
+    lx.globalCompositeOperation = 'destination-out';
+    if (running) punch(P.x, P.y - 8, 110);
+    for (const s of structs){
+      if (s.x < vx0 - 300 || s.x > vx1 + 300 || s.y < vy0 - 300 || s.y > vy1 + 300) continue;
+      if (s.t === 'fire' && s.fuel > 0) punch(s.x, s.y - 6, 250 + Math.sin(anim * 11 + s.x) * 8);
+      else if (s.t === 'shelter') punch(s.x, s.y - 10, 80);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(lc, 0, 0, cv.width, cv.height);
+  }
+  $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
+}
+
+/* ================= main loop ================= */
+let last = 0;
+function frame(ts){
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, (ts - last) / 1000 || 0); last = ts; anim += dt;
+  if (running && !paused && !sleeping) update(dt);
+  render();
+}
+
+resize();
+grassPat = ctx.createPattern(makeGrassTile(), 'repeat');
+function boot(data){ refreshTitle(); demoWorld(); if (data && data.resume) continueGame(); }
+requestAnimationFrame(frame);
+try {   // when hosted as an artifact, keep the run alive across a page update
+  const hot = window.claude && window.claude.hot;
+  if (hot && hot.snapshot) hot.snapshot(() => { save(); return { resume: running }; });
+  if (hot && hot.ready) hot.ready(boot); else boot((hot && hot.data) || {});
+} catch (_) { boot({}); }
+
+// debug/test hook (read-only view of the running game)
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b) => spawnCreature(k, a, b), hurt, get target(){ return target; } };
+})();
+</script>
+</body>
+</html>

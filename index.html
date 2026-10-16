@@ -73,6 +73,17 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #btnAct.press{transform:scale(.92);filter:brightness(1.12)}
 #btnCraft{position:fixed;right:max(30px,calc(env(safe-area-inset-right) + 12px));bottom:max(138px,calc(env(safe-area-inset-bottom) + 126px));width:62px;height:62px;border-radius:50%;
   border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:15px;pointer-events:auto;z-index:6}
+#btnBuild{position:fixed;right:max(124px,calc(env(safe-area-inset-right) + 112px));bottom:max(52px,calc(env(safe-area-inset-bottom) + 40px));width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:14px;pointer-events:auto;z-index:6}
+#btnBuild.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
+#build{position:fixed;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(130px,calc(env(safe-area-inset-right) + 118px));bottom:max(128px,calc(env(safe-area-inset-bottom) + 116px));display:flex;gap:6px;pointer-events:none}
+#build button{pointer-events:auto}
+.bp{flex:1;min-width:0;max-width:66px;height:64px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0 2px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.bp svg{width:26px;height:22px;display:block}
+.bp b{font-size:10.5px;font-weight:500;line-height:1.1}
+.bp small{font-size:9.5px;color:var(--dim);line-height:1.1;white-space:nowrap}
+.bp.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
+.bp.no{opacity:.5}
+body.building #equip{display:none}
 #equip{position:fixed;z-index:6;right:max(36px,calc(env(safe-area-inset-right) + 18px));bottom:max(210px,calc(env(safe-area-inset-bottom) + 198px));display:flex;flex-direction:column-reverse;align-items:center;gap:6px;pointer-events:none}
 #equip button{pointer-events:auto}
 .eq{width:48px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -148,6 +159,8 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
   <div id="inv"></div>
   <div id="goal" class="panel"></div>
   <div class="spacer"></div>
+  <button id="btnBuild">건축</button>
+  <div id="build" hidden></div>
   <div id="equip" hidden></div>
   <button id="btnCraft">제작</button>
   <button id="btnAct"><span id="actLabel">행동</span></button>
@@ -186,6 +199,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
     <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
     <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~4, Q)</li>
+    <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
     <li>밤에는 <b>늑대</b>가 옵니다. 모닥불 안에서 버티세요.</li>
   </ul>
 </div>
@@ -212,7 +226,23 @@ const PLAYER_R = 11, SPEED = 125;
 const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
 const CELL = 128, GN = Math.ceil(WORLD / CELL);
 const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
-const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1 };
+const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1 };
+const GRID = 28, BUILD_RANGE = 150;     // walls sit on a 28px grid; you can build within 150px of yourself
+const WALLS = {
+  wood:  { name: '울타리', hp: 40,  cost: { wood: 2 } },
+  stone: { name: '돌담',   hp: 140, cost: { stone: 4 } },
+  gate:  { name: '문',     hp: 50,  cost: { wood: 3, stone: 1 } },   // you walk through, animals do not
+  erase: { name: '철거',   hp: 0,   cost: {} }
+};
+const BUILD_ORDER = ['wood', 'stone', 'gate', 'erase'];
+const WALL_SVG = {
+  wood: '<svg viewBox="0 0 26 22"><path d="M2 8H24M2 14H24" stroke="#b58a52" stroke-width="2.2"/><rect x="3" y="3" width="4" height="16" rx="1" fill="#8b6035"/><rect x="11" y="3" width="4" height="16" rx="1" fill="#8b6035"/><rect x="19" y="3" width="4" height="16" rx="1" fill="#8b6035"/></svg>',
+  stone: '<svg viewBox="0 0 26 22"><rect x="2" y="3" width="22" height="16" rx="2" fill="#8d9296"/><rect x="2" y="3" width="22" height="6" rx="2" fill="#aeb4b8"/><path d="M2 12.5H24M10 9V12.5M17 12.5V19" stroke="#5e6367" stroke-width="1.4"/></svg>',
+  gate: '<svg viewBox="0 0 26 22"><rect x="3" y="3" width="20" height="16" rx="2" fill="#a9783e" stroke="#6a4824" stroke-width="1.5"/><path d="M3 3L23 19M23 3L3 19" stroke="#6a4824" stroke-width="1.5"/><circle cx="19" cy="11" r="1.5" fill="#f2d9a0"/></svg>',
+  erase: '<svg viewBox="0 0 26 22"><path d="M6 4L20 18M20 4L6 18" stroke="#ec5a4d" stroke-width="3.2" stroke-linecap="round"/></svg>'
+};
+const wallMap = new Map();              // "i,j" cell -> wall object
+let buildMode = false, buildSel = 'wood', cursor = null, paint = null, buildTip = false, lastBuildMsg = '', lastBuildMsgT = 0;
 
 const ITEMS = {
   wood:   { name: '나무',   icon: '🪵' },
@@ -293,8 +323,8 @@ function gridQuery(x0, y0, x1, y1, fn){
     if (a) for (let i = 0; i < a.length; i++) fn(a[i]);
   }
 }
-function addObj(o){ objs.push(o); gridAdd(o); if (o.t === 'fire' || o.t === 'shelter') structs.push(o); return o; }
-function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); }
+function addObj(o){ objs.push(o); gridAdd(o); if (o.t === 'fire' || o.t === 'shelter') structs.push(o); if (o.t === 'wall') wallMap.set(o.i + ',' + o.j, o); return o; }
+function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); if (o.t === 'wall') wallMap.delete(o.i + ',' + o.j); }
 
 // distance to the coast, measured inward (positive = on the island)
 function inside(x, y){
@@ -317,14 +347,14 @@ function blocked(x, y, r){
 function collide(e, r){
   for (let pass = 0; pass < 2; pass++)
     gridQuery(e.x - 110, e.y - 110, e.x + 110, e.y + 110, o => {
-      if (!SOLID[o.t]) return;
+      if (!SOLID[o.t] || (e === P && o.kind === 'gate')) return;
       const dx = e.x - o.x, dy = e.y - o.y, min = r + o.r, d2 = dx * dx + dy * dy;
       if (d2 < min * min){ const d = Math.sqrt(d2) || .001; e.x = o.x + dx / d * min; e.y = o.y + dy / d * min; }
     });
 }
 
 function genWorld(){
-  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = [];
+  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear();
   const C = WORLD / 2, noise = makeNoise();
   const tooClose = (x, y, d) => { let c = false; gridQuery(x - d - 100, y - d - 100, x + d + 100, y + d + 100, o => { if (!c && Math.hypot(o.x - x, o.y - y) < d + o.r) c = true; }); return c; };
 
@@ -374,7 +404,7 @@ function genWorld(){
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
     inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0 }, tools: { axe: false, pickaxe: false, spear: false }, equip: 'hand', auto: true,
-    built: { fire: false, shelter: false }, cd: 0, swing: 0, step: 0, moving: false };
+    built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
 function spawnCreature(kind, minD, maxD){
@@ -400,14 +430,15 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQ1234'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB1234'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
   if (e.key === 'c' || e.key === 'C') toggleCraft();
   else if (e.key === 'e' || e.key === 'E'){ if (!paused) eatBest(); }
-  else if (e.key >= '1' && e.key <= '4'){ if (!paused) manualEquip(ownedTools()[+e.key - 1]); }
-  else if (e.key === 'q' || e.key === 'Q'){ if (!paused) cycleEquip(); }
+  else if (e.key >= '1' && e.key <= '4'){ if (!paused) buildMode ? selectBuild(BUILD_ORDER[+e.key - 1]) : manualEquip(ownedTools()[+e.key - 1]); }
+  else if (e.key === 'q' || e.key === 'Q'){ if (!paused) buildMode ? selectBuild(BUILD_ORDER[(BUILD_ORDER.indexOf(buildSel) + 1) % BUILD_ORDER.length]) : cycleEquip(); }
+  else if (e.key === 'b' || e.key === 'B'){ if (!paused) toggleBuild(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -416,22 +447,33 @@ document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('contextmenu', e => e.preventDefault());
 
 function resetJoy(){ joy.active = false; joy.x = joy.y = 0; $('joy').classList.remove('on'); }
+const toWorld = e => ({ x: cam.x + e.clientX / zoom, y: cam.y + e.clientY / zoom });
+const inBuildRange = w => Math.hypot(w.x - P.x, w.y - P.y) <= BUILD_RANGE + GRID * .7;
 cv.addEventListener('pointerdown', e => {
-  if (!running || paused || joy.active) return;
+  if (!running || paused) return;
+  if (buildMode){            // inside the ring you paint walls, outside it you steer
+    const w = toWorld(e);
+    if (inBuildRange(w)){ paint = { id: e.pointerId, last: '' }; try { cv.setPointerCapture(e.pointerId); } catch (_) {} paintAt(w); return; }
+  }
+  if (joy.active) return;
   joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
   const j = $('joy'); j.style.left = joy.ox + 'px'; j.style.top = joy.oy + 'px'; j.classList.add('on');
   $('joyKnob').style.transform = 'translate(0,0)';
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
 });
 cv.addEventListener('pointermove', e => {
-  if (!joy.active || e.pointerId !== joy.id) return;
+  if (paint && e.pointerId === paint.id){ paintAt(toWorld(e)); return; }
+  if (!joy.active || e.pointerId !== joy.id){ if (buildMode && running && e.pointerType === 'mouse' && !paint) cursorAt(toWorld(e)); return; }
   let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const d = Math.hypot(dx, dy), R = 52;
   if (d > R){ dx = dx / d * R; dy = dy / d * R; }
   joy.x = dx / R; joy.y = dy / R;
   $('joyKnob').style.transform = `translate(${dx}px,${dy}px)`;
 });
-const endJoy = e => { if (joy.active && e.pointerId === joy.id) resetJoy(); };
-cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
+const endPtr = e => {
+  if (paint && e.pointerId === paint.id){ paint = null; if (e.pointerType !== 'mouse') cursor = null; }
+  if (joy.active && e.pointerId === joy.id) resetJoy();
+};
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
 
 const btnAct = $('btnAct');
 btnAct.addEventListener('pointerdown', e => { e.preventDefault(); actHeld = true; btnAct.classList.add('press'); try { btnAct.setPointerCapture(e.pointerId); } catch (_) {} });
@@ -448,6 +490,106 @@ $('inv').addEventListener('click', e => { const s = e.target.closest('.slot'); i
 /* ================= actions ================= */
 function floater(x, y, text, color){ floaters.push({ x: x + rand(-6, 6), y, text, color: color || '#fff', t: 0 }); }
 function gain(k, n){ P.inv[k] += n; floater(P.x, P.y - 26, '+' + n + ' ' + ITEMS[k].icon); }
+
+/* ================= building (fences & walls) ================= */
+function buildMsg(m){ const t = performance.now(); if (m !== lastBuildMsg || t - lastBuildMsgT > 1600){ lastBuildMsg = m; lastBuildMsgT = t; toast(m); } }
+function canBuild(i, j){       // '' = ok, otherwise the reason (or 'exists' for an occupied cell)
+  const x = i * GRID + GRID / 2, y = j * GRID + GRID / 2;
+  if (wallMap.has(i + ',' + j)) return 'exists';
+  if (inside(x, y) < 40) return '해안에는 지을 수 없어요';
+  const d = Math.hypot(x - P.x, y - P.y);
+  if (d > BUILD_RANGE + GRID * .7) return '너무 멀어요';
+  if (d < PLAYER_R + 16) return '내가 서 있는 자리예요';
+  for (const c of creatures) if (Math.hypot(x - c.x, y - c.y) < c.r + 15) return '동물이 있어요';
+  let bad = false;
+  gridQuery(x - 130, y - 130, x + 130, y + 130, o => { if (!bad && SOLID[o.t] && o.t !== 'wall' && Math.hypot(o.x - x, o.y - y) < o.r + 14) bad = true; });
+  return bad ? '다른 물체가 있어요' : '';
+}
+function frontCell(){          // the free cell nearest to the spot in front of the player (for the action button)
+  const px = P.x + P.fx * 40, py = P.y + P.fy * 40, ci = Math.floor(px / GRID), cj = Math.floor(py / GRID);
+  let best = { i: ci, j: cj }, bd = 1e9, found = false;
+  for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++){
+    const i = ci + di, j = cj + dj, d = Math.hypot(i * GRID + GRID / 2 - px, j * GRID + GRID / 2 - py), ok = !canBuild(i, j);
+    if ((ok && !found) || (ok === found && d < bd)){ found = ok; bd = d; best = { i, j }; }
+  }
+  return best;
+}
+const ghostCell = () => cursor || frontCell();
+function addWall(i, j, kind, hp){
+  const def = WALLS[kind];
+  return addObj({ t: 'wall', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 15, hp: hp == null ? def.hp : hp, max: def.hp, hit: 0 });
+}
+function tryBuild(i, j){
+  if (buildSel === 'erase'){
+    const w = wallMap.get(i + ',' + j); if (!w) return;
+    if (Math.hypot(w.x - P.x, w.y - P.y) > BUILD_RANGE + GRID) return buildMsg('너무 멀어요');
+    return demolish(w);
+  }
+  const why = canBuild(i, j); if (why === 'exists') return; if (why) return buildMsg(why);
+  const cost = WALLS[buildSel].cost;
+  for (const k in cost) if (P.inv[k] < cost[k]) return buildMsg(josa(ITEMS[k].name, '이/가') + ' 부족해요 (' + P.inv[k] + '/' + cost[k] + ')');
+  for (const k in cost) P.inv[k] -= cost[k];
+  addWall(i, j, buildSel); P.built.wall = true;
+}
+function demolish(w){
+  const cost = WALLS[w.kind].cost;
+  for (const k in cost){ const n = Math.floor(cost[k] / 2); if (n){ P.inv[k] += n; floater(w.x, w.y - 18, '+' + n + ' ' + ITEMS[k].icon); } }
+  removeObj(w);
+}
+function damageWall(w, n){
+  w.hp -= n; w.hit = .15; floater(w.x, w.y - 22, '-' + n, '#ffb199');
+  if (w.hp <= 0){ removeObj(w); if (Math.hypot(w.x - P.x, w.y - P.y) < 420) toast(josa(WALLS[w.kind].name, '이/가') + ' 부서졌어요!'); }
+}
+function wallAhead(c, sx, sy){ // a wall pressing against the creature in its direction of travel
+  let best = null, bd = 1e9;
+  gridQuery(c.x - 50, c.y - 50, c.x + 50, c.y + 50, o => {
+    if (o.t !== 'wall') return;
+    const dx = o.x - c.x, dy = o.y - c.y, dd = Math.hypot(dx, dy) || 1;
+    if (dd < c.r + o.r + 8 && (dx * sx + dy * sy) / dd > .45 && dd < bd){ bd = dd; best = o; }
+  });
+  return best;
+}
+function buildAtGhost(){ const g = ghostCell(); tryBuild(g.i, g.j); }
+function cursorAt(w){ cursor = inBuildRange(w) ? { i: Math.floor(w.x / GRID), j: Math.floor(w.y / GRID) } : null; }
+function paintAt(w){
+  cursorAt(w); if (!cursor) return;
+  const key = cursor.i + ',' + cursor.j; if (key === paint.last) return;
+  paint.last = key; tryBuild(cursor.i, cursor.j);
+}
+function renderBuildBar(){
+  const box = $('build'); box.innerHTML = '';
+  for (const k of BUILD_ORDER){
+    const d = WALLS[k], b = document.createElement('button'); b.className = 'bp'; b.dataset.k = k;
+    const cost = k === 'erase' ? '환급 50%' : Object.keys(d.cost).map(r => ITEMS[r].icon + d.cost[r]).join('');
+    b.innerHTML = WALL_SVG[k] + '<b>' + d.name + '</b><small>' + cost + '</small>'; box.appendChild(b);
+  }
+  syncBuildBar();
+}
+function syncBuildBar(){
+  $('build').querySelectorAll('.bp').forEach(b => {
+    const k = b.dataset.k, cost = WALLS[k].cost;
+    b.classList.toggle('on', k === buildSel);
+    b.classList.toggle('no', Object.keys(cost).some(r => P.inv[r] < cost[r]));
+  });
+}
+function selectBuild(k){ if (!k) return; buildSel = k; cursor = null; syncBuildBar(); lastLabel = ''; }
+function setBuild(on){
+  buildMode = on; paint = null; cursor = null; lastLabel = '';
+  document.body.classList.toggle('building', on);
+  $('btnBuild').classList.toggle('on', on); $('btnBuild').textContent = on ? '완료' : '건축';
+  $('build').hidden = !on;
+  if (on) renderBuildBar();
+}
+function toggleBuild(){
+  if (!running || sleeping) return;
+  setBuild(!buildMode);
+  if (buildMode && !buildTip){
+    buildTip = true; toast('원 안을 터치하거나 드래그해서 울타리를 쳐요. 원 밖을 드래그하면 이동해요.');
+    setTimeout(() => toast('문은 나만 지나갈 수 있어요. 철거하면 재료의 절반을 돌려받아요.'), 3200);
+  }
+}
+$('btnBuild').addEventListener('click', toggleBuild);
+$('build').addEventListener('click', e => { const b = e.target.closest('.bp'); if (b && running && !paused) selectBuild(b.dataset.k); });
 
 let equipTip = false, autoTip = false;
 const hasTool = t => t === 'hand' || !!P.tools[t];
@@ -498,6 +640,7 @@ function findTarget(){
   }
   gridQuery(P.x - 120, P.y - 120, P.x + 120, P.y + 120, o => {
     if (o.t === 'bush' && o.amt <= 0) return;
+    if (o.t === 'wall' && o.hp >= o.max) return;
     const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r;
     if (d < (o.t === 'water' ? 22 : 27) && d < bs){ bs = d; best = { kind: 'obj', o }; }
   });
@@ -512,6 +655,7 @@ function labelFor(tg){
     case 'tree': return '베기';
     case 'rock': return '캐기';
     case 'bush': return '따기';
+    case 'wall': return '수리';
     case 'water': return '마시기';
     case 'fire': return o.fuel > 0 && P.inv.meat > 0 ? '굽기' : '장작';
     case 'shelter': return isNight() ? '잠자기' : '움막';
@@ -521,6 +665,7 @@ function labelFor(tg){
 
 function act(){
   if (P.cd > 0 || sleeping) return;
+  if (buildMode){ P.cd = .2; buildAtGhost(); return; }
   const tg = target;
   if (!tg){ P.cd = .3; P.swing = .18; return; }
   const o = tg.o, dx = o.x - P.x, dy = o.y - P.y, d = Math.hypot(dx, dy) || 1;
@@ -530,6 +675,11 @@ function act(){
   switch (o.t){
     case 'tree': { const eq = TOOLS[P.equip], n = Math.min(o.amt, eq.wood); gain('wood', n); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
     case 'rock': { const eq = TOOLS[P.equip], n = Math.min(o.amt, eq.stone); gain('stone', n); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'wall': {                                    // repair a damaged wall with its own material
+      const k = Object.keys(WALLS[o.kind].cost)[0]; P.cd = .35;
+      if (P.inv[k] < 1){ toast(josa(ITEMS[k].name, '이/가') + ' 필요해요'); break; }
+      P.inv[k]--; o.hp = Math.min(o.max, o.hp + 30); floater(o.x, o.y - 24, '수리 +30', '#9be3a5'); break;
+    }
     case 'bush': { o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
     case 'water': { P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y - 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
     case 'fire':
@@ -672,7 +822,8 @@ function updateHUD(){
     const n = P.inv[s.dataset.k]; setText(s.querySelector('.n'), String(n));
     s.classList.toggle('dim', n === 0);
   });
-  const lab = labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
+  if (buildMode) syncBuildBar();
+  const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
 function objective(){
   const day = dayOf();
@@ -680,6 +831,7 @@ function objective(){
   if (!P.tools.spear) return '<b>목표</b> 나무 4 · 돌 2로 <b>나무 창</b> 만들기';
   if (!P.built.fire) return '<b>목표</b> 해가 지기 전에 <b>모닥불</b> 피우기';
   if (!P.built.shelter) return '<b>목표</b> 나무 12 · 돌 5로 <b>움막</b> 짓기';
+  if (!P.built.wall && day < RAFT_DAY) return '<b>목표</b> <b>건축</b> 버튼으로 울타리를 쳐서 늑대 막기';
   if (day < RAFT_DAY) return `<b>목표</b> ${RAFT_DAY}일차까지 생존 (뗏목 재료: 나무 30 · 돌 10 · 구운고기 3)`;
   return '<b>목표</b> 해안에서 <b>탈출 뗏목</b>을 만드세요!';
 }
@@ -704,14 +856,16 @@ function updateCreatures(dt){
     } else if (c.k === 'boar'){
       if (c.state === 'angry'){
         c.angry -= dt; sx = dx / d; sy = dy / d; spd = sp.speed * 2.2;
-        if (d < c.r + PLAYER_R + 5 && c.atk <= 0){ hurt(sp.dmg); c.atk = 1.3; }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(sp.dmg); c.atk = 1.3; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, 10); c.atk = 1.3; } }
         if (c.angry <= 0 || d > 520) c.state = 'idle';
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
     } else {
       if (!night){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > 650){ creatures.splice(i, 1); continue; } }
       else if (d < 480){
         sx = dx / d; sy = dy / d; spd = sp.speed;
-        if (d < c.r + PLAYER_R + 5 && c.atk <= 0){ hurt(Math.min(14, 6 + day)); c.atk = 1; }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.min(14, 6 + day)); c.atk = 1; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.min(12, 5 + day)); c.atk = 1; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
     if (sx > .1) c.fx = 1; else if (sx < -.1) c.fx = -1;
@@ -775,6 +929,7 @@ function update(dt){
   // world
   for (const o of objs){
     if (o.shake > 0) o.shake -= dt;
+    if (o.hit > 0) o.hit -= dt;
     if (o.t === 'bush' && o.regrow > 0){ o.regrow -= dt; if (o.regrow <= 0) o.amt = 3; }
     else if (o.t === 'fire' && o.fuel > 0){ o.fuel -= dt; if (o.fuel <= 0) toast('모닥불이 꺼졌어요. 장작을 넣어 다시 피우세요.'); }
   }
@@ -812,20 +967,21 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, built: P.built },
-      objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0)])
+      objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0), o.kind || 0, Math.round(o.hp || 0)])
     }));
   } catch (_) {}
 }
 function readSave(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
 function loadGame(s){
-  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = [];
+  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear();
   for (const a of s.objs){
     const o = { t: a[0], x: a[1], y: a[2], r: a[3], v: a[5] };
     if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush') o.amt = a[4];
     if (o.t === 'tree' || o.t === 'rock') o.shake = 0;
     if (o.t === 'bush') o.regrow = a[7];
     if (o.t === 'fire') o.fuel = a[6];
+    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
     addObj(o);
   }
   P = Object.assign(newPlayer(), s.p); T = s.T;
@@ -841,13 +997,13 @@ function startRun(){
   cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zoom / 2;
   $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
   $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
-  buildEquip(); updateHUD(); save();
+  setBuild(false); buildEquip(); updateHUD(); save();
 }
 function newGame(){ clearSave(); genWorld(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.'); setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200); }
 function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try { loadGame(s); startRun(); toast(dayOf() + '일차, 다시 시작합니다.'); } catch (_) { newGame(); } }
 function endGame(win){
   if (!running) return;
-  running = false; paused = false; actHeld = false; resetJoy(); clearSave();
+  running = false; paused = false; actHeld = false; resetJoy(); clearSave(); setBuild(false);
   const days = dayOf(); let best = 0;
   try { best = +localStorage.getItem(BEST_KEY) || 0; if (!win && days > best){ best = days; localStorage.setItem(BEST_KEY, String(days)); } } catch (_) {}
   $('endTitle').innerHTML = win ? '탈출 <em>성공!</em>' : '<em>쓰러졌습니다</em>';
@@ -966,6 +1122,60 @@ function drawShelter(o){
   ctx.fillStyle = '#2b2118'; ctx.beginPath(); ctx.moveTo(o.x - 8, o.y + 9); ctx.lineTo(o.x, o.y - 12); ctx.lineTo(o.x + 8, o.y + 9); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = '#6a4a28'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(o.x, o.y - 36); ctx.lineTo(o.x, o.y - 44); ctx.stroke();
 }
+function drawWall(o, alpha){
+  const x = o.x, y = o.y, flash = o.hit > 0, hpk = o.hp / o.max;
+  if (alpha) ctx.globalAlpha = alpha;
+  if (o.kind === 'stone'){
+    ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(x - 14, y + 4, 28, 7);
+    ctx.fillStyle = flash ? '#fff' : '#7b8185'; ctx.fillRect(x - 14, y - 8, 28, 16);
+    ctx.fillStyle = flash ? '#fff' : '#a6acb0'; ctx.fillRect(x - 14, y - 18, 28, 10);
+    ctx.strokeStyle = 'rgba(38,44,48,.55)'; ctx.lineWidth = 1.2; ctx.beginPath();
+    ctx.moveTo(x - 14, y); ctx.lineTo(x + 14, y); ctx.moveTo(x - 4, y - 8); ctx.lineTo(x - 4, y); ctx.moveTo(x + 6, y); ctx.lineTo(x + 6, y + 8);
+    ctx.moveTo(x - 14, y - 13); ctx.lineTo(x + 14, y - 13); ctx.stroke();
+  } else {
+    const east = wallMap.get((o.i + 1) + ',' + o.j), south = wallMap.get(o.i + ',' + (o.j + 1));
+    ell(x, y + 7, 12, 4, 'rgba(0,0,0,.22)');
+    ctx.strokeStyle = flash ? '#fff' : '#b88c55'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    for (const h of [-6, -13]){
+      if (east){ ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(east.x, east.y + h); ctx.stroke(); }
+      if (south){ ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(south.x, south.y + h); ctx.stroke(); }
+    }
+    if (o.kind === 'gate'){
+      ctx.fillStyle = flash ? '#fff' : '#a87a40'; ctx.fillRect(x - 12, y - 19, 24, 24);
+      ctx.strokeStyle = '#5f4020'; ctx.lineWidth = 2; ctx.strokeRect(x - 12, y - 19, 24, 24);
+      ctx.beginPath(); ctx.moveTo(x - 12, y - 19); ctx.lineTo(x + 12, y + 5); ctx.moveTo(x + 12, y - 19); ctx.lineTo(x - 12, y + 5); ctx.stroke();
+      circ(x + 8, y - 7, 2, '#f2d9a0');
+    } else {
+      ctx.fillStyle = flash ? '#fff' : '#8a5f33'; ctx.fillRect(x - 3.5, y - 21, 7, 26);
+      ctx.fillStyle = flash ? '#fff' : '#ad7d4c'; ctx.fillRect(x - 3.5, y - 21, 7, 4);
+    }
+  }
+  if (hpk < .55){ ctx.strokeStyle = 'rgba(30,20,12,.7)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 6, y - 14); ctx.lineTo(x - 1, y - 7); ctx.lineTo(x - 5, y - 1); ctx.moveTo(x + 5, y - 15); ctx.lineTo(x + 2, y - 9); ctx.stroke(); }
+  if (o.hp < o.max){ ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 11, y - 29, 22, 4); ctx.fillStyle = hpk > .5 ? '#8fd16a' : hpk > .25 ? '#f2b84b' : '#ec5a4d'; ctx.fillRect(x - 10, y - 28, 20 * Math.max(0, hpk), 2); }
+  ctx.globalAlpha = 1;
+}
+function drawBuildGrid(){
+  const R = BUILD_RANGE;
+  ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 2; ctx.setLineDash([8, 8]); ctx.lineDashOffset = -anim * 8;
+  ctx.beginPath(); ctx.arc(P.x, P.y, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,255,255,.3)';
+  for (let i = Math.floor((P.x - R) / GRID); i <= Math.floor((P.x + R) / GRID); i++)
+    for (let j = Math.floor((P.y - R) / GRID); j <= Math.floor((P.y + R) / GRID); j++){
+      const cx = i * GRID + GRID / 2, cy = j * GRID + GRID / 2;
+      if (Math.hypot(cx - P.x, cy - P.y) <= R) ctx.fillRect(cx - 1, cy - 1, 2, 2);
+    }
+}
+function drawGhost(){
+  const g = ghostCell(), x = g.i * GRID + GRID / 2, y = g.j * GRID + GRID / 2;
+  let col = '#7bd88f', piece = true;
+  if (buildSel === 'erase'){ col = wallMap.has(g.i + ',' + g.j) ? '#ff6b5e' : 'rgba(255,255,255,.35)'; piece = false; }
+  else {
+    const cost = WALLS[buildSel].cost;
+    if (canBuild(g.i, g.j)){ col = '#ff6b5e'; piece = false; } else if (Object.keys(cost).some(k => P.inv[k] < cost[k])) col = '#ffd166';
+  }
+  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.strokeRect(x - GRID / 2, y - GRID / 2, GRID, GRID); ctx.setLineDash([]);
+  if (piece) drawWall({ kind: buildSel, x, y, i: g.i, j: g.j, hp: 1, max: 1, hit: 0 }, .65);
+}
 function drawCreature(c){
   const flash = c.hit > 0, hop = Math.abs(Math.sin(c.hop)) * (c.k === 'rabbit' ? 4 : 1.2);
   ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.fx, 1);
@@ -1046,7 +1256,8 @@ function render(){
       ctx.beginPath(); ctx.ellipse(s.x, s.y + 2, rad, rad * .8, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     }
   }
-  if (running && target){
+  if (buildMode && running) drawBuildGrid();
+  if (running && target && !buildMode){
     const o = target.o; let tx = o.x, ty = o.y + 3, rr = o.r + 8;
     if (o.t === 'water'){ const d = Math.hypot(P.x - o.x, P.y - o.y) || 1; tx = o.x + (P.x - o.x) / d * o.r; ty = o.y + (P.y - o.y) / d * o.r; rr = 14; }
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.lineDashOffset = -anim * 14;
@@ -1060,8 +1271,9 @@ function render(){
   for (const d of draws){
     if (d.p){ drawPlayer(); continue; }
     if (d.c){ drawCreature(d.c); continue; }
-    switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; }
+    switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; }
   }
+  if (buildMode && running) drawGhost();
 
   // floating texts
   ctx.textAlign = 'center'; ctx.font = '700 13px "Noto Sans KR",sans-serif'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
@@ -1111,7 +1323,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b) => spawnCreature(k, a, b), hurt, get target(){ return target; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b) => spawnCreature(k, a, b), hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, walls: () => [...wallMap.values()], clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; } };
 })();
 </script>
 </body>

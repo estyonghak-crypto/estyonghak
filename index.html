@@ -535,9 +535,10 @@ function craftBlock(r){
   return '';
 }
 function placeSpot(r){
-  const rad = r.place === 'shelter' ? 26 : 9, base = Math.atan2(P.fy, P.fx), d = PLAYER_R + rad + 8;
-  for (const a of [0, .8, -.8, 1.6, -1.6, 2.4, -2.4, 3.14]){
-    const x = P.x + Math.cos(base + a) * d, y = P.y + Math.sin(base + a) * d;
+  const rad = r.place === 'shelter' ? 26 : 9, base = Math.atan2(P.fy, P.fx);
+  for (const extra of [0, 18, 36]) for (let i = 0; i < 12; i++){
+    const a = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * .52, d = PLAYER_R + rad + 8 + extra;
+    const x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d;
     if (!blocked(x, y, rad + 4) && inside(x, y) > 70) return { x, y, rad };
   }
   return null;
@@ -545,7 +546,7 @@ function placeSpot(r){
 function craft(r){
   if (craftBlock(r)) return;
   let spot = null;
-  if (r.place){ spot = placeSpot(r); if (!spot){ toast('여기에는 놓을 수 없어요'); return; } }
+  if (r.place){ spot = placeSpot(r); if (!spot){ toast('주변이 빽빽해서 놓을 수 없어요. 탁 트인 곳으로 가세요.'); return; } }
   for (const k in r.cost) P.inv[k] -= r.cost[k];
   if (r.tool){ P.tools[r.tool] = true; toast(josa(r.name, '을/를') + ' 만들었어요!'); }
   else if (r.place === 'fire'){ addObj({ t: 'fire', x: spot.x, y: spot.y, r: 9, fuel: 140 }); P.built.fire = true; toast('모닥불을 피웠어요. 가까이에서 몸을 녹이세요.'); }

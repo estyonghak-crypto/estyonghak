@@ -73,6 +73,18 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #btnAct.press{transform:scale(.92);filter:brightness(1.12)}
 #btnCraft{position:fixed;right:max(30px,calc(env(safe-area-inset-right) + 12px));bottom:max(138px,calc(env(safe-area-inset-bottom) + 126px));width:62px;height:62px;border-radius:50%;
   border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:15px;pointer-events:auto;z-index:6}
+#equip{position:fixed;z-index:6;right:max(36px,calc(env(safe-area-inset-right) + 18px));bottom:max(210px,calc(env(safe-area-inset-bottom) + 198px));display:flex;flex-direction:column-reverse;align-items:center;gap:6px;pointer-events:none}
+#equip button{pointer-events:auto}
+.eq{width:48px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.eq svg{width:24px;height:24px;display:block}
+.eq span{font-size:9.5px;line-height:1.1;color:var(--dim)}
+.eq.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
+.eq.on span{color:var(--bone)}
+.eq.pop{animation:pop .28s ease-out}
+@keyframes pop{40%{transform:scale(1.14)}}
+.auto{width:48px;height:26px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:11.5px;font-weight:700;color:var(--dim);padding:0}
+.auto.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
+@media (max-height:520px){#equip{flex-direction:row-reverse;right:calc(max(30px,calc(env(safe-area-inset-right) + 12px)) + 72px);bottom:max(144px,calc(env(safe-area-inset-bottom) + 132px))}}
 #joy{position:fixed;left:0;top:0;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,230,210,.38);background:rgba(239,230,210,.07);pointer-events:none;z-index:6;opacity:0;transition:opacity .12s}
 #joy.on{opacity:1}
 #joyKnob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(239,230,210,.55)}
@@ -114,7 +126,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:40;transition:opacity .45s}
 #fade.on{opacity:1}
 #hurt{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;box-shadow:inset 0 0 110px 26px rgba(236,90,77,.85)}
-@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast{animation:none}}
+@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast,.eq.pop{animation:none}}
 </style>
 </head>
 <body>
@@ -136,6 +148,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
   <div id="inv"></div>
   <div id="goal" class="panel"></div>
   <div class="spacer"></div>
+  <div id="equip" hidden></div>
   <button id="btnCraft">제작</button>
   <button id="btnAct"><span id="actLabel">행동</span></button>
 </div>
@@ -172,6 +185,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~4, Q)</li>
     <li>밤에는 <b>늑대</b>가 옵니다. 모닥불 안에서 버티세요.</li>
   </ul>
 </div>
@@ -212,10 +226,23 @@ const SPECS = {
   boar:   { hp: 10, r: 12, speed: 45,  dmg: 12,   drop: { meat: 3 } },
   wolf:   { hp: 14, r: 11, speed: 106, drop: { meat: 1 } }
 };
+const TOOLS = {   // what each equipped tool does: yield per swing, damage, extra reach, swing cooldowns (wood / stone / attack)
+  hand:    { name: '맨손',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 },
+  axe:     { name: '도끼',   wood: 2, stone: 1, dmg: 2, reach: 0,  cdW: .38, cdS: .6,  cdA: .4 },
+  spear:   { name: '창',     wood: 1, stone: 1, dmg: 4, reach: 12, cdW: .55, cdS: .6,  cdA: .5 },
+  pickaxe: { name: '곡괭이', wood: 1, stone: 3, dmg: 1, reach: 0,  cdW: .55, cdS: .42, cdA: .4 }
+};
+const TOOL_ORDER = ['hand', 'axe', 'spear', 'pickaxe'];
+const TOOL_SVG = {
+  hand: '<svg viewBox="0 0 24 24"><rect x="6.5" y="10" width="11" height="9" rx="3" fill="#f0c9a0"/><circle cx="8.6" cy="9.6" r="2.1" fill="#f0c9a0"/><circle cx="12" cy="8.7" r="2.1" fill="#f0c9a0"/><circle cx="15.4" cy="9.6" r="2.1" fill="#f0c9a0"/><rect x="6.5" y="15" width="11" height="1.6" fill="#d9a878"/></svg>',
+  axe: '<svg viewBox="0 0 24 24"><path d="M5 21 L16 7" stroke="#9a7040" stroke-width="2.6" stroke-linecap="round"/><path d="M12.5 3.5 L21 6.5 L19.5 12.5 L14.5 10 Z" fill="#b8bfc4" stroke="#6d757b" stroke-width="1" stroke-linejoin="round"/></svg>',
+  spear: '<svg viewBox="0 0 24 24"><path d="M4 22 L16 10" stroke="#9a7040" stroke-width="2.4" stroke-linecap="round"/><path d="M13.5 7 L22 2 L18 10.5 Z" fill="#d3d8dc" stroke="#6d757b" stroke-width="1" stroke-linejoin="round"/></svg>',
+  pickaxe: '<svg viewBox="0 0 24 24"><path d="M5 21 L17 9" stroke="#9a7040" stroke-width="2.6" stroke-linecap="round"/><path d="M5.5 9.5 Q12.5 1.5 21 9" fill="none" stroke="#b8bfc4" stroke-width="3.2" stroke-linecap="round"/></svg>'
+};
 const RECIPES = [
-  { id: 'axe',     name: '돌도끼', desc: '나무를 2배 빨리 베고 공격력이 2가 됩니다.', cost: { wood: 3, stone: 2 }, tool: 'axe' },
-  { id: 'spear',   name: '나무 창', desc: '공격력 4, 더 멀리 찌를 수 있습니다.', cost: { wood: 4, stone: 2 }, tool: 'spear' },
-  { id: 'pickaxe', name: '곡괭이', desc: '돌을 한 번에 3개씩 캡니다.', cost: { wood: 3, stone: 3 }, tool: 'pickaxe' },
+  { id: 'axe',     name: '돌도끼', desc: '장착하면 나무를 2배로 얻고 공격력이 2가 됩니다.', cost: { wood: 3, stone: 2 }, tool: 'axe' },
+  { id: 'spear',   name: '나무 창', desc: '장착하면 공격력이 4가 되고 더 멀리 찌릅니다.', cost: { wood: 4, stone: 2 }, tool: 'spear' },
+  { id: 'pickaxe', name: '곡괭이', desc: '장착하면 돌을 한 번에 3개씩 캡니다.', cost: { wood: 3, stone: 3 }, tool: 'pickaxe' },
   { id: 'fire',    name: '모닥불', desc: '빛과 온기를 주고 늑대를 막습니다. 고기도 구울 수 있어요.', cost: { wood: 5, stone: 2 }, place: 'fire' },
   { id: 'shelter', name: '움막', desc: '낮은 안전지대. 밤에 잠을 자서 아침까지 건너뜁니다.', cost: { wood: 12, stone: 5 }, place: 'shelter' },
   { id: 'raft',    name: '탈출 뗏목', desc: RAFT_DAY + '일차부터 해안에서 만들 수 있습니다. 완성하면 탈출!', cost: { wood: 30, stone: 10, cooked: 3 }, raft: true }
@@ -346,7 +373,7 @@ function genWorld(){
 
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0 }, tools: { axe: false, pickaxe: false, spear: false },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0 }, tools: { axe: false, pickaxe: false, spear: false }, equip: 'hand', auto: true,
     built: { fire: false, shelter: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -373,12 +400,14 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && (e.key === 'c' || e.key === 'e' || e.key === 'Escape')) return;
+  if (e.repeat && 'cCeEqQ1234'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
   if (e.key === 'c' || e.key === 'C') toggleCraft();
   else if (e.key === 'e' || e.key === 'E'){ if (!paused) eatBest(); }
+  else if (e.key >= '1' && e.key <= '4'){ if (!paused) manualEquip(ownedTools()[+e.key - 1]); }
+  else if (e.key === 'q' || e.key === 'Q'){ if (!paused) cycleEquip(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -410,14 +439,58 @@ const relAct = () => { actHeld = false; btnAct.classList.remove('press'); };
 btnAct.addEventListener('pointerup', relAct); btnAct.addEventListener('pointercancel', relAct); btnAct.addEventListener('lostpointercapture', relAct);
 $('btnCraft').addEventListener('click', toggleCraft);
 $('menuBtn').addEventListener('click', openMenu);
+$('equip').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !running || paused) return;
+  if (b.id === 'autoBtn') toggleAuto(); else manualEquip(b.dataset.t);
+});
 $('inv').addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
 
 /* ================= actions ================= */
 function floater(x, y, text, color){ floaters.push({ x: x + rand(-6, 6), y, text, color: color || '#fff', t: 0 }); }
 function gain(k, n){ P.inv[k] += n; floater(P.x, P.y - 26, '+' + n + ' ' + ITEMS[k].icon); }
 
+let equipTip = false, autoTip = false;
+const hasTool = t => t === 'hand' || !!P.tools[t];
+const ownedTools = () => TOOL_ORDER.filter(hasTool);
+function bestFor(tg){          // tool that suits the thing in front of the player, or null to keep the current one
+  if (!tg) return null;
+  const pref = tg.kind === 'creature' ? ['spear', 'axe'] : tg.o.t === 'tree' ? ['axe'] : tg.o.t === 'rock' ? ['pickaxe'] : null;
+  return pref ? (pref.find(hasTool) || 'hand') : null;
+}
+function buildEquip(){
+  const box = $('equip'), list = ownedTools();
+  box.hidden = list.length < 2; box.innerHTML = '';
+  for (const t of list){
+    const b = document.createElement('button'); b.className = 'eq'; b.dataset.t = t; b.setAttribute('aria-label', TOOLS[t].name);
+    b.innerHTML = TOOL_SVG[t] + '<span>' + TOOLS[t].name + '</span>'; box.appendChild(b);
+  }
+  const a = document.createElement('button'); a.className = 'auto'; a.id = 'autoBtn'; box.appendChild(a);
+  syncEquip();
+}
+function syncEquip(){
+  $('equip').querySelectorAll('.eq').forEach(b => b.classList.toggle('on', b.dataset.t === P.equip));
+  const a = $('autoBtn'); if (a){ a.classList.toggle('on', P.auto); a.textContent = P.auto ? '자동' : '수동'; }
+}
+function setEquip(t, manual){
+  if (!hasTool(t) || P.equip === t) return;
+  P.equip = t; syncEquip();
+  const b = $('equip').querySelector('.eq[data-t="' + t + '"]');
+  if (b){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  if (manual) floater(P.x, P.y - 34, TOOLS[t].name, '#ffd8a8');
+}
+function manualEquip(t){
+  if (!t) return;
+  if (P.auto){ P.auto = false; if (!autoTip){ autoTip = true; toast('수동 장비로 바꿨어요. 위쪽 "수동" 칩을 누르면 다시 자동이 돼요.'); } }
+  setEquip(t, true); syncEquip();
+}
+function cycleEquip(){ const l = ownedTools(); if (l.length > 1) manualEquip(l[(l.indexOf(P.equip) + 1) % l.length]); }
+function toggleAuto(){
+  P.auto = !P.auto; syncEquip(); toast(P.auto ? '자동 장비를 켰어요' : '수동 장비로 바꿨어요');
+  const b = P.auto && bestFor(target); if (b) setEquip(b);
+}
+
 function findTarget(){
-  const reach = 34 + (P.tools.spear ? 12 : 0);
+  const reach = 34 + (P.auto ? Math.max(...ownedTools().map(t => TOOLS[t].reach)) : TOOLS[P.equip].reach);   // auto mode will swap to the longest weapon
   let best = null, bs = 1e9;
   for (const c of creatures){
     const d = Math.hypot(c.x - P.x, c.y - P.y) - c.r;
@@ -455,8 +528,8 @@ function act(){
   P.swing = .18;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { const n = Math.min(o.amt, P.tools.axe ? 2 : 1); gain('wood', n); o.amt -= n; o.shake = .22; P.cd = P.tools.axe ? .38 : .55; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { const n = Math.min(o.amt, P.tools.pickaxe ? 3 : 1); gain('stone', n); o.amt -= n; o.shake = .15; P.cd = P.tools.pickaxe ? .42 : .6; if (o.amt <= 0) removeObj(o); break; }
+    case 'tree': { const eq = TOOLS[P.equip], n = Math.min(o.amt, eq.wood); gain('wood', n); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { const eq = TOOLS[P.equip], n = Math.min(o.amt, eq.stone); gain('stone', n); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
     case 'bush': { o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
     case 'water': { P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y - 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
     case 'fire':
@@ -473,8 +546,8 @@ function act(){
 }
 
 function attack(c){
-  const dmg = P.tools.spear ? 4 : P.tools.axe ? 2 : 1;
-  c.hp -= dmg; c.hit = .18; P.cd = P.tools.spear ? .5 : .4;
+  const eq = TOOLS[P.equip], dmg = eq.dmg;
+  c.hp -= dmg; c.hit = .18; P.cd = eq.cdA;
   const dx = c.x - P.x, dy = c.y - P.y, d = Math.hypot(dx, dy) || 1;
   c.kvx = dx / d * 170; c.kvy = dy / d * 170;
   floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
@@ -548,7 +621,10 @@ function craft(r){
   let spot = null;
   if (r.place){ spot = placeSpot(r); if (!spot){ toast('주변이 빽빽해서 놓을 수 없어요. 탁 트인 곳으로 가세요.'); return; } }
   for (const k in r.cost) P.inv[k] -= r.cost[k];
-  if (r.tool){ P.tools[r.tool] = true; toast(josa(r.name, '을/를') + ' 만들었어요!'); }
+  if (r.tool){
+    P.tools[r.tool] = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
+    if (!equipTip){ equipTip = true; setTimeout(() => toast('오른쪽 장비 슬롯으로 교체할 수 있어요. "자동"이면 알아서 바뀝니다.'), 2600); }
+  }
   else if (r.place === 'fire'){ addObj({ t: 'fire', x: spot.x, y: spot.y, r: 9, fuel: 140 }); P.built.fire = true; toast('모닥불을 피웠어요. 가까이에서 몸을 녹이세요.'); }
   else if (r.place === 'shelter'){ addObj({ t: 'shelter', x: spot.x, y: spot.y, r: 26 }); P.built.shelter = true; toast('움막을 지었어요. 밤에 잘 수 있어요.'); }
   else if (r.raft){ closeCraft(); setTimeout(() => endGame(true), 700); return; }
@@ -703,6 +779,7 @@ function update(dt){
     else if (o.t === 'fire' && o.fuel > 0){ o.fuel -= dt; if (o.fuel <= 0) toast('모닥불이 꺼졌어요. 장작을 넣어 다시 피우세요.'); }
   }
   target = findTarget();
+  if (P.auto){ const b = bestFor(target); if (b) setEquip(b); }
   if ((actHeld || keys.act) && !paused) act();
   updateCreatures(dt);
 
@@ -734,7 +811,7 @@ function save(){
   if (!running || !P) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, built: P.built },
+      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, built: P.built },
       objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0)])
     }));
   } catch (_) {}
@@ -752,6 +829,7 @@ function loadGame(s){
     addObj(o);
   }
   P = Object.assign(newPlayer(), s.p); T = s.T;
+  if (!hasTool(P.equip)) P.equip = 'hand';
   for (let i = 0; i < 36; i++) spawnCreature('rabbit', 300);
   for (let i = 0; i < 7; i++) spawnCreature('boar', 300);
 }
@@ -763,7 +841,7 @@ function startRun(){
   cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zoom / 2;
   $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
   $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
-  updateHUD(); save();
+  buildEquip(); updateHUD(); save();
 }
 function newGame(){ clearSave(); genWorld(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.'); setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200); }
 function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try { loadGame(s); startRun(); toast(dayOf() + '일차, 다시 시작합니다.'); } catch (_) { newGame(); } }
@@ -919,7 +997,7 @@ function drawPlayer(){
   ctx.fillStyle = '#b8472c'; ctx.fillRect(-9, -9, 18, 3);
   circ(0, -28, 8, '#f0c9a0'); ctx.fillStyle = '#3a2a1e'; ctx.beginPath(); ctx.arc(0, -30, 8.2, Math.PI, TAU); ctx.fill(); circ(3.5, -27.5, 1.2, '#222');
   // held tool
-  const tool = P.tools.spear ? 'spear' : P.tools.axe ? 'axe' : P.tools.pickaxe ? 'pickaxe' : null;
+  const tool = P.equip === 'hand' ? null : P.equip;
   ctx.save(); ctx.translate(8, -15);
   ctx.rotate(P.swing > 0 ? -1.3 + (1 - P.swing / .18) * 2.3 : -.5 + run * .15);
   ctx.strokeStyle = '#7a5530'; ctx.lineWidth = 3; ctx.lineCap = 'round';
@@ -929,7 +1007,7 @@ function drawPlayer(){
   ctx.restore(); ctx.restore();
   if (P.swing > 0){
     const a = Math.atan2(P.fy, P.fx), k = P.swing / .18;
-    ctx.strokeStyle = `rgba(255,255,255,${.7 * k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y - 14, 30 + (P.tools.spear ? 8 : 0), a - .7, a + .7); ctx.stroke();
+    ctx.strokeStyle = `rgba(255,255,255,${.7 * k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y - 14, 30 + (P.equip === 'spear' ? 8 : 0), a - .7, a + .7); ctx.stroke();
   }
 }
 

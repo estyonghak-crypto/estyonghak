@@ -53,9 +53,9 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #clock i{position:absolute;top:-3px;width:3px;height:13px;margin-left:-1px;background:var(--bone);border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
 #menuBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1}
 #inv{display:flex;gap:5px;margin-top:8px}
-.slot{position:relative;width:48px;height:54px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
+.slot{position:relative;flex:1;min-width:0;max-width:52px;height:54px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
 .slot .ic{font-size:21px;line-height:1}
-.slot .nm{font-size:9.5px;color:var(--dim);line-height:1.1}
+.slot .nm{font-size:9px;color:var(--dim);line-height:1.1;white-space:nowrap;max-width:100%;overflow:hidden}
 .slot .n{position:absolute;right:4px;top:2px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .slot.dim{opacity:.4}
 .slot.food:not(.dim){border-color:rgba(143,209,106,.55)}
@@ -84,9 +84,17 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .bp.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
 .bp.no{opacity:.5}
 body.building #equip{display:none}
+.lv{position:absolute;top:2px;right:4px;font-size:8.5px;font-style:normal;font-weight:700;color:#7fd0ff}
+.lv.l3{color:#ffd166}
+#armorBadge{color:var(--amber);margin-left:3px}
+.tabs{display:flex;gap:6px;margin:4px 0 10px}
+.tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:transparent;font-weight:700;font-size:14px}
+.tab.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
+.lvtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(127,208,255,.16);color:#7fd0ff;font-size:11px;font-weight:700}
+.lvtag.max{background:rgba(255,209,102,.18);color:#ffd166}
 #equip{position:fixed;z-index:6;right:max(36px,calc(env(safe-area-inset-right) + 18px));bottom:max(210px,calc(env(safe-area-inset-bottom) + 198px));display:flex;flex-direction:column-reverse;align-items:center;gap:5px;pointer-events:none}
 #equip button{pointer-events:auto}
-.eq{width:48px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.eq{position:relative;width:48px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .eq svg{width:24px;height:24px;display:block}
 .eq span{font-size:9.5px;line-height:1.1;color:var(--dim)}
 .eq.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
@@ -148,7 +156,7 @@ body.building #equip{display:none}
 <div id="hud" hidden>
   <div class="top">
     <div id="stats" class="panel">
-      <div class="stat" id="st-hp" style="--c:var(--blood)"><label>체력</label><div class="bar"><i></i></div></div>
+      <div class="stat" id="st-hp" style="--c:var(--blood)"><label>체력<span id="armorBadge"></span></label><div class="bar"><i></i></div></div>
       <div class="stat" id="st-hunger" style="--c:var(--amber)"><label>배고픔</label><div class="bar"><i></i></div></div>
       <div class="stat" id="st-thirst" style="--c:var(--sea)"><label>갈증</label><div class="bar"><i></i></div></div>
       <div class="stat" id="st-warmth" style="--c:var(--ember)"><label>체온</label><div class="bar"><i></i></div></div>
@@ -170,7 +178,8 @@ body.building #equip{display:none}
 <div id="craft" class="modal" hidden>
   <div class="sheet">
     <div class="head"><h2>제작</h2><button class="xbtn" id="craftClose" aria-label="닫기">✕</button></div>
-    <p class="sub">재료를 모아 도구와 시설을 만드세요.</p>
+    <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button></div>
+    <p class="sub" id="craftSub">재료를 모아 도구와 시설을 만드세요.</p>
     <div id="craftList"></div>
   </div>
 </div>
@@ -201,7 +210,8 @@ body.building #equip{display:none}
     <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~4, Q)</li>
     <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
     <li><b>소총·탑</b> 소총은 장착하면 자동 조준, 탑은 건축에서 설치해요. 둘 다 탄약이 필요해요</li>
-    <li>밤에는 <b>늑대</b>가 옵니다. 모닥불 안에서 버티세요.</li>
+    <li>밤에는 <b>늑대</b>와 <b>좀비</b>가 옵니다. 낮에도 <b>곰</b>을 조심하세요.</li>
+    <li>전리품(고철, 가죽)으로 제작 창의 <b>강화</b> 탭에서 장비를 올려요</li>
   </ul>
 </div>
 
@@ -227,9 +237,10 @@ const PLAYER_R = 11, SPEED = 125;
 const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
 const CELL = 128, GN = Math.ceil(WORLD / CELL);
 const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
-const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1 };
-const GUN_RANGE = 280, GUN_SPEED = 560, GUN_DMG = 6, AUTO_GUN_RANGE = 190;
-const TOWER_RANGE = 240, TOWER_DMG = 4, TOWER_AMMO_MAX = 30;
+const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1 };
+const GUN_SPEED = 560, AUTO_GUN_RANGE = 190;
+const TOWER_LV = { dmg: [4, 6, 9], range: [240, 270, 300], max: [30, 40, 50], cd: [1, .85, .7] };   // index = tower level - 1
+const TOWER_UPG = [{ scrap: 4, wood: 6 }, { scrap: 8, stone: 8 }];
 const GRID = 28, BUILD_RANGE = 150;     // walls sit on a 28px grid; you can build within 150px of yourself
 const WALLS = {
   wood:  { name: '울타리', hp: 40,  cost: { wood: 2 } },
@@ -255,13 +266,20 @@ const ITEMS = {
   berry:  { name: '열매',   icon: '🍒', food: 1 },
   meat:   { name: '생고기', icon: '🥩', food: 1 },
   cooked: { name: '구운고기', icon: '🍖', food: 1 },
-  ammo:   { name: '탄약',   icon: '🔸' }
+  ammo:   { name: '탄약',   icon: '🔸' },
+  scrap:  { name: '고철',   icon: '🔩' },
+  hide:   { name: '가죽',   icon: '🟫' }
 };
+const RARE = { ammo: 1, scrap: 1, hide: 1 };   // bag slots that stay hidden until you first get one
 const SPECS = {
-  rabbit: { hp: 3,  r: 7,  speed: 55,  flee: 140, drop: { meat: 1 } },
-  boar:   { hp: 10, r: 12, speed: 45,  dmg: 12,   drop: { meat: 3 } },
-  wolf:   { hp: 14, r: 11, speed: 106, drop: { meat: 1 } }
+  rabbit: { hp: 3,   r: 7,  speed: 55,  flee: 140, drop: { meat: 1 } },
+  boar:   { hp: 10,  r: 12, speed: 45,  dmg: 12, rage: 2.2, atkCd: 1.3, wallDmg: 10, drop: { meat: 3, hide: 2 } },
+  wolf:   { hp: 14,  r: 11, speed: 106, drop: { meat: 1, hide: 1 } },
+  zombie: { hp: 24,  r: 11, speed: 46,  dmg: 9,  drop: { scrap: [1, 2] } },                 // night only, slow, ignores fire's fear but burns
+  brute:  { hp: 110, r: 16, speed: 38,  dmg: 22, drop: { scrap: [4, 6], hide: 1 } },        // big zombie from day 4, breaks walls fast
+  bear:   { hp: 55,  r: 15, speed: 50,  dmg: 18, rage: 2.3, atkCd: 1.5, wallDmg: 16, territory: 110, drop: { meat: 5, hide: 3 } }
 };
+const NIGHT_KINDS = { wolf: 1, zombie: 1, brute: 1 };
 const TOOLS = {   // what each equipped tool does: yield per swing, damage, extra reach, swing cooldowns (wood / stone / attack)
   hand:    { name: '맨손',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 },
   axe:     { name: '도끼',   wood: 2, stone: 1, dmg: 2, reach: 0,  cdW: .38, cdS: .6,  cdA: .4 },
@@ -270,6 +288,23 @@ const TOOLS = {   // what each equipped tool does: yield per swing, damage, extr
   gun:     { name: '소총',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 }   // shots are handled by fireGun()
 };
 const TOOL_ORDER = ['hand', 'axe', 'spear', 'pickaxe', 'gun'];
+const TOOL_LV = {   // stats per upgrade level (index = level - 1)
+  axe:     { wood: [2, 3, 4], dmg: [2, 3, 4], cdW: [.38, .32, .26] },
+  spear:   { dmg: [4, 6, 9], reach: [12, 16, 22], cdA: [.5, .45, .4] },
+  pickaxe: { stone: [3, 4, 6], cdS: [.42, .36, .3] },
+  gun:     { dmg: [6, 9, 13], cd: [.55, .45, .36], range: [280, 320, 370] }
+};
+const UPGRADES = {  // cost of the next level (tools: Lv1->2, Lv2->3; armor: none->1->2->3)
+  axe:     [{ scrap: 2, wood: 5 }, { scrap: 5, stone: 6, hide: 2 }],
+  spear:   [{ scrap: 3, wood: 4 }, { scrap: 6, hide: 3 }],
+  pickaxe: [{ scrap: 2, stone: 5 }, { scrap: 5, stone: 8, hide: 1 }],
+  gun:     [{ scrap: 4, wood: 6 }, { scrap: 9, hide: 3, stone: 6 }],
+  armor:   [{ hide: 4, wood: 2 }, { hide: 6, scrap: 4 }, { scrap: 10, hide: 6 }]
+};
+const UP_NAME = { axe: '돌도끼', spear: '나무 창', pickaxe: '곡괭이', gun: '사제 소총' };
+const ARMOR_RED = [0, .15, .3, .45], ARMOR_NAME = ['맨몸', '가죽 옷', '강화 가죽 갑옷', '철판 갑옷'];
+function stat(t){ const s = Object.assign({}, TOOLS[t]), lv = TOOL_LV[t]; if (lv) for (const k in lv) s[k] = lv[k][(P.lv[t] || 1) - 1]; return s; }
+const tw = o => { const l = (o.lv || 1) - 1; return { dmg: TOWER_LV.dmg[l], range: TOWER_LV.range[l], max: TOWER_LV.max[l], cd: TOWER_LV.cd[l] }; };
 const TOOL_SVG = {
   hand: '<svg viewBox="0 0 24 24"><rect x="6.5" y="10" width="11" height="9" rx="3" fill="#f0c9a0"/><circle cx="8.6" cy="9.6" r="2.1" fill="#f0c9a0"/><circle cx="12" cy="8.7" r="2.1" fill="#f0c9a0"/><circle cx="15.4" cy="9.6" r="2.1" fill="#f0c9a0"/><rect x="6.5" y="15" width="11" height="1.6" fill="#d9a878"/></svg>',
   axe: '<svg viewBox="0 0 24 24"><path d="M5 21 L16 7" stroke="#9a7040" stroke-width="2.6" stroke-linecap="round"/><path d="M12.5 3.5 L21 6.5 L19.5 12.5 L14.5 10 Z" fill="#b8bfc4" stroke="#6d757b" stroke-width="1" stroke-linejoin="round"/></svg>',
@@ -399,6 +434,11 @@ function genWorld(){
   scatter(430, 22, tree, (x, y) => { const f = noise(x / 240, y / 240); return Math.random() < (f > .52 ? .95 : f > .4 ? .3 : .04); });
   scatter(95, 26, rock);
   scatter(70, 28, bush);
+  for (let n = 0, tries = 0; n < 7 && tries < 6000; tries++){          // wreckage on the beach: early scrap
+    const x = rand(40, WORLD - 40), y = rand(40, WORLD - 40), ins = inside(x, y);
+    if (ins < 34 || ins > 52 || Math.hypot(x - C, y - C) < 120 || tooClose(x, y, 30)) continue;
+    addObj({ t: 'wreck', x, y, r: 14, amt: 3, v: Math.random(), shake: 0 }); n++;
+  }
 
   // starter supplies around the spawn point
   const starter = (n, make) => { for (let i = 0, k = 0; i < n && k < 200; k++){
@@ -410,11 +450,12 @@ function genWorld(){
   P = newPlayer();
   for (let i = 0; i < 40; i++) spawnCreature('rabbit', 300);
   for (let i = 0; i < 8; i++) spawnCreature('boar', 300);
+  for (let i = 0; i < 3; i++) spawnCreature('bear', 400);
 }
 
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true,
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {},
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -425,7 +466,7 @@ function spawnCreature(kind, minD, maxD){
     if (maxD){ const a = rand(0, TAU), d = rand(minD, maxD); x = P.x + Math.cos(a) * d; y = P.y + Math.sin(a) * d; }
     else { x = rand(60, WORLD - 60); y = rand(60, WORLD - 60); }
     if (inside(x, y) < 70 || Math.hypot(x - P.x, y - P.y) < minD || blocked(x, y, sp.r + 6)) continue;
-    const c = { k: kind, x, y, hp: sp.hp, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6) };
+    const c = { k: kind, x, y, hp: sp.hp, max: sp.hp, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6) };
     creatures.push(c); return c;
   }
   return null;
@@ -500,7 +541,7 @@ $('inv').addEventListener('click', e => { const s = e.target.closest('.slot'); i
 
 /* ================= actions ================= */
 function floater(x, y, text, color){ floaters.push({ x: x + rand(-6, 6), y, text, color: color || '#fff', t: 0 }); }
-function gain(k, n){ P.inv[k] += n; floater(P.x, P.y - 26, '+' + n + ' ' + ITEMS[k].icon); }
+function gain(k, n){ P.inv[k] += n; P.seen[k] = true; floater(P.x, P.y - 26, '+' + n + ' ' + ITEMS[k].icon); }
 
 /* ================= building (fences & walls) ================= */
 function buildMsg(m){ const t = performance.now(); if (m !== lastBuildMsg || t - lastBuildMsgT > 1600){ lastBuildMsg = m; lastBuildMsgT = t; toast(m); } }
@@ -528,7 +569,7 @@ function frontCell(){          // the free cell nearest to the spot in front of 
 const ghostCell = () => cursor || frontCell();
 function addWall(i, j, kind, hp){
   const def = WALLS[kind];
-  return addObj({ t: 'wall', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 15, hp: hp == null ? def.hp : hp, max: def.hp, hit: 0, ammo: kind === 'tower' ? 10 : 0, cd: 0, fire: 0, aim: 0 });
+  return addObj({ t: 'wall', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 15, hp: hp == null ? def.hp : hp, max: def.hp, hit: 0, ammo: kind === 'tower' ? 10 : 0, lv: 1, cd: 0, fire: 0, aim: 0 });
 }
 function tryBuild(i, j){
   if (buildSel === 'erase'){
@@ -617,13 +658,16 @@ function buildEquip(){
   box.hidden = list.length < 2; box.innerHTML = '';
   for (const t of list){
     const b = document.createElement('button'); b.className = 'eq'; b.dataset.t = t; b.setAttribute('aria-label', TOOLS[t].name);
-    b.innerHTML = TOOL_SVG[t] + '<span>' + TOOLS[t].name + '</span>'; box.appendChild(b);
+    b.innerHTML = TOOL_SVG[t] + '<span>' + TOOLS[t].name + '</span><i class="lv"></i>'; box.appendChild(b);
   }
   const a = document.createElement('button'); a.className = 'auto'; a.id = 'autoBtn'; box.appendChild(a);
   syncEquip();
 }
 function syncEquip(){
-  $('equip').querySelectorAll('.eq').forEach(b => b.classList.toggle('on', b.dataset.t === P.equip));
+  $('equip').querySelectorAll('.eq').forEach(b => {
+    b.classList.toggle('on', b.dataset.t === P.equip);
+    const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 3 ? ' l3' : ''); }
+  });
   const a = $('autoBtn'); if (a){ a.classList.toggle('on', P.auto); a.textContent = P.auto ? '자동' : '수동'; }
 }
 function setEquip(t, manual){
@@ -645,7 +689,7 @@ function toggleAuto(){
 }
 
 function findTarget(){
-  const reach = 34 + (P.auto ? Math.max(...ownedTools().map(t => TOOLS[t].reach)) : TOOLS[P.equip].reach);   // auto mode will swap to the longest weapon
+  const reach = 34 + (P.auto ? Math.max(...ownedTools().map(t => stat(t).reach)) : stat(P.equip).reach);   // auto mode will swap to the longest weapon
   let best = null, bs = 1e9;
   for (const c of creatures){
     const d = Math.hypot(c.x - P.x, c.y - P.y) - c.r;
@@ -653,7 +697,7 @@ function findTarget(){
   }
   gridQuery(P.x - 120, P.y - 120, P.x + 120, P.y + 120, o => {
     if (o.t === 'bush' && o.amt <= 0) return;
-    if (o.t === 'wall' && o.hp >= o.max && !(o.kind === 'tower' && o.ammo < TOWER_AMMO_MAX && P.inv.ammo > 0)) return;
+    if (o.t === 'wall' && o.hp >= o.max && !(o.kind === 'tower' && ((o.ammo < tw(o).max && P.inv.ammo > 0) || canTowerUpgrade(o)))) return;
     const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r;
     if (d < (o.t === 'water' ? 22 : 27) && d < bs){ bs = d; best = { kind: 'obj', o }; }
   });
@@ -668,7 +712,8 @@ function labelFor(tg){
     case 'tree': return '베기';
     case 'rock': return '캐기';
     case 'bush': return '따기';
-    case 'wall': return o.kind === 'tower' && P.inv.ammo > 0 && o.ammo < TOWER_AMMO_MAX ? '장전' : '수리';
+    case 'wall': return o.kind === 'tower' && P.inv.ammo > 0 && o.ammo < tw(o).max ? '장전' : o.hp < o.max ? '수리' : '강화';
+    case 'wreck': return '뒤지기';
     case 'water': return '마시기';
     case 'fire': return o.fuel > 0 && P.inv.meat > 0 ? '굽기' : '장작';
     case 'shelter': return isNight() ? '잠자기' : '움막';
@@ -687,18 +732,23 @@ function act(){
   P.swing = .18;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { const eq = TOOLS[P.equip], n = Math.min(o.amt, eq.wood); gain('wood', n); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { const eq = TOOLS[P.equip], n = Math.min(o.amt, eq.stone); gain('stone', n); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'tree': { const eq = stat(P.equip), n = Math.min(o.amt, eq.wood); gain('wood', n); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { const eq = stat(P.equip), n = Math.min(o.amt, eq.stone); gain('stone', n); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
     case 'wall': {
-      if (o.kind === 'tower' && P.inv.ammo > 0 && o.ammo < TOWER_AMMO_MAX){   // reload the tower
-        const n = Math.min(P.inv.ammo, TOWER_AMMO_MAX - o.ammo, 10); P.inv.ammo -= n; o.ammo += n; P.cd = .35;
+      const ts = o.kind === 'tower' ? tw(o) : null;
+      if (ts && P.inv.ammo > 0 && o.ammo < ts.max){                       // reload the tower
+        const n = Math.min(P.inv.ammo, ts.max - o.ammo, 10); P.inv.ammo -= n; o.ammo += n; P.cd = .35;
         floater(o.x, o.y - 36, '장전 +' + n, '#9be3a5'); break;
       }
-      // repair a damaged wall with its own material
-      const k = Object.keys(WALLS[o.kind].cost)[0]; P.cd = .35;
-      if (P.inv[k] < 1){ toast(josa(ITEMS[k].name, '이/가') + ' 필요해요'); break; }
-      P.inv[k]--; o.hp = Math.min(o.max, o.hp + 30); floater(o.x, o.y - 24, '수리 +30', '#9be3a5'); break;
+      if (o.hp < o.max){                                                  // repair with the wall's own material
+        const k = Object.keys(WALLS[o.kind].cost)[0]; P.cd = .35;
+        if (P.inv[k] < 1){ toast(josa(ITEMS[k].name, '이/가') + ' 필요해요'); break; }
+        P.inv[k]--; o.hp = Math.min(o.max, o.hp + 30); floater(o.x, o.y - 24, '수리 +30', '#9be3a5'); break;
+      }
+      if (ts && canTowerUpgrade(o)){ upgradeTower(o); P.cd = .5; }
+      break;
     }
+    case 'wreck': { o.amt--; gain('scrap', 1); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
     case 'bush': { o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
     case 'water': { P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y - 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
     case 'fire':
@@ -714,23 +764,24 @@ function act(){
   }
 }
 
+function rollDrop(v){ return Array.isArray(v) ? v[0] + Math.floor(Math.random() * (v[1] - v[0] + 1)) : v; }
 function hitCreature(c, dmg, kx, ky, byPlayer){
-  c.hp -= dmg; c.hit = .18;
-  const d = Math.hypot(kx, ky) || 1; c.kvx = kx / d * 170; c.kvy = ky / d * 170;
+  const sp = SPECS[c.k]; c.hp -= dmg; c.hit = .18;
+  const d = Math.hypot(kx, ky) || 1, kb = c.k === 'brute' ? .25 : 1; c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
-  if (c.k === 'boar' && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
+  if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
-    if (byPlayer){ const drop = SPECS[c.k].drop; for (const k in drop) gain(k, drop[k]); }
+    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]); if (n > 0) gain(k, n); }
     creatures.splice(creatures.indexOf(c), 1);
   }
 }
 function attack(c){
-  const eq = TOOLS[P.equip]; P.cd = eq.cdA;
+  const eq = stat(P.equip); P.cd = eq.cdA;
   hitCreature(c, eq.dmg, c.x - P.x, c.y - P.y, true);
 }
 
 /* ================= guns, arrows, towers ================= */
-const isHostile = c => c.k === 'wolf' || (c.k === 'boar' && c.state === 'angry');
+const isHostile = c => c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || (SPECS[c.k].rage && c.state === 'angry');
 function nearestHostile(maxD){
   let best = null, bd = maxD;
   for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
@@ -739,7 +790,7 @@ function nearestHostile(maxD){
 function aimTarget(){           // what the rifle would shoot at: hostile animals first, then the nearest animal
   let best = null, bs = 1e9;
   for (const c of creatures){
-    const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > GUN_RANGE) continue;
+    const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > stat('gun').range) continue;
     const sc = d - (isHostile(c) ? 1000 : 0); if (sc < bs){ bs = sc; best = c; }
   }
   return best;
@@ -749,21 +800,27 @@ function fireGun(){
   const t = aimTarget(); let ax = P.fx, ay = P.fy;
   if (t){ const d = Math.hypot(t.x - P.x, t.y - P.y) || 1; ax = (t.x - P.x) / d; ay = (t.y - P.y) / d; }
   P.fx = ax; P.fy = ay; if (Math.abs(ax) > .2) P.flip = ax < 0 ? -1 : 1;
-  P.inv.ammo--; P.cd = .55; P.flash = .1;
-  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: GUN_DMG, life: GUN_RANGE / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
+  const gs = stat('gun'); P.inv.ammo--; P.cd = gs.cd; P.flash = .1;
+  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: gs.dmg, life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
   try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
+}
+const towerUpCost = o => TOWER_UPG[(o.lv || 1) - 1];
+const canTowerUpgrade = o => { const c = towerUpCost(o); return !!c && Object.keys(c).every(k => P.inv[k] >= c[k]); };
+function upgradeTower(o){
+  const c = towerUpCost(o); for (const k in c) P.inv[k] -= c[k];
+  o.lv = (o.lv || 1) + 1; floater(o.x, o.y - 40, '탑 Lv.' + o.lv, '#ffd166'); toast('탑이 Lv.' + o.lv + '로 강화됐어요! 사거리, 화력, 탄약 한도가 늘었어요.');
 }
 function updateTowers(dt){
   for (const w of wallMap.values()){
     if (w.kind !== 'tower') continue;
     w.cd = Math.max(0, w.cd - dt); w.fire = Math.max(0, w.fire - dt);
     if (w.cd > 0 || w.ammo <= 0) continue;
-    let best = null, bd = TOWER_RANGE;
+    const ts = tw(w); let best = null, bd = ts.range;
     for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - w.x, c.y - w.y); if (d < bd){ bd = d; best = c; } }
     if (!best) continue;
     const a = Math.atan2(best.y - w.y, best.x - w.x);
-    bullets.push({ x: w.x, y: w.y, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, dmg: TOWER_DMG, life: TOWER_RANGE / 480 + .2, own: 'tower', kind: 'arrow', hostileOnly: true });
-    w.ammo--; w.cd = 1; w.fire = .12; w.aim = a;
+    bullets.push({ x: w.x, y: w.y, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, dmg: ts.dmg, life: ts.range / 480 + .2, own: 'tower', kind: 'arrow', hostileOnly: true });
+    w.ammo--; w.cd = ts.cd; w.fire = .12; w.aim = a;
     if (w.ammo === 0 && Math.hypot(w.x - P.x, w.y - P.y) < 600) toast('탑의 탄약이 떨어졌어요!');
   }
 }
@@ -773,13 +830,14 @@ function updateBullets(dt){
     let hit = false;
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
-      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player'); hit = true; break; }
+      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400)); hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
   }
 }
 
-function hurt(n){
+function hurt(n, raw){
+  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0])));
   P.hp -= n; hurtT = .45; shakeT = .25;
   floater(P.x, P.y - 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
@@ -793,7 +851,7 @@ function useItem(k){
   P.inv[k]--;
   if (k === 'berry'){ P.hunger = Math.min(100, P.hunger + 12); floater(P.x, P.y - 26, '+12 배고픔', '#f2b84b'); }
   else if (k === 'cooked'){ P.hunger = Math.min(100, P.hunger + 40); P.hp = Math.min(100, P.hp + 10); floater(P.x, P.y - 26, '+40 배고픔', '#f2b84b'); }
-  else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6); }
+  else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6, true); }
 }
 function eatBest(){
   for (const k of ['cooked', 'berry', 'meat']) if (P.inv[k] > 0){ useItem(k); return; }
@@ -807,7 +865,7 @@ function sleep(){
     T = (Math.floor(T / DAY_LEN) + 1) * DAY_LEN + DAY_LEN * .01;
     P.hunger = Math.max(1, P.hunger - 15); P.thirst = Math.max(1, P.thirst - 20);
     P.hp = Math.min(100, P.hp + 25); P.warmth = 100;
-    creatures = creatures.filter(c => c.k !== 'wolf');
+    creatures = creatures.filter(c => !NIGHT_KINDS[c.k]);
   }, 480);
   setTimeout(() => { $('fade').classList.remove('on'); sleeping = false; toast('푹 잤어요. 체력이 회복됐습니다.'); }, 1250);
 }
@@ -853,7 +911,45 @@ function craft(r){
   else if (r.raft){ closeCraft(); setTimeout(() => endGame(true), 700); return; }
   renderCraft();
 }
+let craftTab = 'make';
+const costChips = cost => Object.keys(cost).map(k => `<span class="${P.inv[k] >= cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${cost[k]}</span>`).join('');
+function effectText(t, lv){
+  if (t === 'armor') return ARMOR_NAME[lv] + ' · 받는 피해 -' + Math.round(ARMOR_RED[lv] * 100) + '%';
+  const L = TOOL_LV[t], i = lv - 1;
+  if (t === 'axe') return '나무 ' + L.wood[i] + '개씩 · 공격 ' + L.dmg[i] + ' · 휘두르기 ' + L.cdW[i] + '초';
+  if (t === 'spear') return '공격 ' + L.dmg[i] + ' · 사거리 +' + L.reach[i];
+  if (t === 'pickaxe') return '돌 ' + L.stone[i] + '개씩 · 휘두르기 ' + L.cdS[i] + '초';
+  return '공격 ' + L.dmg[i] + ' · 사거리 ' + L.range[i] + ' · 연사 ' + (1 / L.cd[i]).toFixed(1) + '/초';
+}
+function upgradeItem(t){
+  const isA = t === 'armor', lv = isA ? P.armor : P.lv[t], cost = UPGRADES[t][isA ? lv : lv - 1];
+  if (!cost || !Object.keys(cost).every(k => P.inv[k] >= cost[k])) return;
+  for (const k in cost) P.inv[k] -= cost[k];
+  if (isA) P.armor++; else P.lv[t]++;
+  const nl = isA ? P.armor : P.lv[t];
+  toast(isA ? josa(ARMOR_NAME[nl], '을/를') + ' 입었어요! 받는 피해 -' + Math.round(ARMOR_RED[nl] * 100) + '%' : josa(UP_NAME[t], '이/가') + ' Lv.' + nl + '이 됐어요!');
+  syncEquip(); updateHUD(); renderCraft();
+}
+function renderUpgrades(){
+  const list = $('craftList'); list.innerHTML = '';
+  const rows = ['axe', 'spear', 'pickaxe', 'gun'].filter(t => P.tools[t]).concat(['armor']);
+  rows.forEach(t => {
+    const isA = t === 'armor', lv = isA ? P.armor : P.lv[t], cost = UPGRADES[t][isA ? lv : lv - 1], max = !cost;
+    const title = isA ? (lv === 0 ? '방어구' : ARMOR_NAME[lv]) : UP_NAME[t];
+    const tag = max ? '<span class="lvtag max">MAX</span>' : isA ? (lv === 0 ? '' : `<span class="lvtag">Lv.${lv} → ${lv + 1}</span>`) : `<span class="lvtag">Lv.${lv} → ${lv + 1}</span>`;
+    const desc = max ? '현재: ' + effectText(t, lv) : (isA && lv === 0 ? '입으면 ' : '다음: ') + effectText(t, lv + 1);
+    const can = !max && Object.keys(cost).every(k => P.inv[k] >= cost[k]);
+    const div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>${title}${tag}</b><p>${desc}</p>${max ? '' : `<div class="cost">${costChips(cost)}</div>`}</div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = max ? '최대' : isA && lv === 0 ? '제작' : '강화'; b.disabled = !can;
+    b.addEventListener('click', () => upgradeItem(t)); div.appendChild(b); list.appendChild(div);
+  });
+  if (rows.length === 1){ const p = document.createElement('p'); p.className = 'sub'; p.style.marginTop = '10px'; p.textContent = '도구를 만들면 여기서 강화할 수 있어요. 고철은 좀비와 해안의 난파 잔해에서, 가죽은 늑대·멧돼지·곰에게서 얻어요.'; list.appendChild(p); }
+}
 function renderCraft(){
+  $('tabMake').classList.toggle('on', craftTab === 'make'); $('tabUp').classList.toggle('on', craftTab === 'upgrade');
+  $('craftSub').textContent = craftTab === 'make' ? '재료를 모아 도구와 시설을 만드세요.' : '전리품(고철, 가죽)으로 장비를 강화하세요.';
+  if (craftTab === 'upgrade'){ renderUpgrades(); return; }
   const list = $('craftList'); list.innerHTML = '';
   RECIPES.forEach(r => {
     const why = craftBlock(r), owned = r.tool && P.tools[r.tool];
@@ -892,9 +988,11 @@ function updateHUD(){
   setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT()));
   $('clockHand').style.left = (dayT() * 100).toFixed(1) + '%';
   invEl.querySelectorAll('.slot').forEach(s => {
-    const n = P.inv[s.dataset.k]; setText(s.querySelector('.n'), String(n));
+    const k = s.dataset.k, n = P.inv[k] || 0; setText(s.querySelector('.n'), String(n));
     s.classList.toggle('dim', n === 0);
+    const hide = !!(RARE[k] && n === 0 && !P.seen[k] && !(k === 'ammo' && P.tools.gun)); if (s.hidden !== hide) s.hidden = hide;
   });
+  setText($('armorBadge'), P.armor ? '🛡' + P.armor : '');
   if (buildMode) syncBuildBar();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
@@ -921,19 +1019,32 @@ function updateCreatures(dt){
   for (let i = creatures.length - 1; i >= 0; i--){
     const c = creatures[i], sp = SPECS[c.k];
     const dx = P.x - c.x, dy = P.y - c.y, d = Math.hypot(dx, dy) || 1;
-    c.hit = Math.max(0, c.hit - dt); c.atk = Math.max(0, c.atk - dt); c.timer -= dt;
+    c.hit = Math.max(0, c.hit - dt); c.atk = Math.max(0, c.atk - dt); c.timer -= dt; c.burn = Math.max(0, (c.burn || 0) - dt);
     let sx = 0, sy = 0, spd = 0;
     if (c.k === 'rabbit'){
       if (d < sp.flee){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 2.4; c.hop += dt * 16; }
       else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; if (sx || sy) c.hop += dt * 9; }
-    } else if (c.k === 'boar'){
+    } else if (sp.rage){                    // boar and bear: calm until hurt (a bear also snaps if you trespass)
+      if (c.state !== 'angry' && sp.territory && d < sp.territory){ c.state = 'angry'; c.angry = 8; }
       if (c.state === 'angry'){
-        c.angry -= dt; sx = dx / d; sy = dy / d; spd = sp.speed * 2.2;
-        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(sp.dmg); c.atk = 1.3; } }
-        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, 10); c.atk = 1.3; } }
+        c.angry -= dt; sx = dx / d; sy = dy / d; spd = sp.speed * sp.rage;
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(sp.dmg); c.atk = sp.atkCd; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, sp.wallDmg); c.atk = sp.atkCd; } }
         if (c.angry <= 0 || d > 520) c.state = 'idle';
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
-    } else {
+    } else if (c.k === 'zombie' || c.k === 'brute'){
+      // shamble after the player all night; fire doesn't scare them but burns them, daylight turns them to ash
+      const big = c.k === 'brute';
+      if (!night){ c.hp -= (big ? 4 : 10) * dt; c.burn = .3; }
+      for (const s of structs) if (s.t === 'fire' && s.fuel > 0 && Math.hypot(c.x - s.x, c.y - s.y) < FIRE_SAFE * .8){ c.hp -= (big ? 3 : 6) * dt; c.burn = .3; }
+      if (c.hp <= 0){ creatures.splice(i, 1); continue; }
+      if (d < 700){
+        sx = dx / d; sy = dy / d; spd = sp.speed;
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (1 + (day - 1) * .1))); c.atk = 1.2; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, big ? 22 : 7); c.atk = 1.2; } }
+      } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .5; }
+      c.hop += dt * (spd ? 5 : 0);
+    } else {                                // wolf
       if (!night){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > 650){ creatures.splice(i, 1); continue; } }
       else if (d < 480){
         sx = dx / d; sy = dy / d; spd = sp.speed;
@@ -1014,14 +1125,17 @@ function update(dt){
 
   if (isNight()){
     wolfTimer -= dt;
-    const want = Math.min(7, 1 + day);
-    if (wolfTimer <= 0 && creatures.filter(c => c.k === 'wolf').length < want){ spawnCreature('wolf', 420, 560); wolfTimer = 2.5; }
+    if (wolfTimer <= 0){
+      const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
+      const want = { wolf: Math.min(7, 1 + day), zombie: day >= 2 ? Math.min(8, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(3, Math.floor((day - 2) / 2)) : 0 };
+      for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){ spawnCreature(k, 420, 560); wolfTimer = 2.2; break; }
+    }
   }
   respawnTimer -= dt;
   if (respawnTimer <= 0){
     respawnTimer = 5;
-    let r = 0, b = 0; for (const c of creatures){ if (c.k === 'rabbit') r++; else if (c.k === 'boar') b++; }
-    if (r < 36) spawnCreature('rabbit', 560); if (b < 7) spawnCreature('boar', 560);
+    let r = 0, b = 0, br = 0; for (const c of creatures){ if (c.k === 'rabbit') r++; else if (c.k === 'boar') b++; else if (c.k === 'bear') br++; }
+    if (r < 36) spawnCreature('rabbit', 560); if (b < 7) spawnCreature('boar', 560); if (br < 3) spawnCreature('bear', 560);
   }
 
   for (let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.t += dt; f.y -= 24 * dt; if (f.t > 1) floaters.splice(i, 1); }
@@ -1040,8 +1154,8 @@ function save(){
   if (!running || !P) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, built: P.built },
-      objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0), o.kind || 0, Math.round(o.hp || 0), Math.round(o.ammo || 0)])
+      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, built: P.built },
+      objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0), o.kind || 0, Math.round(o.hp || 0), Math.round(o.ammo || 0), o.lv || 1])
     }));
   } catch (_) {}
 }
@@ -1051,18 +1165,20 @@ function loadGame(s){
   objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0;
   for (const a of s.objs){
     const o = { t: a[0], x: a[1], y: a[2], r: a[3], v: a[5] };
-    if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush') o.amt = a[4];
+    if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush' || o.t === 'wreck') o.amt = a[4];
     if (o.t === 'tree' || o.t === 'rock') o.shake = 0;
     if (o.t === 'bush') o.regrow = a[7];
     if (o.t === 'fire') o.fuel = a[6];
-    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.ammo = a[10] || 0; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
+    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.ammo = a[10] || 0; o.lv = a[11] || 1; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
     addObj(o);
   }
   P = Object.assign(newPlayer(), s.p); T = s.T;
-  P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack ammo / gun
+  P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
+  P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
   if (!hasTool(P.equip)) P.equip = 'hand';
   for (let i = 0; i < 36; i++) spawnCreature('rabbit', 300);
   for (let i = 0; i < 7; i++) spawnCreature('boar', 300);
+  for (let i = 0; i < 3; i++) spawnCreature('bear', 400);
 }
 
 /* ================= game flow ================= */
@@ -1110,6 +1226,8 @@ $('btnContinue').addEventListener('click', continueGame);
 $('btnAgain').addEventListener('click', newGame);
 $('btnHome').addEventListener('click', toTitle);
 $('craftClose').addEventListener('click', closeCraft);
+$('tabMake').addEventListener('click', () => { craftTab = 'make'; renderCraft(); });
+$('tabUp').addEventListener('click', () => { craftTab = 'upgrade'; renderCraft(); });
 $('craft').addEventListener('click', e => { if (e.target === $('craft')) closeCraft(); });
 $('menu').addEventListener('click', e => { if (e.target === $('menu')) closeMenu(); });
 $('menuResume').addEventListener('click', closeMenu);
@@ -1212,7 +1330,8 @@ function drawWall(o, alpha){
     ctx.strokeStyle = '#2a2d30'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y - 26); ctx.lineTo(x + ax * 15, y - 26 + ay * 15); ctx.stroke();
     if (o.fire > 0) circ(x + ax * 17, y - 26 + ay * 17, 4, 'rgba(255,230,140,.9)');
     ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(x - 12, y + 9, 24, 3);
-    ctx.fillStyle = o.ammo > 0 ? '#7fd0ff' : '#ec5a4d'; ctx.fillRect(x - 12, y + 9, 24 * Math.min(1, (o.ammo || 0) / TOWER_AMMO_MAX), 3);
+    ctx.fillStyle = o.ammo > 0 ? '#7fd0ff' : '#ec5a4d'; ctx.fillRect(x - 12, y + 9, 24 * Math.min(1, (o.ammo || 0) / tw(o).max), 3);
+    for (let i = 1; i < (o.lv || 1); i++) circ(x - 11 + i * 7, y - 12, 2.4, '#ffd166');
     if (!alpha && !(o.ammo > 0)){ circ(x, y - 56, 6.5, '#ec5a4d'); ctx.fillStyle = '#fff'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', x, y - 52.5); }
   } else if (o.kind === 'stone'){
     ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(x - 14, y + 4, 28, 7);
@@ -1283,6 +1402,16 @@ function drawGhost(){
   ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.strokeRect(x - GRID / 2, y - GRID / 2, GRID, GRID); ctx.setLineDash([]);
   if (piece) drawWall({ kind: buildSel, x, y, i: g.i, j: g.j, hp: 1, max: 1, hit: 0 }, .65);
 }
+function drawWreck(o){
+  const x = o.x, y = o.y, k = .7 + .3 * o.amt / 3, sh = o.shake > 0 ? Math.sin(o.shake * 70) * 1.5 : 0;
+  ell(x, y + 4, 18, 6, 'rgba(0,0,0,.22)');
+  ctx.save(); ctx.translate(x + sh, y); ctx.scale(k, k);
+  ctx.fillStyle = '#6b4a2a'; ctx.fillRect(-14, -6, 24, 8); ctx.fillStyle = '#85603a'; ctx.fillRect(-12, -12, 20, 7);
+  ctx.strokeStyle = '#4a3320'; ctx.lineWidth = 1.4; ctx.strokeRect(-14, -6, 24, 8); ctx.strokeRect(-12, -12, 20, 7);
+  ctx.fillStyle = '#3d4348'; ctx.fillRect(-4, -19, 3, 15); ctx.fillStyle = '#9aa3ab'; ctx.fillRect(4, -9, 9, 4); circ(8, -7, 1.3, '#555');
+  ctx.fillStyle = '#b5472f'; ctx.fillRect(-14, -3, 4, 3);
+  ctx.restore();
+}
 function drawCreature(c){
   const flash = c.hit > 0, hop = Math.abs(Math.sin(c.hop)) * (c.k === 'rabbit' ? 4 : 1.2);
   ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.fx, 1);
@@ -1295,15 +1424,39 @@ function drawCreature(c){
     ctx.fillStyle = '#f2ead5'; ctx.fillRect(17, -6, 4, 2); circ(15, -11, 1.4, '#111');
     ctx.fillStyle = '#4a2f1f'; ctx.fillRect(-9, -2, 3, 6); ctx.fillRect(5, -2, 3, 6);
     ctx.fillStyle = '#3d2618'; ctx.beginPath(); ctx.moveTo(-8, -15); ctx.lineTo(-2, -20); ctx.lineTo(5, -15); ctx.closePath(); ctx.fill();
-  } else {
+  } else if (c.k === 'wolf'){
     const run = Math.sin(c.hop) * 2; c.hop += .22;
     ell(0, -9, 15, 7, flash ? '#fff' : '#737a84'); circ(14, -11, 6.5, flash ? '#fff' : '#808792');
     ctx.fillStyle = '#6a717a'; ctx.beginPath(); ctx.moveTo(11, -16); ctx.lineTo(13, -22); ctx.lineTo(16, -16); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#737a84'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-14, -10); ctx.quadraticCurveTo(-22, -12 + run, -24, -6); ctx.stroke();
     ctx.fillStyle = '#5d646c'; ctx.fillRect(-8, -4, 3, 6 + run * .3); ctx.fillRect(6, -4, 3, 6 - run * .3);
     circ(17, -12, 1.6, '#ff3b30'); ctx.fillStyle = '#eee'; ctx.fillRect(18, -8, 2, 2);
+  } else if (c.k === 'zombie' || c.k === 'brute'){
+    const big = c.k === 'brute', k = big ? 1.55 : 1, sw = Math.sin(c.hop) * 1.8;
+    ctx.scale(k, k);
+    const skin = flash ? '#fff' : big ? '#8a7aa8' : '#8fb27a', shirt = flash ? '#fff' : big ? '#4a3d5e' : '#5b6b8a';
+    ctx.fillStyle = '#33363f'; ctx.fillRect(-5 + sw, -8, 4.5, 9); ctx.fillRect(1 - sw, -8, 4.5, 9);
+    ctx.fillStyle = shirt; ctx.fillRect(-7, -21, 14, 14);
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(-7, -12, 14, 2); ctx.fillRect(-2, -19, 3, 3);
+    ctx.fillStyle = skin; ctx.fillRect(5, -20 + sw * .3, 11, 4); ctx.fillRect(5, -14 - sw * .3, 11, 4);
+    circ(0, -26, 7, skin); ctx.fillStyle = 'rgba(40,30,20,.6)'; ctx.fillRect(-7, -32, 14, 3);
+    circ(3.5, -27, 1.6, '#e33'); circ(-1, -27, 1.6, '#e33'); ctx.fillStyle = '#2a1a1a'; ctx.fillRect(1, -22.5, 5, 1.6);
+  } else if (c.k === 'bear'){
+    ell(0, -11, 21, 13, flash ? '#fff' : '#5a3a24'); circ(18, -12, 9, flash ? '#fff' : '#6a4529');
+    circ(15, -20, 3.4, '#4a2f1d'); circ(22, -19, 3.2, '#4a2f1d'); ell(25, -9, 4.5, 3.5, '#a98462'); circ(26, -10.5, 1.4, '#111');
+    circ(20, -14, c.state === 'angry' ? 2.1 : 1.5, c.state === 'angry' ? '#f33' : '#111');
+    ctx.fillStyle = '#4a2f1d'; ctx.fillRect(-13, -4, 6, 8); ctx.fillRect(7, -4, 6, 8);
   }
   ctx.restore();
+  if (c.max > 10 && c.hp < c.max){
+    const w = 22, hk = Math.max(0, c.hp / c.max), by = c.y - c.r - 30;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(c.x - w / 2, by, w, 4);
+    ctx.fillStyle = hk > .5 ? '#8fd16a' : hk > .25 ? '#f2b84b' : '#ec5a4d'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 2);
+  }
+  if (c.burn > 0) for (let i = 0; i < 3; i++){
+    const fx = c.x + (i - 1) * 6, fy = c.y - 18 - Math.abs(Math.sin(anim * 12 + i)) * 8;
+    ctx.fillStyle = i === 1 ? '#ffc247' : '#ff6a1f'; ctx.beginPath(); ctx.ellipse(fx, fy, 3, 5, 0, 0, TAU); ctx.fill();
+  }
 }
 function drawPlayer(){
   const x = P.x, y = P.y, run = P.moving ? Math.sin(P.step) : 0;
@@ -1312,6 +1465,12 @@ function drawPlayer(){
   ctx.fillStyle = '#2f3555'; ctx.fillRect(-6 + run * 2, -8, 5, 10 + run); ctx.fillRect(1 - run * 2, -8, 5, 10 - run);
   ctx.fillStyle = '#d65a3a'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -22, 18, 17, 5) : ctx.rect(-9, -22, 18, 17); ctx.fill();
   ctx.fillStyle = '#b8472c'; ctx.fillRect(-9, -9, 18, 3);
+  if (P.armor){
+    ctx.fillStyle = ['', '#8a5a2b', '#6e4a23', '#9aa3ab'][P.armor]; ctx.fillRect(-9, -22, 18, 11);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-9, -13, 18, 2);
+    if (P.armor >= 2){ circ(-5, -18, 1.2, '#d8dde0'); circ(5, -18, 1.2, '#d8dde0'); }
+    if (P.armor >= 3){ ctx.fillStyle = '#c4cbd0'; ctx.fillRect(-12, -22, 5, 4); ctx.fillRect(7, -22, 5, 4); }
+  }
   circ(0, -28, 8, '#f0c9a0'); ctx.fillStyle = '#3a2a1e'; ctx.beginPath(); ctx.arc(0, -30, 8.2, Math.PI, TAU); ctx.fill(); circ(3.5, -27.5, 1.2, '#222');
   // held tool
   const tool = (P.equip === 'hand' || P.equip === 'gun') ? null : P.equip;
@@ -1387,7 +1546,7 @@ function render(){
   for (const d of draws){
     if (d.p){ drawPlayer(); continue; }
     if (d.c){ drawCreature(d.c); continue; }
-    switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; }
+    switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; }
   }
   if (buildMode && running) drawGhost();
   if (running && aim && !buildMode && P.equip === 'gun') drawAim();
@@ -1441,7 +1600,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b) => spawnCreature(k, a, b), hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, walls: () => [...wallMap.values()], bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b) => spawnCreature(k, a, b), hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, walls: () => [...wallMap.values()], hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; } };
 })();
 </script>
 </body>

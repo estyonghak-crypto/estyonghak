@@ -177,7 +177,17 @@ body.building #equip{display:none}
 #fxClouds{position:fixed;left:0;top:0;pointer-events:none;z-index:2;will-change:transform;opacity:0;background-repeat:repeat}
 #fxHaze{position:fixed;left:0;right:0;top:0;height:42%;pointer-events:none;z-index:2;background:linear-gradient(rgba(200,225,245,.17),rgba(200,225,245,0));opacity:1}
 #fxTint{position:fixed;inset:0;pointer-events:none;z-index:2;background:rgb(255,150,70);opacity:0}
-#fxVig{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at 50% 50%,rgba(2,8,6,0) 58%,rgba(2,8,6,.5) 100%)}
+#fxVig{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at 50% 50%,rgba(2,8,6,0) 52%,rgba(2,8,6,.62) 100%)}
+#fxWet{position:fixed;inset:0;pointer-events:none;z-index:2;background:#0a1318;opacity:0}
+#fxGrade{position:fixed;inset:0;pointer-events:none;z-index:2;background:#7d8272;mix-blend-mode:saturation;opacity:.5}
+#fxGrain{position:fixed;inset:-64px;pointer-events:none;z-index:3;opacity:.13;mix-blend-mode:overlay;background-repeat:repeat;animation:grain .8s steps(1) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-23px,17px)}40%{transform:translate(19px,-31px)}60%{transform:translate(-37px,-11px)}80%{transform:translate(27px,29px)}}
+#fxRain1,#fxRain2{position:fixed;left:0;top:0;pointer-events:none;z-index:3;opacity:0;background-repeat:repeat;will-change:transform;transition:opacity .8s}
+#fxRain1{animation:rainA .42s linear infinite}
+#fxRain2{animation:rainB .58s linear infinite}
+@keyframes rainA{from{transform:translate3d(0,-256px,0)}to{transform:translate3d(0,0,0)}}
+@keyframes rainB{from{transform:translate3d(0,-384px,0)}to{transform:translate3d(0,0,0)}}
+body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 #hurt{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;box-shadow:inset 0 0 110px 26px rgba(236,90,77,.85)}
 #fxSnow1,#fxSnow2{position:fixed;left:0;top:0;pointer-events:none;z-index:3;opacity:0;background-repeat:repeat;will-change:transform;transition:opacity .6s}
 #fxSnow1{animation:snowA 7s linear infinite}
@@ -197,12 +207,12 @@ body.building #equip{display:none}
 .vbar i{display:block;height:100%;width:0;background:#fff;border-radius:4px}
 #voyage.on .vbar i{animation:vfill 2.6s linear forwards}
 @keyframes vfill{to{width:100%}}
-@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast,.eq.pop,#vboat,#voyage .wv,#fxSnow1,#fxSnow2{animation:none}}
+@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast,.eq.pop,#vboat,#voyage .wv,#fxSnow1,#fxSnow2,#fxRain1,#fxRain2,#fxGrain{animation:none}}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div id="fxClouds"></div><div id="fxSnow1"></div><div id="fxSnow2"></div><div id="fxHaze"></div><div id="fxTint"></div><div id="fxVig"></div>
+<div id="fxClouds"></div><div id="fxSnow1"></div><div id="fxSnow2"></div><div id="fxRain1"></div><div id="fxRain2"></div><div id="fxHaze"></div><div id="fxTint"></div><div id="fxWet"></div><div id="fxGrade"></div><div id="fxGrain"></div><div id="fxVig"></div>
 <div id="hurt"></div>
 <div id="joy"><div id="joyKnob"></div></div>
 
@@ -312,16 +322,16 @@ const CELL = 128; let GN = Math.ceil(WORLD / CELL);
 const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
 const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1, ore: 1, furnace: 1, boat: 1, mine: 1, exit: 1 };
 /* ---- zones: each one is its own map (an island, or the mine below one) with its own look and rules ---- */
-const LAKE_PAL = { rim: ['#d6c690', '#b7a874'], foam: '#e9f6fa', water: '#78cbe0', deep: '#4faad2', core: '#2f86b8' };
+const LAKE_PAL = { rim: ['#b3a47e', '#8e8160'], foam: '#c9dadb', water: '#6aa3b0', deep: '#4a8294', core: '#33687c' };
 const ZONES = {
-  home: { id: 'home', name: '무인도', world: 2400, margin: 24, rad: 230, ground: 'grass', bg: '#2f86ad', shallow: ['#4aa7cc', '#7cc4de'], shore: '#dcc790',
-    cliff: ['#4d3a28', '#624a30', '#785c3a', '#8f7248', '#a58a58'], lake: LAKE_PAL, cap: { rabbit: 36, boar: 7, bear: 3 }, fauna: { rabbit: 40, boar: 8, bear: 3 } },
-  mine: { id: 'mine', name: '광산섬', world: 2000, margin: 24, rad: 200, ground: 'rock', bg: '#2a7898', shallow: ['#3f94b8', '#6cb4d0'], shore: '#b4aa9a',
-    cliff: ['#34322e', '#46423c', '#58534a', '#6e685c', '#857e6e'], lake: LAKE_PAL, cap: { rabbit: 10, bear: 2 }, fauna: { rabbit: 12, bear: 2 } },
+  home: { id: 'home', name: '무인도', world: 2400, margin: 24, rad: 230, ground: 'grass', bg: '#2b7089', shallow: ['#3d869c', '#69aabb'], shore: '#b9a97f',
+    cliff: ['#43362a', '#54442f', '#695539', '#7f6a45', '#957f55'], lake: LAKE_PAL, cap: { rabbit: 36, boar: 7, bear: 3 }, fauna: { rabbit: 40, boar: 8, bear: 3 } },
+  mine: { id: 'mine', name: '광산섬', world: 2000, margin: 24, rad: 200, ground: 'rock', bg: '#276279', shallow: ['#397f96', '#639eb0'], shore: '#9d968a',
+    cliff: ['#2f2d2a', '#3f3c37', '#504c44', '#635e53', '#777062'], lake: LAKE_PAL, cap: { rabbit: 10, bear: 2 }, fauna: { rabbit: 12, bear: 2 } },
   cave: { id: 'cave', name: '광산 갱도', world: 1700, margin: 20, rad: 250, ground: 'cave', bg: '#050608', cave: true, chill: .4, eliteBonus: .08, shallow: ['#16181c', '#1f2227'], shore: '#2a2d33',
     cliff: ['#0e0f12', '#14161a', '#1a1c21', '#202328', '#272a30'], lake: { rim: ['#3b3e45', '#2b2e34'], foam: '#6f8494', water: '#2f6c86', deep: '#20516b', core: '#163a4d' }, cap: { bat: 10, golem: 6 }, fauna: { bat: 10, golem: 6 } },
-  snow: { id: 'snow', name: '설원섬', world: 2200, margin: 24, rad: 220, ground: 'snow', bg: '#4590b4', shallow: ['#68aecf', '#a6d3e6'], shore: '#e4ecf0', chill: .3, dayWolves: true, eliteBonus: .08,
-    cliff: ['#4e5862', '#626c76', '#79838d', '#939da7', '#aeb7c0'], lake: { rim: ['#e6eff3', '#c3d8e2'], foam: '#f4fafc', water: '#bfe3f2', deep: '#8fc7e2', core: '#6aaed6' }, cap: { rabbit: 14, bear: 4 }, fauna: { rabbit: 16, bear: 4 } }
+  snow: { id: 'snow', name: '설원섬', world: 2200, margin: 24, rad: 220, ground: 'snow', bg: '#3c7a98', shallow: ['#5f9bb8', '#9ac4d6'], shore: '#d3dbe0', chill: .3, dayWolves: true, eliteBonus: .08,
+    cliff: ['#4e5862', '#626c76', '#79838d', '#939da7', '#aeb7c0'], lake: { rim: ['#d8e3e8', '#b3c8d2'], foam: '#e8f1f4', water: '#aed3e2', deep: '#82b2cb', core: '#609bbf' }, cap: { rabbit: 14, bear: 4 }, fauna: { rabbit: 16, bear: 4 } }
 };
 const zoneSave = {}, zoneLeft = {};    // zone id -> its objects (packed away while you are elsewhere) / the game time you left it
 let Z = ZONES.home;
@@ -495,9 +505,9 @@ let objs = [], grid = [], structs = [], creatures = [], floaters = [];
 let P = null, T = 0;
 let running = false, paused = false, sleeping = false, anim = 0;
 let target = null, actHeld = false;
-const bullets = [], parts = [], pickups = []; let aim = null, towerTip = false, dustT = 0;
+const bullets = [], parts = [], pickups = [], decals = []; let aim = null, towerTip = false, dustT = 0;
 let hurtT = 0, shakeT = 0, lastDay = 1, lastPhase = '', lastLabel = '';
-let bossTimer = 4, lastChillT = -99, wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
+let lightAng = 0, rainOn = false, rainZone = '', bossTimer = 4, lastChillT = -99, wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
 const keys = {};
 const joy = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 
@@ -544,7 +554,7 @@ function collide(e, r){
 }
 
 function setZone(id){ Z = ZONES[id]; WORLD = Z.world; ISL_M = Z.margin; ISL_R = Z.rad; GN = Math.ceil(WORLD / CELL); }
-function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; }
+function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; }
 function spawnFauna(){          // the animals a zone starts with (they are not saved; a zone repopulates when you arrive)
   for (const k in Z.fauna) for (let i = 0; i < Z.fauna[k]; i++) spawnCreature(k, 300, undefined, false);
 }
@@ -1175,6 +1185,7 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
   const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1) * (c.boss ? .15 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
   fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : c.k === 'golem' ? '170,172,180' : '196,44,44');
+  bloodAt(c.x, c.y, c.k, c.hp <= 0);
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1); if (n > 0) gain(k, n); }
@@ -1245,9 +1256,17 @@ function updateBullets(dt){
   }
 }
 
+const BLOOD_COL = { zombie: '58,84,40', brute: '58,84,40', zombielord: '58,84,40', golem: '' };
+function bloodAt(x, y, kind, big){         // stains stay on the ground for a while (they fade out); not saved
+  const col = kind in BLOOD_COL ? BLOOD_COL[kind] : '118,20,22'; if (!col) return;
+  for (let i = 0; i < (big ? 4 : 1); i++){
+    if (decals.length > 150) decals.shift();
+    decals.push({ x: x + rand(-14, 14) * (big ? 1 : .5), y: y + rand(-6, 8), r: big ? rand(6, 13) : rand(3, 6), rot: rand(0, TAU), col, a: big ? .62 : .5, life: big ? 70 : 45 });
+  }
+}
 function hurt(n, raw){
   if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0])));
-  P.hp -= n; hurtT = .45; shakeT = .25;
+  P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false);
   floater(P.x, P.y - 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
   if (P.hp <= 0) endGame(false);
@@ -1716,6 +1735,8 @@ function update(dt){
   aim = P.equip === 'gun' ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
   updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
+  const da = Math.atan2(P.fy * TILT, P.fx) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
 
   if (isNight() && !Z.cave){
     wolfTimer -= dt;
@@ -1741,6 +1762,7 @@ function update(dt){
     if (Z.dayWolves && !isNight() && (have.wolf || 0) < 3) spawnCreature('wolf', offD(), offD() + 150);       // snow island: wolves hunt by day too
   }
 
+  { const rw = rainAmt(), on = rw > .5; if (rainZone !== Z.id){ rainZone = Z.id; rainOn = on; } else if (on !== rainOn){ rainOn = on; toast(on ? '비가 내리기 시작했어요' : '비가 그쳤어요'); } }
   for (let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.t += dt; f.y -= 24 * dt; if (f.t > 1) floaters.splice(i, 1); }
   hurtT = Math.max(0, hurtT - dt); shakeT = Math.max(0, shakeT - dt);
 
@@ -1843,19 +1865,30 @@ const SS = 2;                          // resolution multiplier of the cached sp
 const frac = v => v - Math.floor(v);
 function makeGrassTile(){
   const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(7);
-  g.fillStyle = '#4e9a47'; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = '#58733d'; g.fillRect(0, 0, 256, 256);
   const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
   for (let i = 0; i < 30; i++){
     const x = r() * 256, y = r() * 256, rx = 22 + r() * 30, ry = rx * (.6 + r() * .4), light = r() < .5;
-    g.fillStyle = light ? 'rgba(118,182,76,.25)' : 'rgba(52,114,56,.28)';
+    g.fillStyle = light ? 'rgba(150,172,92,.24)' : 'rgba(36,56,30,.3)';
     wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); });
+  }
+  for (let i = 0; i < 10; i++){                          // bare dirt showing through
+    const x = r() * 256, y = r() * 256, rx = 12 + r() * 22, ry = rx * (.5 + r() * .4); g.fillStyle = 'rgba(112,92,62,.26)';
+    wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, r() * 3, 0, TAU); g.fill(); });
   }
   g.lineCap = 'round';
   for (let i = 0; i < 170; i++){
-    const x = r() * 256, y = r() * 256, s = 2 + r() * 3; g.strokeStyle = r() < .5 ? 'rgba(36,96,44,.55)' : 'rgba(140,204,92,.5)'; g.lineWidth = 1.2;
+    const x = r() * 256, y = r() * 256, s = 2 + r() * 3; g.strokeStyle = r() < .55 ? 'rgba(30,50,30,.55)' : 'rgba(150,168,98,.45)'; g.lineWidth = 1.2;
     wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox - 2, y + oy); g.lineTo(x + ox - 3, y + oy - s); g.moveTo(x + ox, y + oy); g.lineTo(x + ox, y + oy - s - 1); g.moveTo(x + ox + 2, y + oy); g.lineTo(x + ox + 3, y + oy - s); g.stroke(); });
   }
-  for (let i = 0; i < 14; i++){ g.fillStyle = r() < .5 ? '#f4efe0' : '#f2d36b'; const x = r() * 256, y = r() * 256; g.beginPath(); g.arc(x, y, 1.6, 0, TAU); g.fill(); }
+  for (let i = 0; i < 26; i++){                          // dead leaves, twigs and pebbles
+    const x = r() * 256, y = r() * 256, a = r() * 3, k = r();
+    wrap((ox, oy) => {
+      if (k < .5){ g.fillStyle = k < .25 ? 'rgba(138,116,72,.75)' : 'rgba(110,91,59,.75)'; g.beginPath(); g.ellipse(x + ox, y + oy, 2.6, 1.3, a, 0, TAU); g.fill(); }
+      else if (k < .8){ g.strokeStyle = 'rgba(86,66,44,.7)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * 6, y + oy + Math.sin(a) * 3); g.stroke(); }
+      else { g.fillStyle = 'rgba(150,152,142,.8)'; g.beginPath(); g.arc(x + ox, y + oy, 1.3, 0, TAU); g.fill(); }
+    });
+  }
   return c;
 }
 function paintSoft(g, size, count, rmin, rmax, seed, cols){      // seamless soft blobs painted onto an existing context (hills, cloud shadows)
@@ -1924,6 +1957,20 @@ function makeSnowTile(size, count, seed, rmin, rmax, alpha){
   }
   return c;
 }
+function makeRainTile(size, count, seed, len, alpha){
+  const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'), r = mulberry32(seed);
+  g.strokeStyle = 'rgba(205,224,238,' + alpha + ')'; g.lineWidth = 1.1; g.lineCap = 'round';
+  for (let i = 0; i < count; i++){
+    const x = r() * size, y = r() * size, l = len * (.7 + r() * .6);
+    for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]){ g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox - l * .22, y + oy + l); g.stroke(); }
+  }
+  return c;
+}
+function makeGrainTile(){
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), im = g.createImageData(128, 128), d = im.data;
+  for (let i = 0; i < d.length; i += 4){ const v = 128 + (Math.random() - .5) * 150; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+  g.putImageData(im, 0, 0); return c;
+}
 function makeCloudTile(){
   const c = document.createElement('canvas'); c.width = c.height = 512; paintSoft(c.getContext('2d'), 512, 9, 70, 140, 23, [['rgba(10,28,40,.2)', 'rgba(10,28,40,0)']]);
   return c;
@@ -1949,7 +1996,7 @@ function mkSprite(w, h, ax, ay, hgt, draw){
   const c = document.createElement('canvas'); c.width = w * SS; c.height = h * SS; const g = c.getContext('2d'); g.scale(SS, SS); draw(g);
   return { cv: c, w, h, ax, ay, hgt };
 }
-const TREE_PAL = [['#17482a', '#2b6f3a', '#4fa75c', '#a6e58f'], ['#26501f', '#3f7a30', '#6fae45', '#c0e47a'], ['#14463f', '#2a7360', '#4fae8c', '#9ae6c4']];
+const TREE_PAL = [['#1b3a26', '#2f5a37', '#58824e', '#9fbd7a'], ['#2a3f1f', '#46662f', '#6f8e45', '#b4c47a'], ['#17393a', '#2a5a52', '#4f8a74', '#92bba0']];
 const treeCache = [], rockCache = [], bushCache = [], snowTreeCache = [];
 function shade(g, w, h, y0, y1, a){ g.globalCompositeOperation = 'source-atop'; const sh = g.createLinearGradient(0, y0, 0, y1); sh.addColorStop(0, 'rgba(0,10,4,0)'); sh.addColorStop(1, 'rgba(0,10,4,' + a + ')'); g.fillStyle = sh; g.fillRect(0, 0, w, h); g.globalCompositeOperation = 'source-over'; }
 function buildTree(i){
@@ -1996,7 +2043,7 @@ function buildRock(i){
   });
 }
 function buildBush(i){
-  const rnd = mulberry32(700 + i), pal = ['#2d6b38', '#418a47', '#74c06a', '#b6e892'];
+  const rnd = mulberry32(700 + i), pal = ['#28502f', '#3b6c3c', '#68935a', '#a3c286'];
   return mkSprite(64, 44, 32, 36, 24, g => {
     const bx = 32, by = 36, blobs = [[-12, -8, 10], [12, -8, 10], [0, -11, 12], [-5, -3, 9], [6, -2, 9], [0, -19, 8]];
     for (const [dx, dy, rad] of blobs){
@@ -2438,6 +2485,15 @@ function drawBossTelegraphs(draws){     // red warnings on the ground before a b
     }
   }
 }
+function drawDecals(vx0, vy0, vx1, vy1){
+  for (const d of decals){
+    if (d.x < vx0 - 30 || d.x > vx1 + 30 || d.y < vy0 - 30 || d.y > vy1 + 30) continue;
+    const a = Math.min(1, d.life / 12) * d.a; if (a < .02) continue;
+    ctx.fillStyle = 'rgba(' + d.col + ',' + a.toFixed(2) + ')';
+    ctx.beginPath(); ctx.ellipse(d.x, d.y, d.r, d.r * .62, d.rot, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(d.x + d.r * .6, d.y - d.r * .1, d.r * .45, d.r * .3, d.rot + 1, 0, TAU); ctx.fill();
+  }
+}
 function drawBuffRings(){
   if (!running) return;
   for (const [k, col, r] of [['swift', '110,200,255', 26], ['power', '255,150,70', 32]]){
@@ -2487,10 +2543,11 @@ function drawCreature(c){
   } else if (c.k === 'zombie' || c.k === 'brute'){
     const big = c.k === 'brute', k = big ? 1.55 : 1, sw = Math.sin(c.hop) * 1.8;
     ctx.scale(k, k);
-    const skin = flash ? '#fff' : big ? '#8a7aa8' : '#8fb27a', shirt = flash ? '#fff' : big ? '#4a3d5e' : '#5b6b8a';
+    const skin = flash ? '#fff' : big ? '#847f92' : '#8d9c80', shirt = flash ? '#fff' : big ? '#3c3548' : '#4b505a';
     ctx.fillStyle = '#33363f'; ctx.fillRect(-5 + sw, -8, 4.5, 9); ctx.fillRect(1 - sw, -8, 4.5, 9);
     ctx.fillStyle = shirt; ctx.fillRect(-7, -21, 14, 14);
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(-7, -12, 14, 2); ctx.fillRect(-2, -19, 3, 3);
+    if (!flash){ ctx.fillStyle = 'rgba(122,22,22,.6)'; ctx.fillRect(-5, -18, 3, 6); ctx.fillRect(1, -14, 4, 3); ctx.fillRect(-7, -9, 5, 2); }
     ctx.fillStyle = skin; ctx.fillRect(5, -20 + sw * .3, 11, 4); ctx.fillRect(5, -14 - sw * .3, 11, 4);
     circ(0, -26, 7, skin); ctx.fillStyle = 'rgba(40,30,20,.6)'; ctx.fillRect(-7, -32, 14, 3);
     circ(3.5, -27, 1.6, '#e33'); circ(-1, -27, 1.6, '#e33'); ctx.fillStyle = '#2a1a1a'; ctx.fillRect(1, -22.5, 5, 1.6);
@@ -2568,8 +2625,8 @@ function drawPlayer(){
   ell(x, y + 3, 15, 6, 'rgba(0,0,0,.26)');
   ctx.save(); ctx.translate(x, y); ctx.scale(P.flip * 1.25, 1.25);
   ctx.fillStyle = '#2f3555'; ctx.fillRect(-6 + run * 2, -8, 5, 10 + run); ctx.fillRect(1 - run * 2, -8, 5, 10 - run);
-  ctx.fillStyle = '#d65a3a'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -22, 18, 17, 5) : ctx.rect(-9, -22, 18, 17); ctx.fill();
-  ctx.fillStyle = '#b8472c'; ctx.fillRect(-9, -9, 18, 3);
+  ctx.fillStyle = '#9a5238'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -22, 18, 17, 5) : ctx.rect(-9, -22, 18, 17); ctx.fill();
+  ctx.fillStyle = '#6f3a28'; ctx.fillRect(-9, -9, 18, 3);
   if (P.armor){
     ctx.fillStyle = ['', '#8a5a2b', '#6e4a23', '#9aa3ab', '#b48cff', '#e8c15a'][P.armor]; ctx.fillRect(-9, -22, 18, 11);
     ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-9, -13, 18, 2);
@@ -2609,11 +2666,17 @@ function resize(){
   zoom = clamp(Math.min(W, H) / 440, .95, 1.7); zy = zoom * TILT;
   const cw = CLOUD_W * zoom / 2, ch = CLOUD_W * zy / 2, el = $('fxClouds');      // cloud tile is 512 px wide, drawn at 2x world scale
   el.style.width = (W + cw + 2) + 'px'; el.style.height = (H + ch + 2) + 'px'; el.style.backgroundSize = cw + 'px ' + ch + 'px';
-  for (const [id, tile] of [['fxSnow1', 256], ['fxSnow2', 384]]){ const sn = $(id); sn.style.width = W + 'px'; sn.style.height = (H + tile) + 'px'; sn.style.backgroundSize = tile + 'px ' + tile + 'px'; }
+  for (const [id, tile] of [['fxSnow1', 256], ['fxSnow2', 384], ['fxRain1', 256], ['fxRain2', 384]]){ const sn = $(id); sn.style.width = W + 'px'; sn.style.height = (H + tile) + 'px'; sn.style.backgroundSize = tile + 'px ' + tile + 'px'; }
 }
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
 
 const lightR = () => (Z.cave ? 135 : 110) + (P.lantern ? 70 : 0);
+function punchCone(x, y, ang, len, half){          // a soft wedge of light ahead of the player (like a flashlight)
+  const k = zoom * .5, cx = (x - cam.x) * k, cy = (y - cam.y) * zy * .5, L = len * k;
+  lx.save(); lx.translate(cx, cy); lx.rotate(ang);
+  const g = lx.createRadialGradient(0, 0, L * .08, 0, 0, L); g.addColorStop(0, 'rgba(0,0,0,.9)'); g.addColorStop(.6, 'rgba(0,0,0,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  lx.fillStyle = g; lx.beginPath(); lx.moveTo(0, 0); lx.arc(0, 0, L, -half, half); lx.closePath(); lx.fill(); lx.restore();
+}
 function punch(x, y, r){         // light hole in the darkness layer; an ellipse because the ground is foreshortened
   const k = zoom * .5, cx = (x - cam.x) * k, cy = (y - cam.y) * zy * .5, R = r * k;
   lx.save(); lx.translate(cx, cy); lx.scale(1, TILT);
@@ -2632,10 +2695,18 @@ function goldenHour(t){          // warm grading around sunrise and sunset
 
 let fxCache = {};
 function fxStyle(id, prop, v){ const key = id + prop; if (fxCache[key] !== v){ fxCache[key] = v; $(id).style[prop] = v; } }
+const hash01 = n => mulberry32(Math.imul(n, 2654435761))();
+function rainAmt(){            // 0..1. Some days (from day 2) get a rain shower; it depends only on the day number, so a reload gives the same weather
+  if (Z.cave || Z.ground === 'snow') return 0;
+  const day = dayOf(); if (day < 2 || hash01(day * 7 + 1) > .4) return 0;
+  const s0 = .1 + hash01(day * 7 + 2) * .4, e0 = s0 + .2 + hash01(day * 7 + 3) * .25, t = dayT();
+  return clamp(Math.min((t - s0) / .04, (e0 - t) / .04), 0, 1);
+}
 function updateAtmosphere(t, dk){   // CSS layers over the canvas: haze, warm grading, drifting cloud shadows
   const day = Z.cave ? 0 : 1 - dk, gh = Z.cave ? 0 : goldenHour(t);
   const sn = Z.ground === 'snow' ? (day > .5 ? '.9' : '.5') : '0'; fxStyle('fxSnow1', 'opacity', sn); fxStyle('fxSnow2', 'opacity', sn);
-  fxStyle('fxHaze', 'opacity', day.toFixed(2)); fxStyle('fxTint', 'opacity', gh.toFixed(3));
+  const rw = running ? rainAmt() : 0; fxStyle('fxRain1', 'opacity', (rw * .85).toFixed(2)); fxStyle('fxRain2', 'opacity', (rw * .6).toFixed(2)); fxStyle('fxWet', 'opacity', (rw * .26).toFixed(2));
+  fxStyle('fxHaze', 'opacity', (day * (1 - rw * .5)).toFixed(2)); fxStyle('fxTint', 'opacity', gh.toFixed(3));
   const co = dk < .9 && !Z.cave ? (.9 * day).toFixed(2) : '0'; fxStyle('fxClouds', 'opacity', co);
   if (co !== '0'){
     const cw = CLOUD_W * zoom / 2, ch = CLOUD_W * zy / 2;
@@ -2658,6 +2729,7 @@ function render(){
   const lakes = [], list = [];
   gridQuery(vx0 - 110, vy0 - 130, vx1 + 110, vy1 + 190, o => { if (o.t === 'water') lakes.push(o); else if (o.y > vy0 - 110 && o.y < vy1 + 130 && o.x > vx0 - 80 && o.x < vx1 + 80) list.push(o); });
   drawLakes(lakes);
+  drawDecals(vx0, vy0, vx1, vy1);
 
   // ground markers: safe zones, target ring
   for (const s of structs){
@@ -2709,9 +2781,9 @@ function render(){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (dk > .01){
     lx.globalCompositeOperation = 'source-over'; lx.setTransform(1, 0, 0, 1, 0, 0); lx.clearRect(0, 0, lc.width, lc.height);
-    lx.fillStyle = Z.cave ? `rgba(3,4,10,${.88 * dk})` : `rgba(5,9,28,${.86 * dk})`; lx.fillRect(0, 0, lc.width, lc.height);
+    lx.fillStyle = Z.cave ? `rgba(3,4,10,${.9 * dk})` : `rgba(4,8,24,${.9 * dk})`; lx.fillRect(0, 0, lc.width, lc.height);
     lx.globalCompositeOperation = 'destination-out';
-    if (running) punch(P.x, P.y - 8, lightR());
+    if (running){ punch(P.x, P.y - 8, lightR()); punchCone(P.x, P.y - 10, lightAng, lightR() * 2, .55); }
     for (const o of list) if (o.t === 'furnace' && o.glow > 0) punch(o.x, o.y - 6, 120);
     for (const s of structs){
       if (s.x < vx0 - 300 || s.x > vx1 + 300 || s.y < vy0 - 300 || s.y > vy1 + 300) continue;
@@ -2732,14 +2804,14 @@ function frame(ts){
   const raw = ts - last, dt = Math.min(.05, raw / 1000 || 0); last = ts; anim += dt;
   if (autoQ && !lowFx && raw > 0 && raw < 200){                  // sustained < 30 fps -> cheaper rendering for the rest of the session
     frameEma = frameEma * .94 + raw * .06;
-    if (++frameN > 150 && frameEma > 34){ lowFx = true; dprCap = 1.5; resize(); }
+    if (++frameN > 150 && frameEma > 34){ lowFx = true; dprCap = 1.5; document.body.classList.add('lowfx'); resize(); }
   }
   if (running && !paused && !sleeping) update(dt);
   render();
 }
 
 resize();
-try { $('fxClouds').style.backgroundImage = 'url(' + makeCloudTile().toDataURL() + ')'; $('fxSnow1').style.backgroundImage = 'url(' + makeSnowTile(256, 34, 5, 1, 2.2, .85).toDataURL() + ')'; $('fxSnow2').style.backgroundImage = 'url(' + makeSnowTile(384, 16, 9, 1.8, 3.4, .6).toDataURL() + ')'; } catch (_) {}
+try { $('fxClouds').style.backgroundImage = 'url(' + makeCloudTile().toDataURL() + ')'; $('fxSnow1').style.backgroundImage = 'url(' + makeSnowTile(256, 34, 5, 1, 2.2, .85).toDataURL() + ')'; $('fxSnow2').style.backgroundImage = 'url(' + makeSnowTile(384, 16, 9, 1.8, 3.4, .6).toDataURL() + ')'; $('fxRain1').style.backgroundImage = 'url(' + makeRainTile(256, 46, 15, 30, .55).toDataURL() + ')'; $('fxRain2').style.backgroundImage = 'url(' + makeRainTile(384, 26, 21, 44, .4).toDataURL() + ')'; $('fxGrain').style.backgroundImage = 'url(' + makeGrainTile().toDataURL() + ')'; } catch (_) {}
 blob = makeBlob(); puffSmoke = makePuff('190,195,200'); puffDust = makePuff('216,198,152'); initSprites();
 function boot(data){ $('leadTxt').textContent = '폭풍에 휩쓸려 혼자 남은 섬. ' + RAFT_DAY + '일을 버텨 뗏목을 만들고 탈출하세요.'; refreshTitle(); demoWorld(); if (data && data.resume) continueGame(); }
 requestAnimationFrame(frame);
@@ -2750,7 +2822,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy) => { render(); const k = zoom * .5, x = Math.round((wx - cam.x) * k), y = Math.round((wy - cam.y) * zy * .5); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

@@ -1,0 +1,256 @@
+"""Still things for the sprite pipeline: trees, rocks, bushes, ore and (later) buildings.
+
+Every object is a pile of boxes rendered once, from the same iso camera as the creatures, and packed into one atlas.
+The camera looks at the model the way the game's world axes look on screen: model +z is world +x (down-right on screen),
+model +x is world -y (up-right), so a box that is long in z lies along the world x axis.
+"""
+import math, random
+import numpy as np
+from PIL import Image
+import render as R
+from render import Node, box, rx, ry, rz, ramp, MAT
+
+FACE = 45          # the facing (degrees) that lines model axes up with the world axes on screen
+
+MAT.update({
+    'trunk':  ramp('#241810', '#392616', '#503620', '#6a482b'),
+    'leafA':  ramp('#16301f', '#264a2e', '#46693f', '#7e9962'), 'leafB': ramp('#222f18', '#385225', '#59733a', '#8f9d62'), 'leafC': ramp('#122e2f', '#224944', '#406e5d', '#759683'),
+    'snowL':  ramp('#1f3a42', '#325861', '#587e85', '#8aabb0'), 'snowL2': ramp('#243f39', '#3b635a', '#648a7f', '#93ada3'), 'snowL3': ramp('#2a3b4a', '#415a70', '#6c8399', '#96aab9'),
+    'snow':   ramp('#8fa6bc', '#b9cbdb', '#dfeaf3', '#ffffff'),
+    'stone':  ramp('#3f4348', '#5a5f65', '#7a7f86', '#9fa4ab'), 'moss': ramp('#2c4426', '#41622f', '#5f8442', '#88a85e'),
+    'bushg':  ramp('#1a3320', '#2a4b2d', '#416a3d', '#678c54'), 'berry': ramp('#5a0f1c', '#8e1a2c', '#c4283e', '#e8607a'),
+    'orerock': ramp('#2a2e32', '#3b4046', '#4f555c', '#666d75'),
+    'copper': ramp('#7a3f12', '#a85a22', '#d9803f', '#ffc58a'), 'iron': ramp('#5c6b7d', '#7f92a8', '#9fb2c7', '#e3eefa'), 'goldore': ramp('#8a6a10', '#bf9a1f', '#f2c84b', '#fff2a8'),
+})
+MAT.update({
+    'plank':  ramp('#3e2a16', '#5e4224', '#80592f', '#a07840'), 'plank2': ramp('#2e1f10', '#46301a', '#604424', '#7c5a30'),
+    'thatch': ramp('#4a3a20', '#6a5430', '#8c7242', '#ad9258'),
+    'wallst': ramp('#555b60', '#767c81', '#9a9fa4', '#bcc1c5'), 'walliron': ramp('#2f3841', '#47515b', '#69757f', '#8e9ba6'),
+    'sail':   ramp('#8a8272', '#b3ab98', '#d9d0b8', '#f6eed8'), 'sail2': ramp('#6a7384', '#8a94a8', '#aab4c6', '#cdd6e4'),
+    'red':    ramp('#7a1f14', '#a82e1c', '#d9472f', '#ff7a60'), 'blue': ramp('#1c2f6a', '#2c4a9a', '#3b6fd6', '#7fa6f2'),
+    'furn':   ramp('#4a4e53', '#686d72', '#868b90', '#a5abb0'), 'brickd': ramp('#3a3430', '#524a44', '#6b625a', '#857a70'),
+    'exitl':  ramp('#a88a50', '#d4b06a', '#f2d48c', '#fff0c0'), 'hull': ramp('#3a2610', '#573a1c', '#7d552b', '#a8723a'), 'hull2': ramp('#2a2420', '#3f3730', '#5a5048', '#766a60'),
+    'ash':    ramp('#1c1c1e', '#2a2a2d', '#3a3a3e', '#4c4c50'),
+})
+ORE_MAT = {'copper': 'copper', 'iron': 'iron', 'gold': 'goldore'}
+
+def seeded(name): return random.Random(sum(ord(c) * (i + 3) for i, c in enumerate(name)))
+
+def tree(i, size=1.0, stump=False):
+    r = seeded('tree%d' % i); pine = i % 3 == 2; pal = ('leafA', 'leafB', 'leafC')[i // 3]
+    b = []; root = Node(None, (0, 0, 0), ry(r.uniform(0, 6.28)))
+    th = 1.5 * size
+    box(b, root, (0, th / 2, 0), (.30 * size, th, .30 * size), 'trunk', 'trunk')
+    box(b, root, (0, .08, 0), (.44 * size, .16, .44 * size), 'trunk', 'root')
+    if stump: return _stump(size)
+    if pine:
+        for k in range(4):
+            w = (1.4 - k * .32) * size; y = (1.15 + k * .5) * size
+            n = Node(root, (0, y, 0), ry(k * .8)); box(b, n, (0, .27 * size, 0), (w, .56 * size, w), pal, 'tier%d' % k)
+        box(b, root, (0, 3.15 * size, 0), (.28 * size, .5 * size, .28 * size), pal, 'tip')
+    else:
+        blobs = [(0, 2.0, 0, 1.15), (-.4, 1.85, .12, .8), (.42, 1.8, -.1, .85), (.08, 1.8, .45, .75), (-.05, 2.6, 0, .8)]
+        for k, (x, y, z, s) in enumerate(blobs):
+            s *= size * r.uniform(.9, 1.1); n = Node(root, (x * size, y * size, z * size), ry(r.uniform(0, 1.5)) @ rx(r.uniform(-.12, .12)) @ rz(r.uniform(-.12, .12)))
+            box(b, n, (0, 0, 0), (s, s * .9, s), pal, 'leaf%d' % k)
+    return b
+
+def _stump(size):
+    b = []; root = Node(None, (0, 0, 0), ry(.4))
+    box(b, root, (0, .22 * size, 0), (.34 * size, .44 * size, .34 * size), 'trunk', 'stump'); box(b, root, (0, .02, 0), (.5 * size, .08, .5 * size), 'trunk', 'root')
+    return b
+
+def snow_pine(i, size=1.0):
+    r = seeded('sp%d' % i); pal = ('snowL', 'snowL2', 'snowL3')[i]
+    b = []; root = Node(None, (0, 0, 0), ry(r.uniform(0, 6.28)))
+    box(b, root, (0, .6 * size, 0), (.30 * size, 1.2 * size, .30 * size), 'trunk', 'trunk')
+    for k in range(4):
+        w = (1.55 - k * .36) * size; y = (.95 + k * .5) * size
+        n = Node(root, (0, y, 0), ry(k * .8)); box(b, n, (0, .27 * size, 0), (w, .56 * size, w), pal, 'tier%d' % k)
+        box(b, n, (0, .58 * size, 0), (w * .9, .1 * size, w * .9), 'snow', 'cap%d' % k)
+    box(b, root, (0, 2.95 * size, 0), (.3 * size, .5 * size, .3 * size), 'snow', 'tip')
+    return b
+
+def rock(i, size=1.0):
+    r = seeded('rock%d' % i); b = []; root = Node(None, (0, 0, 0), ry(r.uniform(0, 6.28)))
+    for k in range(3):
+        s = r.uniform(.5, .85) * size * (1 if k == 0 else .72)
+        n = Node(root, (r.uniform(-.28, .28) * size, s * .3, r.uniform(-.25, .25) * size), ry(r.uniform(0, 3)) @ rx(r.uniform(-.3, .3)) @ rz(r.uniform(-.3, .3)))
+        box(b, n, (0, 0, 0), (s * 1.15, s * .8, s), 'stone', 'rock%d' % k)
+    if i % 2 == 0:
+        box(b, Node(root, (.0, .62 * size, .05), ry(.5)), (0, 0, 0), (.45 * size, .06, .36 * size), 'moss', 'moss')
+    return b
+
+def bush(i, berries=3):
+    r = seeded('bush%d' % i); b = []; root = Node(None, (0, 0, 0), ry(r.uniform(0, 6.28)))
+    spots = [(-.28, .26, .0, .6), (.3, .24, .06, .56), (0, .3, -.28, .52), (.04, .24, .3, .5), (0, .55, 0, .5)]
+    for k, (x, y, z, s) in enumerate(spots):
+        n = Node(root, (x, y, z), ry(r.uniform(0, 1.5)) @ rx(r.uniform(-.15, .15))); box(b, n, (0, 0, 0), (s, s * .85, s), 'bushg', 'b%d' % k)
+    pos = [(-.38, .42, .26), (.4, .34, -.1), (.05, .72, .12)]
+    for k in range(berries): box(b, root, pos[k], (.17, .17, .17), 'berry', 'berry%d' % k)
+    return b
+
+def ore(kind, i, rubble=False):
+    r = seeded('ore%s%d' % (kind, i)); b = []; root = Node(None, (0, 0, 0), ry(r.uniform(0, 6.28)))
+    for k in range(3):
+        s = r.uniform(.5, .8) * (1 if k == 0 else .7)
+        n = Node(root, (r.uniform(-.3, .3), s * .28, r.uniform(-.25, .25)), ry(r.uniform(0, 3)) @ rx(r.uniform(-.25, .25)) @ rz(r.uniform(-.25, .25)))
+        box(b, n, (0, 0, 0), (s * 1.1, s * .75, s), 'orerock', 'rk%d' % k)
+    for k in range(2 if rubble else 4):
+        n = Node(root, (r.uniform(-.35, .35), .5 if not rubble else .1, r.uniform(-.3, .3)), ry(r.uniform(0, 3)) @ rx(r.uniform(-.4, .4)) @ rz(r.uniform(-.4, .4)))
+        h = r.uniform(.42, .78) if not rubble else .14; w = .18 if not rubble else .12
+        box(b, n, (0, h / 2, 0), (w, h, w), ORE_MAT[kind], 'cr%d' % k)
+    return b
+
+# ---------------------------------------------------------------- atlas
+PPU = {'tree': 22, 'stump': 22, 'snowpine': 22, 'rock': 21, 'bush': 22, 'ore': 22, 'rubble': 22, 'wreck': 24}      # nature is drawn a little smaller than people-made things (26)
+
+def objects_list():
+    out = []
+    for i in range(9): out += [('tree%d' % i, tree(i)), ('tree%d_s' % i, tree(i, .78)), ('stump%d' % i, tree(i, 1.0, True))]
+    for i in range(3): out += [('snowpine%d' % i, snow_pine(i)), ('snowpine%d_s' % i, snow_pine(i, .78))]
+    for i in range(6): out += [('rock%d' % i, rock(i)), ('rock%d_m' % i, rock(i, .72)), ('rock%d_s' % i, rock(i, .5))]
+    for i in range(4):
+        for n in range(4): out.append(('bush%d_%d' % (i, n), bush(i, n)))
+    for kind in ('copper', 'iron', 'gold'):
+        for i in range(3): out.append(('ore_%s%d' % (kind, i), ore(kind, i)))
+        out.append(('rubble_' + kind, ore(kind, 0, True)))
+    return [(n, b, next((v for k, v in PPU.items() if n.startswith(k)), 26)) for n, b in out]
+
+def render_static(boxes, ppu=26.0):
+    k, info = R.render(boxes, math.radians(FACE), ppu)
+    return R.shade_image(k, info)
+
+def build_atlas(items, ppu=26.0, width=640):
+    tiles = []
+    for item in items:
+        name, boxes = item[0], item[1]; im = render_static(boxes, item[2] if len(item) > 2 else ppu); a = im[..., 3]
+        ys, xs = np.nonzero(a); x0, x1, y0, y1 = xs.min() - 1, xs.max() + 2, ys.min() - 1, ys.max() + 2
+        tiles.append((name, Image.fromarray(im).crop((x0, y0, x1, y1)), R.ANCHOR[0] - x0, R.ANCHOR[1] - y0))
+    x = y = rowh = 0; place = {}
+    for name, t, ax, ay in sorted(tiles, key=lambda t: -t[1].height):
+        if x + t.width > width: x = 0; y += rowh; rowh = 0
+        place[name] = [x, y, t.width, t.height, ax, ay]; x += t.width; rowh = max(rowh, t.height)
+    atlas = Image.new('RGBA', (width, y + rowh), (0, 0, 0, 0))
+    for name, t, ax, ay in tiles: atlas.alpha_composite(t, tuple(place[name][:2]))
+    return atlas, place
+
+
+# ---------------------------------------------------------------- things people build (axes: +z = world +x, -x = world +y)
+def fire_pit(burnt=False):
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    for k in range(7):
+        a = k / 7 * 6.283; box(b, Node(root, (math.cos(a) * .46, .07, math.sin(a) * .46), ry(-a)), (0, 0, 0), (.2, .14, .17), 'stone', 'ring%d' % k)
+    box(b, root, (0, .01, 0), (.78, .02, .78), 'ash', 'ash')
+    for sg, a in ((1, .6), (-1, -.6)):
+        box(b, Node(root, (0, .15, 0), ry(a) @ rz(.12 * sg)), (0, 0, 0), (.95, .13, .15), 'ash' if burnt else 'trunk', 'log%d' % sg)
+    return b
+
+def shelter():
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    for sg in (1, -1):                                              # two sloping roof slabs meeting at a ridge along z
+        n = Node(root, (sg * .5, .62, 0), rz(sg * .9)); box(b, n, (0, 0, 0), (.08, 1.4, 1.9), 'thatch', 'roof%d' % sg)
+    box(b, root, (0, 1.1, 0), (.1, .1, 2.0), 'plank2', 'ridge')
+    for i in range(6):                                              # the gable end: planks getting shorter toward the ridge
+        y = .08 + i * .165; w = 2.0 * (1 - (y + .08) / 1.12); box(b, root, (0, y + .08, .93), (max(.12, w), .17, .06), 'plank', 'gable%d' % i)
+    box(b, root, (0, .3, .99), (.55, .62, .05), 'dark', 'door')
+    for sg in (1, -1): box(b, root, (sg * .3, .34, 1.01), (.07, .7, .06), 'plank2', 'doorpost%d' % sg)
+    box(b, root, (0, .68, 1.01), (.67, .07, .06), 'plank2', 'doorlintel')
+    return b
+
+def furnace(on=False):
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    box(b, root, (0, .45, 0), (1.1, .9, 1.0), 'furn', 'body'); box(b, root, (0, .94, 0), (1.18, .1, 1.08), 'wallst', 'top')
+    box(b, root, (-.28, 1.3, -.2), (.34, .75, .34), 'brickd', 'chimney'); box(b, root, (-.28, 1.7, -.2), (.42, .08, .42), 'furn', 'chimcap')
+    box(b, root, (0, .3, .51), (.5, .48, .04), 'glow' if on else 'dark', 'mouth'); box(b, root, (0, .6, .51), (.62, .08, .05), 'wallst', 'lintel')
+    for sg in (-1, 1): box(b, root, (sg * .3, .3, .5), (.08, .5, .05), 'wallst', 'jamb%d' % sg)
+    box(b, root, (.45, .72, .51), (.08, .08, .04), 'metal', 'rivet')
+    return b
+
+def boat(big=False, flip=False):
+    b = []; root = Node(None, (0, 0, 0), ry(math.pi if flip else 0)); hull = 'hull2' if big else 'hull'
+    box(b, root, (0, .26, -.05), (.95, .34, 2.0), hull, 'keel')
+    box(b, root, (0, .38, -.6), (1.25, .4, .9), hull, 'stern'); box(b, root, (0, .5, .75), (.7, .46, .8), hull, 'bow'); box(b, root, (0, .72, 1.12), (.38, .3, .4), hull, 'prow')
+    box(b, root, (0, .6, -.05), (1.0, .06, 1.7), 'plank', 'deck')
+    for sg in (1, -1): box(b, root, (sg * .52, .62, -.05), (.07, .22, 1.8), hull, 'rail%d' % sg)
+    if big:
+        for z in (-.6, -.2, .2, .6): box(b, root, (0, .76, z), (1.0, .14, .08), 'metal', 'plate')
+    box(b, root, (0, 1.65, .0), (.09, 2.1, .09), 'plank2', 'mast')
+    box(b, root, (0, 1.65, -.42), (.04, 1.6, .8), 'sail2' if big else 'sail', 'sail'); box(b, root, (0, 1.65, .45), (.04, 1.3, .5), 'sail2' if big else 'sail', 'jib')
+    box(b, root, (0, 2.78, .05), (.05, .14, .45), 'blue' if big else 'red', 'flag')
+    if big: box(b, root, (0, 1.5, -.95), (.07, 1.5, .07), 'plank2', 'mast2'); box(b, root, (0, 1.55, -1.2), (.04, 1.0, .4), 'sail2', 'sail2')
+    return b
+
+def mine_door():
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    box(b, root, (0, .9, -.25), (3.4, 1.8, 1.3), 'stone', 'mound'); box(b, root, (0, 1.9, -.3), (2.6, .7, 1.1), 'stone', 'mound2'); box(b, root, (.2, 2.4, -.35), (1.4, .5, .9), 'stone', 'mound3')
+    for sg in (1, -1): box(b, root, (sg * 1.05, .65, .45), (.5, 1.3, .5), 'stone', 'pillar%d' % sg)
+    box(b, root, (0, 1.4, .45), (2.1, .3, .5), 'stone', 'lintel')
+    box(b, root, (0, .6, .5), (1.5, 1.2, .3), 'dark', 'hole')
+    for sg in (1, -1): box(b, root, (sg * .78, .65, .62), (.14, 1.3, .14), 'plank', 'beam%d' % sg)
+    box(b, root, (0, 1.32, .62), (1.7, .14, .14), 'plank', 'crossbeam'); box(b, root, (0, 1.8, .66), (1.1, .46, .08), 'plank2', 'sign')
+    for sg in (1, -1): box(b, root, (sg * 1.45, .55, .65), (.1, .5, .1), 'plank2', 'lamp%d' % sg); box(b, root, (sg * 1.45, .85, .65), (.2, .16, .2), 'glow', 'flame%d' % sg)
+    return b
+
+def cave_exit():
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    box(b, root, (0, 1.0, -.2), (2.6, 2.0, 1.2), 'stone', 'wall'); box(b, root, (0, 2.1, -.25), (2.0, .5, 1.0), 'stone', 'top')
+    box(b, root, (0, .8, .68), (1.3, 1.6, .12), 'exitl', 'light'); box(b, root, (0, 1.72, .68), (.9, .3, .12), 'exitl', 'lightTop')
+    for sg in (1, -1): box(b, root, (sg * .74, .85, .74), (.18, 1.7, .22), 'stone', 'jamb%d' % sg)
+    box(b, root, (0, 1.84, .74), (1.7, .2, .22), 'stone', 'lintel')
+    for z in range(5): box(b, root, (0, .1 + z * .3, .56), (.1, .06, .06), 'plank2', 'rung%d' % z) if False else None
+    for sg in (1, -1): box(b, root, (sg * .17, .85, .8), (.07, 1.7, .07), 'plank2', 'ladder%d' % sg)
+    for k in range(6): box(b, root, (0, .15 + k * .26, .8), (.34, .05, .06), 'plank2', 'rung%d' % k)
+    return b
+
+def wreck(i, size=1.0):
+    r = seeded('wreck%d' % i); b = []; root = Node(None, (0, 0, 0), ry(.3))
+    box(b, root, (0, .1 * size, 0), (1.0 * size, .2 * size, .5 * size), 'plank2', 'floor')
+    for k in range(3): box(b, Node(root, (r.uniform(-.3, .3), .3 * size, r.uniform(-.2, .2)), ry(r.uniform(0, 3)) @ rz(r.uniform(-.4, .4))), (0, 0, 0), (.9 * size, .1, .16), 'plank', 'plank%d' % k)
+    box(b, root, (-.2 * size, .38 * size, .1), (.12, .6 * size, .12), 'metal', 'pipe'); box(b, Node(root, (.3 * size, .22 * size, -.15), ry(.5)), (0, 0, 0), (.3 * size, .3 * size, .3 * size), 'plank', 'crate')
+    box(b, root, (.4 * size, .12, .2), (.36, .05, .14), 'red', 'rag')
+    return b
+
+def wall_post(kind):                                                    # a fence post (the rails come as separate pieces)
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    box(b, root, (0, .38, 0), (.18, .76, .18), 'plank', 'post'); box(b, root, (0, .8, 0), (.24, .08, .24), 'plank2', 'cap')
+    return b
+
+def rail(axis):                                                         # 'x': from a post to the next one along world +x (model +z); 'y': along world +y (model -x)
+    b = []; root = Node(None, (0, 0, 0), ry(0 if axis == 'x' else -math.pi / 2))
+    for y in (.3, .56): box(b, root, (0, y, .54), (.07, .09, 1.1), 'plank', 'rail')
+    return b
+
+def gate():
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    for sg in (1, -1): box(b, root, (sg * .5, .45, 0), (.14, .9, .2), 'plank2', 'gpost%d' % sg)
+    box(b, root, (0, .42, 0), (.9, .66, .1), 'plank', 'leaf')
+    for y in (.2, .64): box(b, root, (0, y, .06), (.9, .08, .05), 'plank2', 'bar')
+    box(b, Node(root, (0, .42, .07), rz(.62)), (0, 0, 0), (1.05, .07, .05), 'plank2', 'brace'); box(b, root, (.3, .42, .09), (.08, .08, .05), 'gold', 'latch')
+    return b
+
+def wall_block(kind):
+    b = []; root = Node(None, (0, 0, 0), ry(0)); m = 'wallst' if kind == 'stone' else 'walliron'
+    box(b, root, (0, .38, 0), (1.04, .76, 1.04), m, 'block'); box(b, root, (0, .79, 0), (1.1, .1, 1.1), m, 'cap')
+    box(b, root, (0, .4, .53), (1.0, .04, .02), 'dark', 'seam') if kind == 'stone' else None
+    if kind == 'iron':
+        for sx, sz in ((.4, .4), (-.4, .4), (.4, -.4), (-.4, -.4)): box(b, root, (sx, .86, sz), (.1, .06, .1), 'metal', 'rivet')
+    return b
+
+def tower():
+    b = []; root = Node(None, (0, 0, 0), ry(0))
+    for sx in (1, -1):
+        for sz in (1, -1): box(b, root, (sx * .42, .62, sz * .42), (.14, 1.24, .14), 'plank2', 'leg')
+    box(b, root, (0, 1.28, 0), (1.15, .12, 1.15), 'plank', 'deck')
+    box(b, root, (0, 1.78, 0), (.92, .9, .92), 'plank', 'cabin'); box(b, root, (0, 1.82, .47), (.5, .26, .04), 'dark', 'slit')
+    box(b, Node(root, (0, 2.34, 0), ry(.0)), (0, 0, 0), (1.2, .12, 1.2), 'plank2', 'roof1'); box(b, root, (0, 2.5, 0), (.8, .2, .8), 'plank2', 'roof2'); box(b, root, (0, 2.66, 0), (.4, .16, .4), 'plank2', 'roof3')
+    for z in (-1, 1): box(b, root, (0, .5, z * .42), (.1, .1, .84), 'plank', 'brace%d' % z) if False else None
+    return b
+
+def building_list():
+    out = [('fire', fire_pit()), ('fire_out', fire_pit(True)), ('shelter', shelter()), ('furnace', furnace()), ('furnace_on', furnace(True)),
+           ('boat_e', boat()), ('boat_w', boat(False, True)), ('boat2_e', boat(True)), ('boat2_w', boat(True, True)),
+           ('minedoor', mine_door()), ('caveexit', cave_exit()), ('gate', gate()), ('tower', tower()),
+           ('wall_wood', wall_post('wood')), ('rail_x', rail('x')), ('rail_y', rail('y')), ('wall_stone', wall_block('stone')), ('wall_iron', wall_block('iron'))]
+    for i in range(3): out.append(('wreck%d' % i, wreck(i, 1.0))); out.append(('wreck%d_m' % i, wreck(i, .72))); out.append(('wreck%d_s' % i, wreck(i, .5)))
+    return out

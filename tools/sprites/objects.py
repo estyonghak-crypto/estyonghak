@@ -15,6 +15,7 @@ FACE = 45          # the facing (degrees) that lines model axes up with the worl
 MAT.update({
     'trunk':  ramp('#241810', '#392616', '#503620', '#6a482b'),
     'leafA':  ramp('#16301f', '#264a2e', '#46693f', '#7e9962'), 'leafB': ramp('#222f18', '#385225', '#59733a', '#8f9d62'), 'leafC': ramp('#122e2f', '#224944', '#406e5d', '#759683'),
+    'leafA2': ramp('#1d3d26', '#31603a', '#548049', '#92b072'), 'leafB2': ramp('#2e3d1d', '#4a6a2a', '#6b8844', '#a3b46c'), 'leafC2': ramp('#173b3a', '#2a5c52', '#4c836f', '#86ab98'),
     'snowL':  ramp('#1f3a42', '#325861', '#587e85', '#8aabb0'), 'snowL2': ramp('#243f39', '#3b635a', '#648a7f', '#93ada3'), 'snowL3': ramp('#2a3b4a', '#415a70', '#6c8399', '#96aab9'),
     'snow':   ramp('#8fa6bc', '#b9cbdb', '#dfeaf3', '#ffffff'),
     'stone':  ramp('#3f4348', '#5a5f65', '#7a7f86', '#9fa4ab'), 'moss': ramp('#2c4426', '#41622f', '#5f8442', '#88a85e'),
@@ -36,23 +37,40 @@ ORE_MAT = {'copper': 'copper', 'iron': 'iron', 'gold': 'goldore'}
 
 def seeded(name): return random.Random(sum(ord(c) * (i + 3) for i, c in enumerate(name)))
 
+def _canopy(b, root, r, lumps, pal, size, cell=.34):
+    """a rounded crown made of small cubes: the union of some ellipsoids, only the cubes you can see, two leaf tones"""
+    cells = set()
+    for (cx, cy, cz, rx_, ry_, rz_) in lumps:
+        n = int(max(rx_, ry_, rz_) / cell) + 2
+        for i in range(-n, n + 1):
+            for j in range(-n, n + 1):
+                for k in range(-n, n + 1):
+                    x, y, z = i * cell, j * cell, k * cell
+                    d = (x / rx_) ** 2 + (y / ry_) ** 2 + (z / rz_) ** 2
+                    if d <= 1 + r.uniform(-.28, .22):
+                        cells.add((round((cx + x) / cell), round((cy + y) / cell), round((cz + z) / cell)))
+    top = max(c[1] for c in cells)
+    for (i, j, k) in sorted(cells):
+        if all(n in cells for n in ((i + 1, j, k), (i - 1, j, k), (i, j + 1, k), (i, j - 1, k), (i, j, k + 1), (i, j, k - 1))): continue      # buried inside the crown
+        m = pal + '2' if r.random() < (.18 + .22 * (j - top + 4) / 4 if j >= top - 3 else .1) else pal
+        box(b, root, (i * cell * size, j * cell * size, k * cell * size), (cell * size * 1.04,) * 3, m, 'leaf')
+
 def tree(i, size=1.0, stump=False):
-    r = seeded('tree%d' % i); pine = i % 3 == 2; pal = ('leafA', 'leafB', 'leafC')[i // 3]
+    r = seeded('tree%d' % i); shape = i % 3; pal = ('leafA', 'leafB', 'leafC')[i // 3]
     b = []; root = Node(None, (0, 0, 0), ry(r.uniform(0, 6.28)))
-    th = 1.5 * size
-    box(b, root, (0, th / 2, 0), (.30 * size, th, .30 * size), 'trunk', 'trunk')
-    box(b, root, (0, .08, 0), (.44 * size, .16, .44 * size), 'trunk', 'root')
+    th = (1.5 if shape != 1 else 1.2) * size
     if stump: return _stump(size)
-    if pine:
-        for k in range(4):
-            w = (1.4 - k * .32) * size; y = (1.15 + k * .5) * size
-            n = Node(root, (0, y, 0), ry(k * .8)); box(b, n, (0, .27 * size, 0), (w, .56 * size, w), pal, 'tier%d' % k)
-        box(b, root, (0, 3.15 * size, 0), (.28 * size, .5 * size, .28 * size), pal, 'tip')
-    else:
-        blobs = [(0, 2.0, 0, 1.15), (-.4, 1.85, .12, .8), (.42, 1.8, -.1, .85), (.08, 1.8, .45, .75), (-.05, 2.6, 0, .8)]
-        for k, (x, y, z, s) in enumerate(blobs):
-            s *= size * r.uniform(.9, 1.1); n = Node(root, (x * size, y * size, z * size), ry(r.uniform(0, 1.5)) @ rx(r.uniform(-.12, .12)) @ rz(r.uniform(-.12, .12)))
-            box(b, n, (0, 0, 0), (s, s * .9, s), pal, 'leaf%d' % k)
+    box(b, root, (0, th / 2, 0), (.30 * size, th, .30 * size), 'trunk', 'trunk'); box(b, root, (0, .1, 0), (.46 * size, .2, .46 * size), 'trunk', 'root')
+    if shape == 0:                                                     # round crown
+        _canopy(b, root, r, [(0, 2.05, 0, 1.05, .9, 1.05), (.55, 1.8, .2, .7, .6, .7), (-.5, 1.85, -.2, .7, .6, .7)], pal, size)
+        box(b, Node(root, (.18 * size, 1.2 * size, 0), rz(-.7)), (0, .0, 0), (.08 * size, .6 * size, .08 * size), 'trunk', 'branch')
+    elif shape == 1:                                                   # tall, narrow crown
+        _canopy(b, root, r, [(0, 2.3, 0, .8, 1.25, .8), (.3, 1.7, .2, .75, .55, .75), (-.25, 2.9, -.1, .55, .55, .55)], pal, size)
+    elif shape == 2:                                                   # a pine: stacked, narrowing tiers, ragged at the bottom
+        for k in range(6):
+            w = (1.6 - k * .27) * size; y = (1.0 + k * .38) * size
+            n = Node(root, (r.uniform(-.04, .04) * size, y, r.uniform(-.04, .04) * size), ry(k * .7)); box(b, n, (0, .2 * size, 0), (w, .42 * size, w), pal if k % 2 == 0 else pal + '2', 'tier%d' % k)
+        box(b, root, (0, 3.35 * size, 0), (.26 * size, .5 * size, .26 * size), pal, 'tip')
     return b
 
 def _stump(size):

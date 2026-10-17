@@ -208,6 +208,7 @@ def person(pose, look='survivor', tool=None):
         box(b, kt, (0, -.22, 0), (.17, .45, .19), M['legs'], 'shin' + side)
         ft = Node(kt, (0, -.45, 0), rx(0.0))
         box(b, ft, (0, -.04, .06), (.19, .13, .32), M['boots'], 'foot' + side)
+    FAT[0] = 1.0                                                   # (the bulk factor only applies to this person; animals and objects built next must not inherit it)
     return b
 
 # ------------------------------------------------------------------ poses

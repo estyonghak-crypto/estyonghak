@@ -511,7 +511,7 @@ function scr2world(a, b){ const A = a / ISO_X, B = b / ISO_Y, x = (A + B) / 2, y
 const scrAng = (fx, fy) => Math.atan2(uy(fx, fy), ux(fx, fy));      // where a world heading points on screen
 const onScreen = (x, y, m) => { const sx = w2sx(x, y), sy = w2sy(x, y); return sx > -m && sx < W + m && sy > -m && sy < H + m; };
 function offscreenSpot(){          // a random world point just outside the screen
-  const a = rand(0, TAU), ca = Math.cos(a), sa = Math.sin(a), hw = W / 2 + 80, hh = H / 2 + 100, k = 1 / Math.max(Math.abs(ca) / hw, Math.abs(sa) / hh) + rand(0, 90);
+  const a = rand(0, TAU), ca = Math.cos(a), sa = Math.sin(a), hw = W / 2 + 80, hh = H / 2 + 100, k = 1 / Math.max(Math.abs(ca) / hw, Math.abs(sa) / hh) + rand(0, 200);
   return s2w(W / 2 + ca * k, H / 2 + VOFF + sa * k);
 }
 let objs = [], grid = [], structs = [], creatures = [], floaters = [];
@@ -769,7 +769,7 @@ function spawnCreature(kind, minD, maxD, elite, unseen, ring){      // elite: tr
     if (maxD && ring){ const a = rand(0, TAU), d = rand(minD, maxD); x = P.x + Math.cos(a) * d; y = P.y + Math.sin(a) * d; }      // (tests) a plain ring around the player
     else if (maxD){ const q = offscreenSpot(); x = q.x; y = q.y; }
     else { x = rand(60, WORLD - 60); y = rand(60, WORLD - 60); }
-    if (inside(x, y) < 70 || Math.hypot(x - P.x, y - P.y) < (maxD ? (ring ? minD : 140) : minD) || blocked(x, y, sp.r + 6)) continue;
+    if (inside(x, y) < 70 || Math.hypot(x - P.x, y - P.y) < (maxD ? (ring ? minD : 460) : minD) || blocked(x, y, sp.r + 6)) continue;
     if (unseen && onScreen(x, y, 120)) continue;
     const c = newCreature(kind, x, y);
     if (ELITE_OK[kind] && elite !== false && (elite === true || rollElite(kind))) makeElite(c, typeof elite === 'string' ? elite : undefined);

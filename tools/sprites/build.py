@@ -1,20 +1,22 @@
-"""Bake the pixel-art sheets (survivor x 5 tools, zombie, brute) and embed them into ../../index.html.
+"""Bake the pixel-art sheets (survivor x 5 tools, zombie, brute, zombie lord, wolf, wolf king, boar, bear, mountain king, rabbit, bat, golem) and embed them into ../../index.html.
 
     python3 tools/sprites/build.py          # needs numpy + pillow
 
-Each sheet is 8 directions (rows: S, SW, W, NW, N, NE, E, SE) x frames (cols: idle 4, walk 8, attack 4, hurt 1, die 5 for the monsters).
-The survivor's jacket is painted in a marker colour; the game swaps it for the armour colours at load time.
+Each sheet is 8 directions (rows: S, SW, W, NW, N, NE, E, SE) x frames (cols per animation are listed in each sheet's meta).
+The survivor's jacket and the mountain king's fur are painted in a marker colour; the game swaps it for the real colours at load time.
 """
 import base64, io, json, os, sys
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render as R
+import animals  # noqa: F401  (registers the animals)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(HERE, '..', '..', 'index.html')
 
 sheets = {}
-for look, tools in (('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun']), ('zombie', [None]), ('brute', [None])):
+LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem')]
+for look, tools in LOOKS:
     for tool in tools:
         key = tool if look == 'survivor' else look
         img, meta = R.build_sheet(look, None if tool == 'hand' else tool)

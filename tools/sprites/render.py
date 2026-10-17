@@ -8,8 +8,8 @@ import math, numpy as np
 from PIL import Image, ImageDraw
 
 SS = 4                      # supersampling while rasterising, reduced to 1x with a per-pixel vote
-BIG = (120, 112)            # working canvas for one frame (cropped to the used area afterwards)
-ANCHOR = (60, 94)           # where the feet touch the ground inside the working canvas
+BIG = (150, 130)            # working canvas for one frame (cropped to the used area afterwards)
+ANCHOR = (75, 108)           # where the feet touch the ground inside the working canvas
 PX_PER_UNIT = 26            # 1 model unit (about a metre) in final pixels
 PITCH = math.radians(30)    # 30 deg camera pitch = the ground is squashed to 0.5 (2:1 tiles)
 LIGHT = np.array([-.488, .78, .39])
@@ -37,6 +37,18 @@ MAT = {
   'bskin':  ramp('#4b4756', '#645f73', '#807a92', '#9a94ad'),
   'bshirt': ramp('#1d1826', '#2b2436', '#3c3548', '#4d4560'),
   'bpants': ramp('#17151c', '#221f29', '#2f2b38', '#3d3948'),
+  # animals
+  'wfur':   ramp('#3a3f48', '#525864', '#6f7683', '#8f97a4'), 'wlight': ramp('#6a7079', '#8a919d', '#a9b0bb', '#c8ced8'),
+  'kfur':   ramp('#1d1f26', '#2c2f38', '#3f434f', '#575c6b'), 'klight': ramp('#4a4f5c', '#6a7080', '#8a90a2', '#abb1c2'),
+  'gold':   ramp('#6e4f0e', '#a37b1a', '#d2a62a', '#f0cc55'),
+  'bfur':   ramp('#2e1c12', '#46291a', '#5f3a24', '#7a4d31'), 'bdark': ramp('#1c110b', '#2a1a10', '#3a2416', '#4c3020'), 'bsnout': ramp('#4d3228', '#6d4a3b', '#8d6654', '#a98370'),
+  'tusk':   ramp('#8a7e66', '#b8ab8e', '#d8ccae', '#efe5c8'),
+  'brown':  ramp('#2d1e13', '#44301d', '#5d4228', '#79583a'), 'tan': ramp('#58432f', '#7a5f45', '#9a7d5f', '#b99b7c'),
+  'rfur':   ramp('#8d8472', '#b0a690', '#cfc4ad', '#e9e0cb'), 'pink': ramp('#8a5a5a', '#b07878', '#d09494', '#e8b0b0'),
+  'batf':   ramp('#251f30', '#352d45', '#493e5e', '#625780'), 'batw': ramp('#2b2339', '#3d3253', '#54476f', '#716391'), 'bred': ramp('#7a1010', '#b01818', '#d62a2a', '#ff5a4a'),
+  'rock':   ramp('#43484e', '#595f66', '#737a82', '#8f979f'), 'rock2': ramp('#33373c', '#454a50', '#585e65', '#6f767e'),
+  'glow':   ramp('#a65a12', '#d98122', '#f5a64a', '#ffd185'), 'glow2': ramp('#4a8a22', '#74c032', '#a3ec55', '#d4ff8a'),
+  'robe':   ramp('#231a3c', '#35275a', '#4c3a80', '#6a52a8'), 'robe2': ramp('#1a1230', '#271b44', '#372860', '#4b3a80'), 'lskin': ramp('#5f7a52', '#7c9a6c', '#9cc78c', '#b8e0a8'),
 }
 
 def rx(a): c, s = math.cos(a), math.sin(a); return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
@@ -136,8 +148,10 @@ def tool_boxes(b, hand, tool):
 
 def person(pose, look='survivor', tool=None):
     """pose: dict of angles (radians). +z is the front, +x the person's left. positive arm/leg angle swings forward."""
-    z = look in ('zombie', 'brute')
+    z = look in ('zombie', 'brute', 'golem', 'lord'); zz = look in ('zombie', 'brute')
     if look == 'brute': M = dict(skin='bskin', top='bshirt', legs='bpants', boots='strap'); FAT[0] = 1.28
+    elif look == 'golem': M = dict(skin='rock', top='rock2', legs='rock2', boots='rock'); FAT[0] = 1.75
+    elif look == 'lord': M = dict(skin='lskin', top='robe', legs='robe2', boots='robe2'); FAT[0] = 1.1
     elif z: M = dict(skin='zskin', top='zshirt', legs='zpants', boots='strap'); FAT[0] = 1.0
     else: M = dict(skin='skin', top='armor', legs='pants', boots='boots'); FAT[0] = 1.0
     b = []
@@ -152,21 +166,29 @@ def person(pose, look='survivor', tool=None):
     if not z:
         box(b, chest, (0, .30, -.23), (.38, .46, .20), 'pack', 'pack'); box(b, chest, (0, .56, -.30), (.34, .08, .06), 'pack', 'rollTop'); box(b, chest, (.15, .38, .12), (.04, .40, .17), 'strap', 'pstrapL'); box(b, chest, (-.15, .38, .12), (.04, .40, .17), 'strap', 'pstrapR')
         box(b, chest, (0, .28, .145), (.035, .52, .02), 'strap', 'zip1')
-    else:
+    elif zz:
         box(b, chest, (-.10, .36, .155), (.16, .20, .02), 'blood', 'stain'); box(b, chest, (.12, .12, .155), (.12, .10, .02), 'blood', 'stain2')
         if look == 'brute': box(b, chest, (.0, .28, -.15), (.4, .5, .02), 'blood', 'stain3'); box(b, chest, (.24, .58, 0), (.12, .10, .34), 'bshirt', 'padL'); box(b, chest, (-.24, .58, 0), (.12, .10, .34), 'bshirt', 'padR')
     neck = Node(chest, (0, .63, 0), rx(-pose.get('head_lean', 0)) @ rz(pose.get('head_roll', 0)))
     box(b, neck, (0, .03, 0), (.14, .09, .14), M['skin'], 'neck')
-    box(b, neck, (0, .26, 0), (.40, .40, .38), M['skin'], 'head')
+    hs = .6 if look == 'golem' else 1
+    box(b, neck, (0, .26, 0), (.40 * hs, .40, .38 * hs), M['skin'], 'head')
     if not z:
         box(b, neck, (0, .45, -.02), (.42, .10, .38), 'hair', 'hairtop'); box(b, neck, (0, .31, -.20), (.42, .30, .05), 'hair', 'hairback')
         box(b, neck, (.215, .36, -.03), (.03, .20, .30), 'hair', 'hairL'); box(b, neck, (-.215, .36, -.03), (.03, .20, .30), 'hair', 'hairR')
         box(b, neck, (0, .425, .20), (.40, .07, .04), 'hair', 'fringe')
         box(b, neck, (-.10, .28, .195), (.07, .07, .02), 'eye', 'eyeR'); box(b, neck, (.10, .28, .195), (.07, .07, .02), 'eye', 'eyeL')
     else:
-        box(b, neck, (0, .43, -.02), (.36, .06, .36), M['skin'], 'scalp'); box(b, neck, (-.09, .27, .185), (.07, .06, .02), 'zeye', 'eyeR'); box(b, neck, (.09, .27, .185), (.07, .06, .02), 'zeye', 'eyeL')
-        box(b, neck, (0, .15, .185), (.17, .04, .02), 'blood', 'mouth')
+        eye = 'glow' if look == 'golem' else 'glow2' if look == 'lord' else 'zeye'
+        box(b, neck, (0, .43, -.02), (.36, .06, .36), M['skin'], 'scalp'); box(b, neck, (-.09, .27, .185), (.07, .06, .02), eye, 'eyeR'); box(b, neck, (.09, .27, .185), (.07, .06, .02), eye, 'eyeL')
+        if zz: box(b, neck, (0, .15, .185), (.17, .04, .02), 'blood', 'mouth')
         if look == 'zombie': box(b, neck, (-.14, .38, .0), (.10, .10, .36), 'hair', 'tuft')
+        if look == 'golem':
+            box(b, neck, (.0, .16, .2), (.2, .06, .02), 'rock2', 'jaw'); box(b, neck, (-.2, .47, .0), (.12, .10, .18), 'rock', 'chunkL'); box(b, neck, (.18, .08, .1), (.08, .1, .12), 'rock', 'chunkR')
+            box(b, chest, (.34, .66, 0), (.26, .16, .34), 'rock', 'padL'); box(b, chest, (-.34, .66, 0), (.26, .16, .34), 'rock', 'padR'); box(b, chest, (0, .35, .15), (.1, .34, .02), 'glow', 'vein1'); box(b, chest, (.12, .2, .15), (.2, .04, .02), 'glow', 'vein2')
+        if look == 'lord':
+            for i, dx in enumerate((-.15, -.075, 0, .075, .15)): box(b, neck, (dx, .52 + (.05 if i % 2 == 0 else 0), 0), (.06, .12 + (.05 if i % 2 == 0 else 0), .06), 'gold', 'crown' + str(i))
+            box(b, neck, (0, .47, 0), (.42, .05, .40), 'gold', 'crownBand')
     for side, sgn in (('L', 1), ('R', -1)):
         ang = pose.get('arm' + side, 0); elb = pose.get('elbow' + side, 0); out = pose.get('out' + side, 0)
         sh = Node(chest, (sgn * .36 * (1 + (FAT[0] - 1) * .6), .54, 0), rz(-sgn * out) @ rx(-ang))
@@ -177,6 +199,7 @@ def person(pose, look='survivor', tool=None):
         if tool and not z and side == 'R':
             hand = Node(el, (0, -.34, 0), rx(-pose.get('grip', 1.2)))
             tool_boxes(b, hand, tool)
+    if look == 'lord': box(b, root, (0, -.30, 0), (.66, .72, .42), 'robe', 'skirt'); box(b, root, (0, -.30, .215), (.08, .70, .02), 'gold', 'trim'); box(b, chest, (0, .05, 0), (.56, .08, .34), 'gold', 'sash')
     for side, sgn in (('L', 1), ('R', -1)):
         ang = pose.get('leg' + side, 0); kn = pose.get('knee' + side, 0)
         hp = Node(root, (sgn * .13, -.02, 0), rx(-ang))
@@ -231,6 +254,23 @@ def survivor_pose(anim, phase, tool=None):
 
 def mix_t(p, q, t): return (lerp(p[0], q[0], t), lerp(p[1], q[1], t))
 
+def golem_pose(anim, phase):
+    ph = phase * 2 * math.pi; s = math.sin(ph)
+    base = dict(armL=.05, armR=.05, elbowL=.15, elbowR=.15, outL=.30, outR=.30, lean=-.05)
+    if anim == 'idle': return dict(base, bob=.012 * s, armL=.05 + .04 * s, armR=.05 - .04 * s)
+    if anim == 'walk':
+        p = dict(base, legL=.30 * s, legR=-.30 * s, armL=-.32 * s, armR=.32 * s, twist=.09 * s, bob=-.05 * abs(s), lean=-.08)
+        p['kneeL'] = max(0, math.sin(ph + math.pi / 2)) * .4 if s < 0 else .05; p['kneeR'] = max(0, math.sin(ph + math.pi / 2 + math.pi)) * .4 if s > 0 else .05
+        return p
+    if anim == 'attack':
+        i = min(3, int(phase * 4))
+        return dict(base, armL=[2.7, 2.4, .35, .6][i], armR=[2.7, 2.4, .35, .6][i], elbowL=.2, elbowR=.2, outL=.12, outR=.12, lean=[.2, .05, -.4, -.25][i], bob=[.02, 0, -.1, -.06][i], legL=[-.2, .1, .3, .2][i], legR=[.2, -.1, -.2, -.1][i], head_lean=[.1, -.05, -.3, -.2][i])
+    if anim == 'hurt': return dict(base, lean=.2, head_lean=.25, bob=-.04, armL=.4, armR=.4, outL=.5, outR=.5)
+    if anim == 'die':
+        t = min(1, phase); e = 1 - (1 - t) ** 2
+        return dict(base, fall=lerp(0, 1.5, e), armL=lerp(.05, 2.2, e), armR=lerp(.05, 1.8, e), outL=lerp(.3, .8, e), outR=lerp(.3, .8, e), head_lean=lerp(0, .3, e))
+    raise ValueError(anim)
+
 def zombie_pose(anim, phase, look='zombie'):
     big = look == 'brute'
     ph = phase * 2 * math.pi; s = math.sin(ph); A = .34 if not big else .3
@@ -258,21 +298,21 @@ def zombie_pose(anim, phase, look='zombie'):
 DIRS = ['S', 'SW', 'W', 'NW', 'N', 'NE', 'E', 'SE']
 FACING = {'S': 0, 'SW': -45, 'W': -90, 'NW': -135, 'N': 180, 'NE': 135, 'E': 90, 'SE': 45}     # E faces screen-right
 
+LOOKS = {}      # name -> dict(frames=[(anim, n), ...], pose=fn(anim, phase, tool), model=fn(pose, tool) -> boxes, ppu=scale)
+
 def frame_img(look, tool, anim, phase, d):
-    pose = survivor_pose(anim, phase, tool) if look == 'survivor' else zombie_pose(anim, phase, look)
-    ppu = PX_PER_UNIT * (1.42 if look == 'brute' else 1.0)
-    k, info = render(person(pose, look, tool if look == 'survivor' else None), math.radians(FACING[d]), ppu)
+    L = LOOKS[look]
+    k, info = render(L['model'](L['pose'](anim, phase, tool), tool), math.radians(FACING[d]), PX_PER_UNIT * L.get('ppu', 1))
     return shade_image(k, info)
 
-ANIMS = {   # name -> frames
-    'survivor': [('idle', 4), ('walk', 8), ('attack', 4), ('hurt', 1)],
-    'zombie':   [('idle', 4), ('walk', 8), ('attack', 4), ('hurt', 1), ('die', 5)],
-    'brute':    [('idle', 4), ('walk', 8), ('attack', 4), ('hurt', 1), ('die', 5)],
-}
+_PEOPLE = [('idle', 4), ('walk', 8), ('attack', 4), ('hurt', 1)]
+LOOKS['survivor'] = dict(frames=_PEOPLE, pose=lambda an, ph, tool: survivor_pose(an, ph, tool), model=lambda pose, tool: person(pose, 'survivor', tool))
+for _k, _p in (('zombie', 1.0), ('brute', 1.42)):
+    LOOKS[_k] = dict(frames=_PEOPLE + [('die', 5)], pose=(lambda k: lambda an, ph, tool: zombie_pose(an, ph, k))(_k), model=(lambda k: lambda pose, tool: person(pose, k, None))(_k), ppu=_p)
 
 def build_sheet(look, tool=None):
     """returns (RGBA image cropped to the used area, meta)"""
-    seq = ANIMS[look]
+    seq = LOOKS[look]['frames']
     frames = {}                                                    # (dir index, col) -> RGBA array
     col = 0; cols = {}
     for name, n in seq:
@@ -292,3 +332,7 @@ def build_sheet(look, tool=None):
         out.alpha_composite(Image.fromarray(f).crop((x0, y0, x1, y1)), (c * cw, r * chh))
     meta = dict(w=int(cw), h=int(chh), ax=int(ANCHOR[0] - x0), ay=int(ANCHOR[1] - y0), cols=cols, ncol=ncol)
     return out, meta
+
+_BIGP = [('idle', 2), ('walk', 8), ('attack', 4), ('hurt', 1), ('die', 5)]
+LOOKS['golem'] = dict(frames=_BIGP[:1] + [('walk', 8), ('attack', 4), ('hurt', 1), ('die', 4)], pose=lambda an, ph, tool: golem_pose(an, ph), model=lambda pose, tool: person(pose, 'golem', None), ppu=1.15)
+LOOKS['zombielord'] = dict(frames=_BIGP, pose=lambda an, ph, tool: zombie_pose(an, ph, 'zombie'), model=lambda pose, tool: person(pose, 'lord', None), ppu=1.55)

@@ -33,6 +33,9 @@ MAT.update({
     'exitl':  ramp('#a88a50', '#d4b06a', '#f2d48c', '#fff0c0'), 'hull': ramp('#3a2610', '#573a1c', '#7d552b', '#a8723a'), 'hull2': ramp('#2a2420', '#3f3730', '#5a5048', '#766a60'),
     'ash':    ramp('#1c1c1e', '#2a2a2d', '#3a3a3e', '#4c4c50'),
 })
+MAT.update({
+    'logw': ramp('#3f2a14', '#5f4120', '#83592b', '#a87a40'), 'logw2': ramp('#4d3419', '#71502a', '#9a6b36', '#c28d4d'), 'coal': ramp('#101012', '#1a1a1d', '#26262a', '#34343a'),
+})
 ORE_MAT = {'copper': 'copper', 'iron': 'iron', 'gold': 'goldore'}
 
 def seeded(name): return random.Random(sum(ord(c) * (i + 3) for i, c in enumerate(name)))
@@ -164,25 +167,31 @@ def fire_pit(burnt=False):
         box(b, Node(root, (0, .15, 0), ry(a) @ rz(.12 * sg)), (0, 0, 0), (.95, .13, .15), 'ash' if burnt else 'trunk', 'log%d' % sg)
     return b
 
-def shelter():
+def shelter():                                                          # a small log cabin: six rows of logs, a doorway in the front wall, a pitched shingle roof and a stone chimney
     b = []; root = Node(None, (0, 0, 0), ry(0))
-    for sg in (1, -1):                                              # two sloping roof slabs meeting at a ridge along z
-        n = Node(root, (sg * .5, .62, 0), rz(sg * .9)); box(b, n, (0, 0, 0), (.08, 1.4, 1.9), 'thatch', 'roof%d' % sg)
-    box(b, root, (0, 1.1, 0), (.1, .1, 2.0), 'plank2', 'ridge')
-    for i in range(6):                                              # the gable end: planks getting shorter toward the ridge
-        y = .08 + i * .165; w = 2.0 * (1 - (y + .08) / 1.12); box(b, root, (0, y + .08, .93), (max(.12, w), .17, .06), 'plank', 'gable%d' % i)
-    box(b, root, (0, .3, .99), (.55, .62, .05), 'dark', 'door')
-    for sg in (1, -1): box(b, root, (sg * .3, .34, 1.01), (.07, .7, .06), 'plank2', 'doorpost%d' % sg)
-    box(b, root, (0, .68, 1.01), (.67, .07, .06), 'plank2', 'doorlintel')
+    for row in range(6):
+        y = .11 + row * .2; long_, short = (2.0, 1.55) if row % 2 == 0 else (1.55, 2.0); m = 'logw' if row % 2 else 'logw2'
+        for sg in (1, -1):
+            if sg == 1 and 1 <= row <= 4:                               # the doorway
+                for sx in (1, -1): box(b, root, (sx * .62, y, .72), (.62, .2, .22), m, 'fx%d_%d' % (row, sx))
+            else: box(b, root, (0, y, sg * .72), (long_, .2, .22), m, 'fx%d_%d' % (row, sg))
+            box(b, root, (sg * .72, y, 0), (.22, .2, short), m, 'fz%d_%d' % (row, sg))
+    box(b, root, (0, .55, .62), (.5, .9, .08), 'dark', 'door')
+    for sg in (1, -1):
+        n = Node(root, (0, 1.58, sg * .46), rx(sg * .7)); box(b, n, (0, 0, 0), (2.4, .1, 1.3), 'plank', 'roof%d' % sg)
+        for k in range(6): box(b, n, (0, .06, -.55 + k * .22), (2.42, .03, .1), 'plank2' if k % 2 == 0 else 'plank', 'shingle%d_%d' % (sg, k))
+    box(b, root, (0, 1.95, 0), (2.4, .1, .14), 'plank2', 'ridge'); box(b, root, (.7, 2.2, -.3), (.34, .7, .34), 'stone', 'chimney')
+    box(b, root, (-.72 - .12, .6, .0), (.04, .3, .3), 'dark', 'window'); box(b, root, (.0, .06, .95), (.9, .12, .3), 'stone', 'step')
     return b
 
-def furnace(on=False):
+def furnace(on=False):                                                  # a forge: stone hearth with a bed of coals under a hood and chimney, an anvil on a stump, bellows behind
     b = []; root = Node(None, (0, 0, 0), ry(0))
-    box(b, root, (0, .45, 0), (1.1, .9, 1.0), 'furn', 'body'); box(b, root, (0, .94, 0), (1.18, .1, 1.08), 'wallst', 'top')
-    box(b, root, (-.28, 1.3, -.2), (.34, .75, .34), 'brickd', 'chimney'); box(b, root, (-.28, 1.7, -.2), (.42, .08, .42), 'furn', 'chimcap')
-    box(b, root, (0, .3, .51), (.5, .48, .04), 'glow' if on else 'dark', 'mouth'); box(b, root, (0, .6, .51), (.62, .08, .05), 'wallst', 'lintel')
-    for sg in (-1, 1): box(b, root, (sg * .3, .3, .5), (.08, .5, .05), 'wallst', 'jamb%d' % sg)
-    box(b, root, (.45, .72, .51), (.08, .08, .04), 'metal', 'rivet')
+    box(b, root, (-.2, .3, 0), (1.2, .6, 1.0), 'furn', 'hearth'); box(b, root, (-.2, .62, 0), (1.0, .08, .8), 'glow' if on else 'coal', 'coals')
+    for sx in (1, -1):
+        for sz in (1, -1): box(b, root, (-.2 + sx * .5, 1.0, sz * .4), (.12, .8, .12), 'plank2', 'post')
+    box(b, root, (-.2, 1.42, 0), (1.2, .12, 1.0), 'walliron', 'hood'); box(b, root, (-.2, 1.9, -.2), (.34, 1.0, .34), 'brickd', 'chimney')
+    box(b, root, (.95, .2, .2), (.34, .4, .34), 'trunk', 'stump'); box(b, root, (.95, .46, .2), (.5, .12, .24), 'metal', 'anvil'); box(b, root, (.95, .54, .2), (.3, .08, .18), 'metal', 'anvilTop'); box(b, root, (1.18, .5, .2), (.18, .06, .1), 'metal', 'horn')
+    box(b, Node(root, (-.2, .4, -.7), rx(.25)), (0, 0, 0), (.5, .5, .12), 'plank', 'bellows'); box(b, root, (-.2, .22, -.95), (.3, .12, .3), 'plank2', 'bellowsPipe')
     return b
 
 def boat(big=False, flip=False):
@@ -266,7 +275,7 @@ def tower():
     return b
 
 def building_list():
-    out = [('fire', fire_pit()), ('fire_out', fire_pit(True)), ('shelter', shelter()), ('furnace', furnace()), ('furnace_on', furnace(True)),
+    out = [('fire', fire_pit()), ('fire_out', fire_pit(True)), ('shelter', shelter()), ('furnace', furnace(), 22), ('furnace_on', furnace(True), 22),
            ('boat_e', boat()), ('boat_w', boat(False, True)), ('boat2_e', boat(True)), ('boat2_w', boat(True, True)),
            ('minedoor', mine_door()), ('caveexit', cave_exit()), ('gate', gate()), ('tower', tower()),
            ('wall_wood', wall_post('wood')), ('rail_x', rail('x')), ('rail_y', rail('y')), ('wall_stone', wall_block('stone')), ('wall_iron', wall_block('iron'))]

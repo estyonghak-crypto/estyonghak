@@ -119,6 +119,8 @@ body.building #equip{display:none}
 .lvtag.l4{background:rgba(194,124,255,.2);color:#d9aeff}
 .lvtag.l5{background:rgba(255,209,102,.22);color:#ffd166}
 .btns{display:flex;flex-direction:column;gap:6px}
+#mini{position:absolute;right:max(10px,env(safe-area-inset-right));top:clamp(150px,30vh,300px);width:104px;height:104px;border:1px solid var(--line);border-radius:10px;background:rgba(8,16,14,.7);image-rendering:pixelated;pointer-events:none;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+@media (max-height:520px){#mini{top:66px;width:88px;height:88px}}
 #eliteArrow{position:fixed;left:0;top:0;width:64px;margin:-20px 0 0 -32px;z-index:6;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:1px}
 #eliteArrow i{display:block;width:0;height:0;border-left:15px solid #ff5a4a;border-top:9px solid transparent;border-bottom:9px solid transparent;filter:drop-shadow(0 0 4px rgba(255,90,74,.9))}
 #eliteArrow b{font-size:10.5px;font-weight:700;color:#ffb3a8;text-shadow:0 1px 3px #000;white-space:nowrap}
@@ -233,6 +235,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <div id="inv3" hidden></div>
   <div id="goal" class="panel"></div>
   <div id="eliteArrow" hidden><i></i><b></b></div>
+  <canvas id="mini" width="104" height="104" aria-label="미니맵"></canvas>
   <div class="spacer"></div>
   <button id="btnBuild">건축</button>
   <div id="build" hidden></div>
@@ -282,6 +285,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>미니맵</b> 오른쪽의 작은 지도를 누르면 섬 전체 ↔ 내 주변으로 바뀌어요 (M)</li>
     <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~5, Q)</li>
     <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
     <li><b>소총·탑</b> 소총은 장착하면 자동 조준, 탑은 건축에서 설치해요. 둘 다 탄약이 필요해요</li>
@@ -790,7 +794,7 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQbB123456zZxXvV'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB123456zZxXvVmM'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
@@ -802,6 +806,7 @@ addEventListener('keydown', e => {
   else if (e.key >= '1' && e.key <= '6'){ if (!paused) buildMode ? selectBuild(buildList()[+e.key - 1]) : manualEquip(ownedTools()[+e.key - 1]); }
   else if (e.key === 'q' || e.key === 'Q'){ if (!paused) { const bl = buildList(); buildMode ? selectBuild(bl[(bl.indexOf(buildSel) + 1) % bl.length]) : cycleEquip(); } }
   else if (e.key === 'b' || e.key === 'B'){ if (!paused) toggleBuild(); }
+  else if (e.key === 'm' || e.key === 'M'){ if (!paused) miniToggle(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -812,7 +817,9 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 function resetJoy(){ joy.active = false; joy.x = joy.y = 0; $('joy').classList.remove('on'); }
 const toWorld = e => s2w(e.clientX, e.clientY);
 const inBuildRange = w => Math.hypot(w.x - P.x, w.y - P.y) <= BUILD_RANGE + GRID * .7;
+let tapT = 0, tapX = 0, tapY = 0;
 cv.addEventListener('pointerdown', e => {
+  tapT = performance.now(); tapX = e.clientX; tapY = e.clientY;
   if (!running || paused) return;
   if (buildMode){            // inside the ring you paint walls, outside it you steer
     const w = toWorld(e);
@@ -833,6 +840,7 @@ cv.addEventListener('pointermove', e => {
   $('joyKnob').style.transform = `translate(${dx}px,${dy}px)`;
 });
 const endPtr = e => {
+  if (e.type === 'pointerup' && running && !paused && performance.now() - tapT < 300 && Math.hypot(e.clientX - tapX, e.clientY - tapY) < 10) miniTap(e);
   if (paint && e.pointerId === paint.id){ paint = null; if (e.pointerType !== 'mouse') cursor = null; }
   if (joy.active && e.pointerId === joy.id) resetJoy();
 };
@@ -1540,6 +1548,69 @@ for (const k in ITEMS){
 }
 for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
 function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
+/* ================= minimap: the island turned 45 degrees (so "up" on the map is "up" on the screen), tap it to switch between the whole island and your surroundings ================= */
+const miniCv = $('mini'), mx = miniCv.getContext('2d');
+let miniMode = 'island', miniLast = -1, miniSz = 104, miniTf = null;
+try { if (localStorage.getItem('muindo-minimap') === 'near') miniMode = 'near'; } catch (_) {}
+const MINI_GROUND = { grass: '#4f6a3b', rock: '#6d675a', snow: '#c9d4db', cave: '#2c2f36' };
+const MINI_ORE = { copper: '#ff9a52', iron: '#dfeaf7', gold: '#ffd84a' };
+const MINI_SEE = 650, MINI_CAVE_SEE = 420;           // how far hostile animals (and, in the cave, ore) show up on the map
+function miniTap(e){
+  const r = miniCv.getBoundingClientRect(); if (!r.width || e.clientX < r.left - 6 || e.clientX > r.right + 6 || e.clientY < r.top - 6 || e.clientY > r.bottom + 6) return;
+  miniToggle();
+}
+function miniToggle(){ miniMode = miniMode === 'island' ? 'near' : 'island'; miniLast = -1; try { localStorage.setItem('muindo-minimap', miniMode); } catch (_) {} }
+function drawMini(force){
+  if (!running || !P) return;
+  if (!force && anim - miniLast < .1) return; miniLast = anim;
+  const sz = H < 520 ? 88 : 104; if (miniCv.width !== sz){ miniCv.width = miniCv.height = sz; } miniSz = sz;
+  const near = miniMode === 'near', R2 = Math.SQRT1_2, cxw = near ? P.x : WORLD / 2, cyw = near ? P.y : WORLD / 2;
+  const span = near ? 560 : (WORLD - 2 * ISL_M) / 2 * Math.SQRT2 + 24, k = (sz / 2 - 3) / span;
+  const tx = (x, y) => sz / 2 + ((x - cxw) - (y - cyw)) * R2 * k, ty = (x, y) => sz / 2 + ((x - cxw) + (y - cyw)) * R2 * k;
+  miniTf = { tx, ty };
+  mx.setTransform(1, 0, 0, 1, 0, 0); mx.imageSmoothingEnabled = false;
+  mx.fillStyle = Z.cave ? '#06070a' : Z.bg; mx.fillRect(0, 0, sz, sz);
+  const outline = (inset, col) => {                        // the rounded-square island as a polygon: four quarter arcs, each around its own corner centre
+    const c = WORLD / 2, h = (WORLD - 2 * ISL_M) / 2 - inset, rr = Math.max(8, ISL_R - inset), q = h - rr; mx.beginPath(); let first = true;
+    for (const [ox, oy, a0] of [[1, 1, 0], [-1, 1, Math.PI / 2], [-1, -1, Math.PI], [1, -1, Math.PI * 1.5]]){
+      for (let i = 0; i <= 8; i++){ const a = a0 + i / 8 * Math.PI / 2, x = c + ox * q + Math.cos(a) * rr, y = c + oy * q + Math.sin(a) * rr; if (first){ mx.moveTo(tx(x, y), ty(x, y)); first = false; } else mx.lineTo(tx(x, y), ty(x, y)); }
+    }
+    mx.closePath(); mx.fillStyle = col; mx.fill();
+  };
+  outline(0, Z.shore); outline(Z.cave ? 14 : 42, MINI_GROUND[Z.ground] || '#4f6a3b');
+  const dot = (x, y, w, col) => { const px = tx(x, y), py = ty(x, y); if (px < -3 || py < -3 || px > sz + 3 || py > sz + 3) return; mx.fillStyle = col; mx.fillRect(Math.round(px - w / 2), Math.round(py - w / 2), w, w); };
+  const see = Z.cave ? MINI_CAVE_SEE : 1e9, wat = Z.lake.water;
+  mx.fillStyle = wat; for (const o of objs) if (o.t === 'water'){ const px = tx(o.x, o.y), py = ty(o.x, o.y), r = Math.max(1.5, o.r * k); if (px > -r && py > -r && px < sz + r && py < sz + r){ mx.beginPath(); mx.arc(px, py, r, 0, TAU); mx.fill(); } }
+  const dn = o => Math.hypot(o.x - P.x, o.y - P.y);
+  for (const o of objs){                                   // the lay of the land first, then the things worth walking to
+    switch (o.t){
+      case 'tree': dot(o.x, o.y, near ? 2 : 1, Z.ground === 'snow' ? '#7f9aa4' : '#2c4a30'); break;
+      case 'rock': dot(o.x, o.y, near ? 2 : 1, '#8b9096'); break;
+      case 'wall': dot(o.x, o.y, o.kind === 'tower' ? 3 : near ? 2 : 1, o.kind === 'tower' ? '#e6c88c' : '#b08850'); break;
+    }
+  }
+  for (const o of objs){
+    switch (o.t){
+      case 'ore': if (o.amt > 0 && dn(o) < see) dot(o.x, o.y, 2, MINI_ORE[o.kind]); break;
+      case 'fire': dot(o.x, o.y, 3, o.fuel > 0 ? '#ffb347' : '#8a8f94'); break;
+      case 'shelter': dot(o.x, o.y, 4, '#d6b078'); break;
+      case 'furnace': dot(o.x, o.y, 3, o.glow > 0 ? '#ff7a3a' : '#c8805a'); break;
+      case 'boat': dot(o.x, o.y, 4, '#a8dcff'); break;
+      case 'mine': dot(o.x, o.y, 4, '#c0a8ff'); break;
+      case 'exit': dot(o.x, o.y, 4, '#8ff08f'); break;
+    }
+  }
+  for (const p of pickups) dot(p.x, p.y, 2, 'rgb(' + (PICK_COL[p.k] || '255,220,120') + ')');
+  const pulse = Math.sin(anim * 7) > 0;
+  for (const c of creatures){
+    const d = dn(c), boss = !!c.boss, elite = !!c.elite; if (!boss && !elite && d > MINI_SEE) continue;
+    const hostile = c.k in NIGHT_KINDS || c.k === 'bat' || c.k === 'golem' && c.state === 'awake' || (c.k === 'bear' || c.k === 'boar') && c.state === 'angry';
+    if (boss) dot(c.x, c.y, pulse ? 6 : 5, '#ffd34a'); else if (elite) dot(c.x, c.y, 4, '#ff9a3c'); else if (hostile) dot(c.x, c.y, 3, '#ff5a4a'); else dot(c.x, c.y, 2, c.k === 'rabbit' ? '#efe6d0' : '#cfa070');
+  }
+  const px = tx(P.x, P.y), py = ty(P.x, P.y), a = Math.atan2(P.fx + P.fy, P.fx - P.fy);      // which way the player faces on the map
+  mx.fillStyle = '#fff'; mx.strokeStyle = 'rgba(0,0,0,.85)'; mx.lineWidth = 1.5; mx.lineJoin = 'round'; mx.beginPath();
+  mx.moveTo(px + Math.cos(a) * 5, py + Math.sin(a) * 5); mx.lineTo(px + Math.cos(a + 2.5) * 4, py + Math.sin(a + 2.5) * 4); mx.lineTo(px + Math.cos(a - 2.5) * 4, py + Math.sin(a - 2.5) * 4); mx.closePath(); mx.stroke(); mx.fill();
+}
 function updateEliteArrow(){            // red arrow at the screen edge pointing at the nearest elite that is off screen
   const el = $('eliteArrow'); let best = null, bd = 1e9;
   for (const c of creatures) if (c.elite || c.boss){ const d = Math.hypot(c.x - P.x, c.y - P.y) - (c.boss ? 1e6 : 0); if (d < bd){ bd = d; best = c; } }      // a boss outranks any elite
@@ -3044,7 +3115,7 @@ function render(){
     ctx.imageSmoothingEnabled = true; ctx.drawImage(lc, 0, 0, cv.width, cv.height);
   }
   uprightT(); drawPickups(); ctx.setTransform(1, 0, 0, 1, 0, 0);
-  updateAtmosphere(t, dk);
+  updateAtmosphere(t, dk); drawMini();
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
 }
 
@@ -3073,7 +3144,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

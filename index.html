@@ -52,6 +52,13 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
   background:linear-gradient(90deg,#f2c35b 0%,#f2c35b 49%,#e8793a 54%,#2c2f6b 62%,#1b1f4b 89%,#8a6fa8 95%,#f2c35b 100%)}
 #clock i{position:absolute;top:-3px;width:3px;height:13px;margin-left:-1px;background:var(--bone);border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
 #menuBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1}
+#bossBar{margin-top:8px;align-self:center;width:min(100%,340px);padding:6px 10px 8px;border-color:rgba(255,205,90,.6)}
+#bossBar .bn{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:13px;color:#ffd98a}
+#bossBar small{font-size:11px;font-weight:400;color:var(--dim);font-variant-numeric:tabular-nums}
+.bbar{height:9px;margin-top:4px;background:rgba(255,255,255,.14);border-radius:5px;overflow:hidden}
+.bbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#e0533f,#ffb44a);border-radius:5px;transition:width .15s linear}
+#eliteArrow.boss i{border-left-color:#ffd34a;filter:drop-shadow(0 0 5px rgba(255,205,70,.95))}
+#eliteArrow.boss b{color:#ffe08a}
 #inv,#inv2{display:flex;gap:5px;margin-top:8px}
 #inv3{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-width:256px}
 #inv2{align-items:center}
@@ -210,6 +217,7 @@ body.building #equip{display:none}
     <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div><small id="zoneTag"></small></div>
     <button id="menuBtn" aria-label="메뉴">☰</button>
   </div>
+  <div id="bossBar" class="panel" hidden><div class="bn"><span id="bossName"></span><small id="bossHp"></small></div><div class="bbar"><i id="bossFill"></i></div></div>
   <div id="inv"></div>
   <div id="inv2" hidden></div>
   <div id="inv3" hidden></div>
@@ -379,11 +387,25 @@ const SPECS = {
   brute:  { hp: 110, r: 16, speed: 38,  dmg: 22, drop: { scrap: [4, 6], hide: 1 } },        // big zombie from day 4, breaks walls fast
   bear:   { hp: 55,  r: 15, speed: 50,  dmg: 18, rage: 2.3, atkCd: 1.5, wallDmg: 16, territory: 110, drop: { meat: 5, hide: 3 } },
   bat:    { hp: 4,   r: 8,  speed: 108, dmg: 4,  atkCd: .9, drop: {} },                          // cave only: flutters, swoops at you in the dark
-  golem:  { hp: 70,  r: 17, speed: 32,  dmg: 17, atkCd: 1.6, wallDmg: 14, drop: { stone: [2, 4], copper: [1, 3], iron: [0, 2] } }   // cave only: sleeps like a rock until you come near
+  golem:  { hp: 70,  r: 17, speed: 32,  dmg: 17, atkCd: 1.6, wallDmg: 14, drop: { stone: [2, 4], copper: [1, 3], iron: [0, 2] } },  // cave only: sleeps like a rock until you come near
+  wolfking:     { hp: 150, r: 21, speed: 110, dmg: 14, atkCd: .9,  boss: 1, drop: {} },                  // bosses: one every third night (see BOSSES)
+  zombielord:   { hp: 320, r: 22, speed: 40,  dmg: 26, atkCd: 1.4, wallDmg: 26, boss: 2, drop: {} },
+  mountainking: { hp: 520, r: 27, speed: 58,  dmg: 30, atkCd: 1.6, wallDmg: 40, boss: 3, drop: {} }
 };
+const BOSS_EVERY = 3;
+const BOSSES = [
+  { k: 'wolfking', name: '늑대왕', col: '255,196,70', desc: '늑대왕: 돌진하기 전에 붉은 길이 나타나요. 옆으로 피하세요!',
+    loot: { core: [1, 1], hide: [6, 8], meat: [5, 7], heal: [1, 2], ammo: [15, 25] } },
+  { k: 'zombielord', name: '좀비 군주', col: '176,128,255', desc: '좀비 군주: 부하 좀비를 계속 불러내요. 군주부터 쓰러뜨리세요!',
+    loot: { core: [2, 2], scrap: [12, 16], iron: [3, 5], heal: [2, 3], power: [1, 1] } },
+  { k: 'mountainking', name: '산군', col: '255,96,76', desc: '산군: 땅을 내리치기 전에 붉은 원이 나타나요. 벗어나세요!',
+    loot: { core: [3, 3], hide: [10, 14], meat: [8, 12], iron: [4, 6], gold: [2, 3], heal: [3, 3], swift: [1, 1], power: [1, 1] } }
+];
+const bossOf = day => BOSSES[Math.min(BOSSES.length, Math.round(day / BOSS_EVERY)) - 1];
+const isBossDay = day => day % BOSS_EVERY === 0 && day <= RAFT_DAY;
 const NIGHT_KINDS = { wolf: 1, zombie: 1, brute: 1 };
 /* ---- elites: stronger variants of wolves, zombies and bears, each with one affix ---- */
-const KIND_NAME = { rabbit: '토끼', boar: '멧돼지', wolf: '늑대', zombie: '좀비', brute: '거대 좀비', bear: '곰', bat: '박쥐', golem: '골렘' };
+const KIND_NAME = { rabbit: '토끼', boar: '멧돼지', wolf: '늑대', zombie: '좀비', brute: '거대 좀비', bear: '곰', bat: '박쥐', golem: '골렘', wolfking: '늑대왕', zombielord: '좀비 군주', mountainking: '산군' };
 const ELITE_OK = { wolf: 3, zombie: 3, bear: 2.2, golem: 2.5 };      // kind -> hp multiplier of its elite
 const AFFIX = {
   frenzy: { name: '광폭', col: '255,84,72',   ok: ['wolf', 'zombie', 'bear', 'golem'], desc: '광폭: 훨씬 빠르고 더 자주 공격해요' },
@@ -475,7 +497,7 @@ let running = false, paused = false, sleeping = false, anim = 0;
 let target = null, actHeld = false;
 const bullets = [], parts = [], pickups = []; let aim = null, towerTip = false, dustT = 0;
 let hurtT = 0, shakeT = 0, lastDay = 1, lastPhase = '', lastLabel = '';
-let lastChillT = -99, wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
+let bossTimer = 4, lastChillT = -99, wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
 const keys = {};
 const joy = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 
@@ -693,7 +715,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0 }, buffs: { swift: 0, power: 0 }, stats: { elites: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, visited: { home: true },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0 }, buffs: { swift: 0, power: 0 }, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, visited: { home: true },
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -1051,6 +1073,77 @@ function dropPickup(k, n, x, y){          // loot lies on the ground as a glowin
   const a = rand(0, TAU), d = rand(16, 38);
   pickups.push({ k, n, ox: x, oy: y, x, y, tx: x + Math.cos(a) * d, ty: y + Math.sin(a) * d, z: 0, age: 0, life: 90 });
 }
+function spawnBoss(def, day){
+  const c = spawnCreature(def.k, offD(), offD() + 140, false); if (!c) return null;
+  c.boss = BOSSES.indexOf(def) + 1; c.name = def.name; c.skill = 3 + Math.random() * 2; c.cast = 0; c.cr = 13; c.bday = day; if (c.boss === 1) c.scale = 1.9;
+  toast('⚠ 보스 ' + josa(def.name, '이/가') + ' 나타났어요!'); setTimeout(() => toast(def.desc), 1900);
+  shakeT = .4; try { navigator.vibrate && navigator.vibrate([80, 60, 120]); } catch (_) {}
+  return c;
+}
+function bossLoot(c){
+  const def = BOSSES[c.boss - 1]; P.stats.bosses = (P.stats.bosses || 0) + 1; P.bossKills[c.bday] = true;
+  floater(c.x, c.y - 74, '보스 처치!', '#ffd166'); fx('glow', c.x, c.y, 26, 30, def.col); fx('spark', c.x, c.y, 24, 20); shakeT = .45;
+  const got = [];
+  for (const k in def.loot){ const n = rollDrop(def.loot[k]); if (n > 0){ dropPickup(k, n, c.x, c.y); got.push(ITEMS[k].icon + (n > 1 ? n : '')); } }
+  for (let i = creatures.length - 1; i >= 0; i--){ const z = creatures[i]; if (z.owner){ fx('splat', z.x, z.y, 12, 6, '170,120,255'); creatures.splice(i, 1); } }       // the lord's minions crumble with him
+  toast('🏆 ' + def.name + ' 처치! 전리품 ' + got.join(' '));
+}
+function bossSlam(c, sp){
+  const R = 105; shakeT = .38;
+  for (let i = 0; i < 20; i++){ const a = i / 20 * TAU; fx('dust', c.x + Math.cos(a) * R * .8, c.y + Math.sin(a) * R * .6, 2, 1); }
+  fx('rock', c.x, c.y, 10, 10); fx('spark', c.x, c.y, 8, 6);
+  const d = Math.hypot(P.x - c.x, P.y - c.y);
+  if (d < R + PLAYER_R){ hurt(Math.round(sp.dmg * 1.15)); const ux = (P.x - c.x) / (d || 1), uy = (P.y - c.y) / (d || 1); P.x += ux * 36; P.y += uy * 36; }
+  for (const w of [...wallMap.values()]) if (Math.hypot(w.x - c.x, w.y - c.y) < R + 14) damageWall(w, 70);
+}
+function bossAI(c, sp, dt, dx, dy, d, night){      // returns the move [x, y, speed] and runs the boss's special attacks
+  let sx = 0, sy = 0, spd = 0;
+  c.skill = (c.skill == null ? 4 : c.skill) - dt;
+  if (!night){                                      // dawn: it slinks away
+    c.cast = 0; c.dash = 0; sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.3; c.hop += dt * 6; c.dawnT = (c.dawnT || 0) + dt;
+    if (d > offD() + 120 || c.dawnT > 8) c.gone = true;                    // it may be stuck behind trees, so it fades away after a while anyway
+    return [sx, sy, spd];
+  }
+  c.dawnT = 0;
+  const melee = d < c.r + PLAYER_R + 6;
+  const strike = mul => { if (c.atk <= 0){ hurt(Math.round(sp.dmg * mul)); c.atk = sp.atkCd; } };
+  const smash = () => { if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, sp.wallDmg); c.atk = sp.atkCd; } } };
+  if (c.boss === 1){                                // wolf king: bites, and charges along a lane that lights up red first
+    if (c.hp < c.max * .5 && !c.howled){ c.howled = true; for (let i = 0; i < 3; i++) spawnAt('wolf', c.x + rand(-60, 60), c.y + rand(-40, 40)); toast('늑대왕이 울부짖어 부하를 불러냈어요!'); shakeT = .3; fx('glow', c.x, c.y, 30, 16, '255,196,70'); }
+    if (c.dash > 0){
+      c.dash -= dt; sx = c.dvx; sy = c.dvy; spd = 470;
+      if (!c.dashHit && d < c.r * .8 + PLAYER_R + 6){ c.dashHit = true; hurt(Math.round(sp.dmg * 1.7)); c.dash = Math.min(c.dash, .08); }
+    } else if (c.cast > 0){
+      c.cast -= dt; if (c.cast > .2){ c.dvx = dx / d; c.dvy = dy / d; }
+      if (c.cast <= 0){ c.dash = .42; c.dashHit = false; }
+    } else {
+      sx = dx / d; sy = dy / d; spd = sp.speed;
+      if (melee) strike(1); else smash();
+      if (c.skill <= 0 && d > 90 && d < 330){ c.cast = c.castTot = .65; c.skill = 5.5; c.dvx = dx / d; c.dvy = dy / d; }
+    }
+  } else if (c.boss === 2){                         // zombie lord: slow and heavy, keeps calling zombies
+    const rage = c.hp < c.max * .5;
+    sx = dx / d; sy = dy / d; spd = sp.speed * (rage ? 1.25 : 1);
+    if (melee) strike(1); else smash();
+    if (c.skill <= 0){
+      c.skill = rage ? 6 : 9;
+      if (creatures.filter(z => z.owner).length < 6){
+        for (let i = 0; i < 2; i++){ const a = rand(0, TAU), z = spawnAt('zombie', c.x + Math.cos(a) * 46, c.y + Math.sin(a) * 30); z.owner = true; fx('glow', z.x, z.y, 14, 8, '176,128,255'); fx('smoke', z.x, z.y, 14, 3); }
+        if (!c.summoned){ c.summoned = true; toast('좀비 군주가 부하를 불러냈어요!'); }
+      }
+    }
+  } else {                                          // mountain king: heavy slams that light up red first, faster when hurt
+    if (!c.enraged && c.hp < c.max * .5){ c.enraged = true; c.spdMul = 1.35; toast('산군이 분노했어요! 더 빠르고 더 자주 내리쳐요'); shakeT = .3; }
+    if (c.cast > 0){ c.cast -= dt; if (c.cast <= 0) bossSlam(c, sp); }
+    else {
+      sx = dx / d; sy = dy / d; spd = sp.speed;
+      if (melee) strike(1); else smash();
+      if (c.skill <= 0 && d < 200){ c.cast = c.castTot = .95; c.skill = c.enraged ? 3.4 : 6; }
+    }
+  }
+  c.hop += dt * (spd > 0 ? 6 : 0);
+  return [sx, sy, spd];
+}
 function eliteLoot(c){
   P.stats.elites++;
   floater(c.x, c.y - 44, '엘리트 처치!', '#ffd166'); fx('glow', c.x, c.y, 18, 16, '255,214,90'); fx('spark', c.x, c.y, 16, 10);
@@ -1079,13 +1172,14 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y - 34, '방어', '#8fc4ff'); dmg = red; }
   c.hp -= dmg; c.hit = .18; c.sinceHit = 0;
-  const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
+  const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1) * (c.boss ? .15 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
   fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : c.k === 'golem' ? '170,172,180' : '196,44,44');
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1); if (n > 0) gain(k, n); }
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
+    if (c.boss && (byPlayer || byTower)) bossLoot(c);
     creatures.splice(creatures.indexOf(c), 1);
   }
 }
@@ -1095,7 +1189,7 @@ function attack(c){
 }
 
 /* ================= guns, arrows, towers ================= */
-const isHostile = c => c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || (SPECS[c.k].rage && c.state === 'angry');
+const isHostile = c => (SPECS[c.k].boss > 0) || c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || (SPECS[c.k].rage && c.state === 'angry');
 function nearestHostile(maxD){
   let best = null, bd = maxD;
   for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
@@ -1189,6 +1283,7 @@ function transition(fn, msg){        // fade out, change the map, fade back in
   setTimeout(() => { $('fade').classList.remove('on'); sleeping = false; if (msg) toast(msg); save(); }, 1100);
 }
 function sleep(){
+  if (creatures.some(c => c.boss)){ toast('보스가 노리고 있어서 잠들 수 없어요!'); return; }
   if (P.hunger < 20 || P.thirst < 20){ toast('너무 배고프거나 목말라서 잠들 수 없어요'); return; }
   sleeping = true; $('fade').classList.add('on');
   setTimeout(() => {
@@ -1411,7 +1506,8 @@ for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power'
 function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
 function updateEliteArrow(){            // red arrow at the screen edge pointing at the nearest elite that is off screen
   const el = $('eliteArrow'); let best = null, bd = 1e9;
-  for (const c of creatures) if (c.elite){ const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
+  for (const c of creatures) if (c.elite || c.boss){ const d = Math.hypot(c.x - P.x, c.y - P.y) - (c.boss ? 1e6 : 0); if (d < bd){ bd = d; best = c; } }      // a boss outranks any elite
+  if (best && best.boss) bd += 1e6;
   if (!best){ if (!el.hidden) el.hidden = true; return; }
   const sx = (best.x - cam.x) * zoom, sy = (best.y - cam.y) * zy, land = H < 520;
   const x0 = 36, x1 = W - (land ? 36 : 112), y0 = land ? 100 : 150, y1 = H - (land ? 70 : 150);    // keep clear of the top HUD, the equipment column and the buttons
@@ -1421,11 +1517,11 @@ function updateEliteArrow(){            // red arrow at the screen edge pointing
   if (el.hidden) el.hidden = false;
   el.style.transform = 'translate(' + (W / 2 + dx * k).toFixed(0) + 'px,' + (H / 2 + dy * k).toFixed(0) + 'px)';
   el.firstElementChild.style.transform = 'rotate(' + Math.atan2(dy, dx).toFixed(2) + 'rad)';
-  setText(el.lastElementChild, '엘리트 ' + Math.round(bd / 10) + 'm');
+  el.classList.toggle('boss', !!best.boss); setText(el.lastElementChild, (best.boss ? '보스 ' : '엘리트 ') + Math.round(bd / 10) + 'm');
 }
 let hudSig = '', lastGoal = '';
 function layoutHud(){            // keep the toasts just below the goal pill however many bag rows are showing
-  const sig = [...inv2El.children, ...inv3El.children].filter(c => !c.hidden).length + '|' + inv2El.hidden + inv3El.hidden + '|' + W + 'x' + H + '|' + lastGoal;
+  const sig = [...inv2El.children, ...inv3El.children].filter(c => !c.hidden).length + '|' + inv2El.hidden + inv3El.hidden + $('bossBar').hidden + '|' + W + 'x' + H + '|' + lastGoal;
   if (sig === hudSig) return; hudSig = sig;
   const r = $('goal').getBoundingClientRect(); if (r.height) document.documentElement.style.setProperty('--tt', Math.round(r.bottom + 10) + 'px');
 }
@@ -1447,13 +1543,17 @@ function updateHUD(){
   const row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || P.buffs.swift > 0 || P.buffs.power > 0;
   const row3 = [...inv3El.querySelectorAll('.slot')].some(s => !s.hidden); if (inv3El.hidden === row3) inv3El.hidden = !row3;
   if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', P.buffs.swift > 0 || P.buffs.power > 0);
+  const boss = creatures.find(c => c.boss), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
+  if (boss){ setText($('bossName'), '👑 ' + boss.name); setText($('bossHp'), Math.ceil(boss.hp) + ' / ' + boss.max); const w = (Math.max(0, boss.hp / boss.max) * 100).toFixed(1) + '%'; if ($('bossFill')._w !== w){ $('bossFill')._w = w; $('bossFill').style.width = w; } }
   updateEliteArrow(); layoutHud();
   setText($('armorBadge'), P.armor ? '🛡' + P.armor : '');
   if (buildMode) syncBuildBar();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
 function objective(){
-  const day = dayOf();
+  const day = dayOf(), boss = creatures.find(c => c.boss);
+  if (boss) return '<b>목표</b> 보스 <b>' + boss.name + '</b>' + josa(boss.name, '을/를').slice(boss.name.length) + ' 쓰러뜨리세요!';
+  if (isBossDay(day) && !P.bossKills[day] && dayT() > .3 && !Z.cave) return '<b>목표</b> 오늘 밤 나타나는 <b>보스</b> 대비 (벽 · 탑 · 모닥불 · 탄약)';
   if (!P.tools.axe) return '<b>목표</b> 나무 3 · 돌 2를 모아 <b>돌도끼</b> 만들기';
   if (!P.tools.spear) return '<b>목표</b> 나무 4 · 돌 2로 <b>나무 창</b> 만들기';
   if (!P.built.fire) return '<b>목표</b> 해가 지기 전에 <b>모닥불</b> 피우기';
@@ -1497,6 +1597,8 @@ function updateCreatures(dt){
         else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(sp.wallDmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
         if (c.angry <= 0 || d > 520) c.state = 'idle';
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
+    } else if (sp.boss){
+      const r = bossAI(c, sp, dt, dx, dy, d, night); sx = r[0]; sy = r[1]; spd = r[2];
     } else if (c.k === 'bat'){              // flutters erratically; swoops at the player in the dark
       c.hop += dt * 18;
       if (d < 240){
@@ -1533,10 +1635,11 @@ function updateCreatures(dt){
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
     spd *= c.spdMul || 1;
+    if (c.gone){ creatures.splice(i, 1); toast(josa(c.name, '이/가') + ' 물러갔어요…'); continue; }
     if (sx > .1) c.fx = 1; else if (sx < -.1) c.fx = -1;
     c.x += (sx * spd + c.kvx) * dt; c.y += (sy * spd + c.kvy) * dt;
     c.kvx *= Math.max(0, 1 - 7 * dt); c.kvy *= Math.max(0, 1 - 7 * dt);
-    if (c.k !== 'bat') collide(c, c.r);
+    if (c.k !== 'bat') collide(c, c.cr || c.r);
     clampIsland(c, c.r + 30);
     if (c.k === 'wolf'){
       for (const s of structs){
@@ -1554,12 +1657,13 @@ function update(dt){
   if (ph !== lastPhase){
     lastPhase = ph;
     if (Z.cave){}
-    else if (ph === '해질녘') toast('해가 저물고 있어요. 모닥불을 준비하세요!');
+    else if (ph === '해질녘'){ toast('해가 저물고 있어요. 모닥불을 준비하세요!'); if (isBossDay(day) && !P.bossKills[day]) setTimeout(() => toast('⚠ 오늘 밤 보스가 나타나요!'), 1900); }
     else if (ph === '밤') toast('밤이 되었습니다. 늑대를 조심하세요.');
     else if (ph === '새벽') toast('동이 틉니다…');
   }
   if (day !== lastDay){
     lastDay = day; toast(day + '일차 아침이 밝았습니다');
+    if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스가 나타나요. 미리 준비하세요!'), 1800);
     if (day === RAFT_DAY) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
   }
 
@@ -1618,6 +1722,7 @@ function update(dt){
     if (wolfTimer <= 0){
       const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
       const want = { wolf: Math.min(9, 1 + day), zombie: day >= 2 ? Math.min(12, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(5, Math.floor((day - 2) / 2)) : 0 };
+      if (isBossDay(day)) for (const k in want) want[k] = Math.ceil(want[k] * .65);       // on a boss night the boss is the main event
       for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){
         const force = day >= 2 && eliteNight !== day && !!ELITE_OK[k] && have.wolf + have.zombie >= 2;    // from night 2 there is always one elite
         const c = spawnCreature(k, offD(), offD() + 150, force ? true : undefined);
@@ -1625,6 +1730,9 @@ function update(dt){
       }
     }
   }
+  if (isBossDay(day) && isNight() && !Z.cave && !P.bossKills[day] && !creatures.some(c => c.boss)){
+    bossTimer -= dt; if (bossTimer <= 0){ bossTimer = 4; spawnBoss(bossOf(day), day); }          // it comes back if you leave and return, until it is dead or dawn breaks
+  } else bossTimer = 4;
   respawnTimer -= dt;
   if (respawnTimer <= 0){
     respawnTimer = Z.cave ? 14 : 5;
@@ -1650,7 +1758,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, visited: P.visited },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, visited: P.visited, bossKills: P.bossKills },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -1665,7 +1773,7 @@ function loadGame(s){
   P = Object.assign(newPlayer(), s.p); T = s.T;
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
-  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0 }, P.buffs); P.stats = Object.assign({ elites: 0 }, P.stats);
+  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0 }, P.buffs); P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {};
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
   spawnFauna();
@@ -1674,7 +1782,7 @@ function loadGame(s){
 /* ================= game flow ================= */
 function startRun(){
   running = true; paused = false; sleeping = false; actHeld = false; resetJoy();
-  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; lastGoal = ''; target = null; lastLabel = '';
+  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; lastGoal = ''; bossTimer = 4; target = null; lastLabel = '';
   cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zy / 2;
   $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
   $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
@@ -1689,7 +1797,7 @@ function endGame(win){
   try { best = +localStorage.getItem(BEST_KEY) || 0; if (!win && days > best){ best = days; localStorage.setItem(BEST_KEY, String(days)); } } catch (_) {}
   $('endTitle').innerHTML = win ? '탈출 <em>성공!</em>' : '<em>쓰러졌습니다</em>';
   $('endText').textContent = win ? '뗏목이 파도를 가르며 섬에서 멀어집니다. 살아서 돌아가는 거예요.' : (P.hp <= 0 && isNight() ? '어둠 속에서 힘이 다했습니다.' : '섬은 만만치 않았습니다.');
-  const ek = P.stats && P.stats.elites ? ' · 엘리트 ' + P.stats.elites + '마리 처치' : '';
+  const ek = (P.stats && P.stats.elites ? ' · 엘리트 ' + P.stats.elites + '마리 처치' : '') + (P.stats && P.stats.bosses ? ' · 보스 ' + P.stats.bosses + '마리 처치' : '');
   $('endStat').innerHTML = (win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`) + ek;
   $('hud').hidden = true; $('end').hidden = false;
 }
@@ -2092,7 +2200,7 @@ function drawLakes(lakes){
 }
 
 /* ---- cast shadows: the sun by day, campfires by night ---- */
-const SHADOW_H = { rabbit: 12, boar: 20, wolf: 19, zombie: 34, brute: 54, bear: 28, bat: 14, golem: 44 };
+const SHADOW_H = { rabbit: 12, boar: 20, wolf: 19, zombie: 34, brute: 54, bear: 28, bat: 14, golem: 44, wolfking: 24, zombielord: 74, mountainking: 62 };
 function casterSpec(d){          // [height, half width] of the thing standing there
   if (d.p) return [50, 9];
   if (d.c) return [SHADOW_H[d.c.k] * (d.c.scale || 1), d.c.r * .85];
@@ -2306,11 +2414,28 @@ function drawWreck(o){
 }
 function drawAuras(draws){           // glowing ground ring under every elite, colored by its affix
   for (const d of draws){
-    const c = d.c; if (!c || !c.elite) continue;
-    const col = AFFIX[c.affix].col, R = c.r * 3.3, pulse = .55 + .25 * Math.sin(anim * 4 + c.x);
+    const c = d.c; if (!c || !(c.elite || c.boss)) continue;
+    const col = c.boss ? BOSSES[c.boss - 1].col : AFFIX[c.affix].col, R = c.r * (c.boss ? 3.8 : 3.3), pulse = .55 + .25 * Math.sin(anim * 4 + c.x);
     const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, R); g.addColorStop(0, 'rgba(' + col + ',' + (.55 * pulse).toFixed(2) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.fill();
     ctx.strokeStyle = 'rgba(' + col + ',.75)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.lineDashOffset = -anim * 18; ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 1.9, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function drawBossTelegraphs(draws){     // red warnings on the ground before a boss attack lands
+  for (const d of draws){
+    const c = d.c; if (!c || !c.boss || !(c.cast > 0)) continue;
+    const p = 1 - c.cast / (c.castTot || .7);
+    if (c.boss === 1){                                // the wolf king's charge lane
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.atan2(c.dvy, c.dvx));
+      ctx.fillStyle = 'rgba(255,60,50,' + (.12 + .3 * p).toFixed(2) + ')'; ctx.fillRect(0, -15, 300, 30);
+      ctx.strokeStyle = 'rgba(255,100,80,.9)'; ctx.lineWidth = 2; ctx.strokeRect(0, -15, 300, 30);
+      ctx.fillStyle = 'rgba(255,230,220,.55)'; ctx.fillRect(0, -15, 300 * p, 30);
+      ctx.restore();
+    } else if (c.boss === 3){                         // the mountain king's slam circle
+      const R = 105; ctx.fillStyle = 'rgba(255,60,50,' + (.1 + .22 * p).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,200,180,.35)'; ctx.beginPath(); ctx.arc(c.x, c.y, R * p, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,100,80,.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.stroke();
+    }
   }
 }
 function drawBuffRings(){
@@ -2369,6 +2494,34 @@ function drawCreature(c){
     ctx.fillStyle = skin; ctx.fillRect(5, -20 + sw * .3, 11, 4); ctx.fillRect(5, -14 - sw * .3, 11, 4);
     circ(0, -26, 7, skin); ctx.fillStyle = 'rgba(40,30,20,.6)'; ctx.fillRect(-7, -32, 14, 3);
     circ(3.5, -27, 1.6, '#e33'); circ(-1, -27, 1.6, '#e33'); ctx.fillStyle = '#2a1a1a'; ctx.fillRect(1, -22.5, 5, 1.6);
+  } else if (c.k === 'wolfking'){
+    const run = Math.sin(c.hop) * 2, fur = flash ? '#fff' : '#3d414b', fur2 = flash ? '#fff' : '#4f5460';
+    ell(0, -9, 15, 7.5, fur);
+    ctx.fillStyle = flash ? '#fff' : '#6d7280'; for (let i = 0; i < 5; i++){ ctx.beginPath(); ctx.moveTo(-4 + i * 4.5, -14); ctx.lineTo(-2 + i * 4.5, -22 - (i % 2) * 2); ctx.lineTo(1 + i * 4.5, -14); ctx.closePath(); ctx.fill(); }
+    ctx.strokeStyle = fur; ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-14, -10); ctx.quadraticCurveTo(-23, -13 + run, -26, -5); ctx.stroke();
+    ctx.fillStyle = '#2f323a'; ctx.fillRect(-9, -4, 3.4, 6 + run * .3); ctx.fillRect(7, -4, 3.4, 6 - run * .3); ctx.fillRect(-2, -4, 3, 6 + run * .2);
+    circ(14, -11, 7, fur2); ctx.fillStyle = fur2; ctx.beginPath(); ctx.moveTo(10, -16); ctx.lineTo(12, -23); ctx.lineTo(16, -16); ctx.closePath(); ctx.fill(); ell(20.5, -9.5, 4.2, 3, fur2);
+    ctx.fillStyle = '#ffd34a'; ctx.beginPath(); ctx.moveTo(9, -17); ctx.lineTo(10, -22); ctx.lineTo(12.5, -18.5); ctx.lineTo(14.5, -23); ctx.lineTo(17, -18.5); ctx.lineTo(19, -21); ctx.lineTo(19.5, -17); ctx.closePath(); ctx.fill();
+    circ(17.5, -12, 1.9, c.cast > 0 ? '#ffffff' : '#ff3b30'); ctx.fillStyle = '#f4f4f4'; ctx.fillRect(19, -7, 1.6, 3); ctx.fillRect(22, -7, 1.6, 3);
+  } else if (c.k === 'zombielord'){
+    const sw = Math.sin(c.hop) * 1.8, skin = flash ? '#fff' : '#9cc78c', robe = flash ? '#fff' : '#3b2f5b'; ctx.scale(2.1, 2.1);
+    ctx.fillStyle = '#26232f'; ctx.fillRect(-5.5 + sw, -8, 5, 9); ctx.fillRect(.5 - sw, -8, 5, 9);
+    ctx.fillStyle = robe; ctx.beginPath(); ctx.moveTo(-9, -6); ctx.lineTo(-8, -22); ctx.lineTo(8, -22); ctx.lineTo(10, -6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = flash ? '#fff' : '#6c4fb0'; ctx.fillRect(-9, -8, 19, 2); ctx.fillRect(-1, -22, 2, 15);
+    ctx.fillStyle = skin; ctx.fillRect(7, -21 + sw * .3, 11, 3.6); ctx.fillRect(7, -15 - sw * .3, 11, 3.6);
+    circ(0, -27, 7, skin);
+    ctx.fillStyle = '#e8c95a'; ctx.beginPath(); ctx.moveTo(-6, -32); ctx.lineTo(-5, -38); ctx.lineTo(-2.5, -33.5); ctx.lineTo(0, -39); ctx.lineTo(2.5, -33.5); ctx.lineTo(5, -38); ctx.lineTo(6, -32); ctx.closePath(); ctx.fill();
+    const eye = c.skill < 1.2 ? '#ffffff' : '#b6ff6a'; circ(3.2, -27.5, 1.7, eye); circ(-1, -27.5, 1.7, eye);
+    for (let i = 0; i < 3; i++){ const a = anim * 2.2 + i * 2.1; ctx.fillStyle = 'rgba(190,150,255,.85)'; ctx.beginPath(); ctx.arc(Math.cos(a) * 14, -22 + Math.sin(a) * 4, 2, 0, TAU); ctx.fill(); }
+  } else if (c.k === 'mountainking'){
+    const rear = c.cast > 0, enr = c.enraged, fur = flash ? '#fff' : enr ? '#6a2f2a' : '#4b3328', fur2 = flash ? '#fff' : enr ? '#7d3a33' : '#5f4132';
+    ell(0, -15, 27, 17, fur); ell(-8, -27, 18, 9, fur2);
+    ctx.fillStyle = '#3c281f'; ctx.fillRect(-20, -6, 9, 12); ctx.fillRect(12, -6 + (rear ? -22 : 0), 9, 12);
+    ctx.fillStyle = '#f0e6c8'; for (const [cx2, cy2] of [[-19, 6], [-15, 6], [13, 6 + (rear ? -22 : 0)], [17, 6 + (rear ? -22 : 0)]]){ ctx.beginPath(); ctx.moveTo(cx2 - 2, cy2); ctx.lineTo(cx2, cy2 + 5); ctx.lineTo(cx2 + 2, cy2); ctx.closePath(); ctx.fill(); }
+    circ(24, -19, 12, fur2); circ(17, -30, 4.5, fur); circ(31, -29, 4.2, fur); ell(34, -14, 6.4, 4.8, '#b79068'); circ(36.5, -15.5, 1.9, '#111');
+    ctx.fillStyle = '#efe3b0'; ctx.beginPath(); ctx.moveTo(30, -11); ctx.lineTo(33, -3); ctx.lineTo(35, -11); ctx.closePath(); ctx.fill();
+    circ(27, -21, 2.8, enr || rear ? '#ff4a3a' : '#ffb04a');
+    ctx.strokeStyle = 'rgba(215,95,75,.75)'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(-6, -26); ctx.lineTo(2, -14); ctx.moveTo(-1, -28); ctx.lineTo(7, -17); ctx.stroke();
   } else if (c.k === 'bat'){
     const fl = Math.sin(c.hop), body = flash ? '#fff' : '#3b3447'; ctx.translate(0, -18);
     ctx.fillStyle = flash ? '#fff' : '#2a2434';
@@ -2396,6 +2549,10 @@ function drawCreature(c){
     const col = AFFIX[c.affix].col, w = 34, hk = Math.max(0, c.hp / c.max), by = c.y - SHADOW_H[c.k] * sc - 14;
     ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(c.x - w / 2, by, w, 5); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 3);
     ctx.font = '700 11px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText('★ ' + c.name, c.x, by - 4); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillText('★ ' + c.name, c.x, by - 4);
+  } else if (c.boss){
+    const col = BOSSES[c.boss - 1].col, w = 60, hk = Math.max(0, c.hp / c.max), by = c.y - SHADOW_H[c.k] * sc - 18;
+    ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(c.x - w / 2, by, w, 6); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 4);
+    ctx.font = '700 12px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText('👑 ' + c.name, c.x, by - 4); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillText('👑 ' + c.name, c.x, by - 4);
   } else if (c.max > 10 && c.hp < c.max){
     const w = 22, hk = Math.max(0, c.hp / c.max), by = c.y - c.r - 30;
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(c.x - w / 2, by, w, 4);
@@ -2522,7 +2679,7 @@ function render(){
   for (const c of creatures) if (c.x > vx0 - 50 && c.x < vx1 + 50 && c.y > vy0 - 90 && c.y < vy1 + 130) draws.push({ y: c.y, c });
   if (running) draws.push({ y: P.y, p: 1 });
   draws.sort((a, b) => a.y - b.y);
-  drawAuras(draws); drawBuffRings();
+  drawAuras(draws); drawBossTelegraphs(draws); drawBuffRings();
   castShadows(draws, vx0, vy0, vx1, vy1, dk);
   for (const d of draws){          // every sprite is drawn upright: undo the ground squash around its base point
     ctx.save(); ctx.transform(1, 0, 0, 1 / TILT, 0, d.y * (1 - 1 / TILT));
@@ -2593,7 +2750,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

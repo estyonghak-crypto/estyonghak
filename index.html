@@ -254,7 +254,7 @@ body.building #equip{display:none}
 
 <div id="title" class="screen">
   <h1>무인도<br><em>생존기</em></h1>
-  <p class="lead">폭풍에 휩쓸려 혼자 남은 섬. 5일을 버텨 뗏목을 만들고 탈출하세요.</p>
+  <p class="lead" id="leadTxt">폭풍에 휩쓸려 혼자 남은 섬. 10일을 버텨 뗏목을 만들고 탈출하세요.</p>
   <div class="stack">
     <button class="btn" id="btnContinue" hidden>이어하기</button>
     <button class="btn" id="btnNew">새 게임</button>
@@ -297,7 +297,7 @@ body.building #equip{display:none}
 
 /* ================= constants ================= */
 let WORLD = 2400, ISL_M = 24, ISL_R = 230;      // the active zone's island = rounded square (setZone changes these)
-const DAY_LEN = 240, RAFT_DAY = 5;
+const DAY_LEN = 240, RAFT_DAY = 10;     // survive this many days, then build the raft
 const PLAYER_R = 11, SPEED = 125;
 const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
 const CELL = 128; let GN = Math.ceil(WORLD / CELL);
@@ -1617,7 +1617,7 @@ function update(dt){
     wolfTimer -= dt;
     if (wolfTimer <= 0){
       const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
-      const want = { wolf: Math.min(7, 1 + day), zombie: day >= 2 ? Math.min(8, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(3, Math.floor((day - 2) / 2)) : 0 };
+      const want = { wolf: Math.min(9, 1 + day), zombie: day >= 2 ? Math.min(12, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(5, Math.floor((day - 2) / 2)) : 0 };
       for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){
         const force = day >= 2 && eliteNight !== day && !!ELITE_OK[k] && have.wolf + have.zombie >= 2;    // from night 2 there is always one elite
         const c = spawnCreature(k, offD(), offD() + 150, force ? true : undefined);
@@ -2584,7 +2584,7 @@ function frame(ts){
 resize();
 try { $('fxClouds').style.backgroundImage = 'url(' + makeCloudTile().toDataURL() + ')'; $('fxSnow1').style.backgroundImage = 'url(' + makeSnowTile(256, 34, 5, 1, 2.2, .85).toDataURL() + ')'; $('fxSnow2').style.backgroundImage = 'url(' + makeSnowTile(384, 16, 9, 1.8, 3.4, .6).toDataURL() + ')'; } catch (_) {}
 blob = makeBlob(); puffSmoke = makePuff('190,195,200'); puffDust = makePuff('216,198,152'); initSprites();
-function boot(data){ refreshTitle(); demoWorld(); if (data && data.resume) continueGame(); }
+function boot(data){ $('leadTxt').textContent = '폭풍에 휩쓸려 혼자 남은 섬. ' + RAFT_DAY + '일을 버텨 뗏목을 만들고 탈출하세요.'; refreshTitle(); demoWorld(); if (data && data.resume) continueGame(); }
 requestAnimationFrame(frame);
 try {   // when hosted as an artifact, keep the run alive across a page update
   const hot = window.claude && window.claude.hot;

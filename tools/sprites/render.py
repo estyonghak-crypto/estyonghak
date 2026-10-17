@@ -310,27 +310,28 @@ LOOKS['survivor'] = dict(frames=_PEOPLE, pose=lambda an, ph, tool: survivor_pose
 for _k, _p in (('zombie', 1.0), ('brute', 1.42)):
     LOOKS[_k] = dict(frames=_PEOPLE + [('die', 5)], pose=(lambda k: lambda an, ph, tool: zombie_pose(an, ph, k))(_k), model=(lambda k: lambda pose, tool: person(pose, k, None))(_k), ppu=_p)
 
-def build_sheet(look, tool=None):
-    """returns (RGBA image cropped to the used area, meta)"""
+def build_sheet(look, tool=None, half=False):
+    """returns (RGBA image cropped to the used area, meta). half: keep only S, SW, W, NW, N (the game mirrors them for SE, E, NE)"""
     seq = LOOKS[look]['frames']
     frames = {}                                                    # (dir index, col) -> RGBA array
     col = 0; cols = {}
+    rows = 5 if half else 8
     for name, n in seq:
         cols[name] = [col, n]
         for i in range(n):
             ph = i / n if name != 'die' else (i + 1) / n
-            for r, d in enumerate(DIRS): frames[(r, col)] = frame_img(look, tool, name, ph, d)
+            for r, d in enumerate(DIRS[:rows]): frames[(r, col)] = frame_img(look, tool, name, ph, d)
             col += 1
     ncol = col
     ys = np.concatenate([np.nonzero(f[..., 3])[0] for f in frames.values()]); xs = np.concatenate([np.nonzero(f[..., 3])[1] for f in frames.values()])
     x0, x1, y0, y1 = xs.min() - 1, xs.max() + 2, ys.min() - 1, ys.max() + 2
     # keep the foot anchor in the middle column so every frame is anchored the same way
-    half = max(ANCHOR[0] - x0, x1 - ANCHOR[0]); x0, x1 = ANCHOR[0] - half, ANCHOR[0] + half
+    hw = max(ANCHOR[0] - x0, x1 - ANCHOR[0]); x0, x1 = ANCHOR[0] - hw, ANCHOR[0] + hw
     cw, chh = x1 - x0, y1 - y0
-    out = Image.new('RGBA', (ncol * cw, 8 * chh), (0, 0, 0, 0))
+    out = Image.new('RGBA', (ncol * cw, rows * chh), (0, 0, 0, 0))
     for (r, c), f in frames.items():
         out.alpha_composite(Image.fromarray(f).crop((x0, y0, x1, y1)), (c * cw, r * chh))
-    meta = dict(w=int(cw), h=int(chh), ax=int(ANCHOR[0] - x0), ay=int(ANCHOR[1] - y0), cols=cols, ncol=ncol)
+    meta = dict(w=int(cw), h=int(chh), ax=int(ANCHOR[0] - x0), ay=int(ANCHOR[1] - y0), cols=cols, ncol=ncol, half=half)
     return out, meta
 
 _BIGP = [('idle', 2), ('walk', 8), ('attack', 4), ('hurt', 1), ('die', 5)]

@@ -52,13 +52,22 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
   background:linear-gradient(90deg,#f2c35b 0%,#f2c35b 49%,#e8793a 54%,#2c2f6b 62%,#1b1f4b 89%,#8a6fa8 95%,#f2c35b 100%)}
 #clock i{position:absolute;top:-3px;width:3px;height:13px;margin-left:-1px;background:var(--bone);border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
 #menuBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1}
-#inv{display:flex;gap:5px;margin-top:8px}
+#inv,#inv2{display:flex;gap:5px;margin-top:8px}
+#inv2{align-items:center}
 .slot{position:relative;flex:1;min-width:0;max-width:52px;height:54px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
 .slot .ic{font-size:21px;line-height:1}
 .slot .nm{font-size:9px;color:var(--dim);line-height:1.1;white-space:nowrap;max-width:100%;overflow:hidden}
 .slot .n{position:absolute;right:4px;top:2px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .slot.dim{opacity:.4}
 .slot.food:not(.dim){border-color:rgba(143,209,106,.55)}
+.slot.use:not(.dim){border-color:rgba(127,208,255,.6)}
+.slot.core:not(.dim){border-color:rgba(194,124,255,.75)}
+.chip{height:34px;padding:0 9px;border-radius:999px;display:flex;align-items:center;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
+.chip.swift{border-color:#6ac8ff;color:#aee3ff}
+.chip.power{border-color:#ff9a5a;color:#ffc6a0}
+@media (min-height:521px){body.row2 #toasts{top:calc(max(10px,env(safe-area-inset-top)) + 158px + 62px)}}
+@media (max-width:520px){#inv2{flex-wrap:wrap;max-width:236px}#inv2 .slot{flex:0 0 42px}.chip{flex:none}}
+@media (max-width:520px) and (min-height:521px){body.row2.chips #toasts{top:calc(max(10px,env(safe-area-inset-top)) + 158px + 62px + 42px)}}
 #goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
 #goal b{color:var(--amber);font-weight:700}
 #toasts{position:fixed;left:0;right:0;top:calc(max(10px,env(safe-area-inset-top)) + 158px);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:7}
@@ -86,12 +95,17 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 body.building #equip{display:none}
 .lv{position:absolute;top:2px;right:4px;font-size:8.5px;font-style:normal;font-weight:700;color:#7fd0ff}
 .lv.l3{color:#ffd166}
+.lv.l4{color:#d49bff}
 #armorBadge{color:var(--amber);margin-left:3px}
 .tabs{display:flex;gap:6px;margin:4px 0 10px}
 .tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:transparent;font-weight:700;font-size:14px}
 .tab.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
 .lvtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(127,208,255,.16);color:#7fd0ff;font-size:11px;font-weight:700}
 .lvtag.max{background:rgba(255,209,102,.18);color:#ffd166}
+.lvtag.l4{background:rgba(194,124,255,.2);color:#d9aeff}
+#eliteArrow{position:fixed;left:0;top:0;width:64px;margin:-20px 0 0 -32px;z-index:6;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:1px}
+#eliteArrow i{display:block;width:0;height:0;border-left:15px solid #ff5a4a;border-top:9px solid transparent;border-bottom:9px solid transparent;filter:drop-shadow(0 0 4px rgba(255,90,74,.9))}
+#eliteArrow b{font-size:10.5px;font-weight:700;color:#ffb3a8;text-shadow:0 1px 3px #000;white-space:nowrap}
 #equip{position:fixed;z-index:6;right:max(36px,calc(env(safe-area-inset-right) + 18px));bottom:max(210px,calc(env(safe-area-inset-bottom) + 198px));display:flex;flex-direction:column-reverse;align-items:center;gap:5px;pointer-events:none}
 #equip button{pointer-events:auto}
 .eq{position:relative;width:48px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -170,7 +184,9 @@ body.building #equip{display:none}
     <button id="menuBtn" aria-label="메뉴">☰</button>
   </div>
   <div id="inv"></div>
+  <div id="inv2" hidden></div>
   <div id="goal" class="panel"></div>
+  <div id="eliteArrow" hidden><i></i><b></b></div>
   <div class="spacer"></div>
   <button id="btnBuild">건축</button>
   <div id="build" hidden></div>
@@ -216,6 +232,7 @@ body.building #equip{display:none}
     <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
     <li><b>소총·탑</b> 소총은 장착하면 자동 조준, 탑은 건축에서 설치해요. 둘 다 탄약이 필요해요</li>
     <li>밤에는 <b>늑대</b>와 <b>좀비</b>가 옵니다. 낮에도 <b>곰</b>을 조심하세요.</li>
+    <li>가끔 나타나는 <b>엘리트</b>를 잡으면 아이템이 떨어져요 (치유약 Z · 신속약 X · 괴력약 V)</li>
     <li>전리품(고철, 가죽)으로 제작 창의 <b>강화</b> 탭에서 장비를 올려요</li>
   </ul>
 </div>
@@ -244,8 +261,8 @@ const CELL = 128, GN = Math.ceil(WORLD / CELL);
 const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
 const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1 };
 const GUN_SPEED = 560, AUTO_GUN_RANGE = 190;
-const TOWER_LV = { dmg: [4, 6, 9], range: [240, 270, 300], max: [30, 40, 50], cd: [1, .85, .7] };   // index = tower level - 1
-const TOWER_UPG = [{ scrap: 4, wood: 6 }, { scrap: 8, stone: 8 }];
+const TOWER_LV = { dmg: [4, 6, 9, 14], range: [240, 270, 300, 340], max: [30, 40, 50, 70], cd: [1, .85, .7, .55] };   // index = tower level - 1
+const TOWER_UPG = [{ scrap: 4, wood: 6 }, { scrap: 8, stone: 8 }, { core: 2, scrap: 12, stone: 14 }];   // Lv.4 needs elite cores
 const GRID = 28, BUILD_RANGE = 150;     // walls sit on a 28px grid; you can build within 150px of yourself
 const WALLS = {
   wood:  { name: '울타리', hp: 40,  cost: { wood: 2 } },
@@ -273,9 +290,15 @@ const ITEMS = {
   cooked: { name: '구운고기', icon: '🍖', food: 1 },
   ammo:   { name: '탄약',   icon: '🔸' },
   scrap:  { name: '고철',   icon: '🔩' },
-  hide:   { name: '가죽',   icon: '🟫' }
+  hide:   { name: '가죽',   icon: '🟫' },
+  heal:   { name: '치유약', icon: '🧪', use: 1 },     // elite loot: +50 hp
+  swift:  { name: '신속약', icon: '💨', use: 1 },     // elite loot: 30 s of speed
+  power:  { name: '괴력약', icon: '💥', use: 1 },     // elite loot: 30 s of x1.5 damage
+  core:   { name: '정예핵', icon: '💠' }              // elite loot: needed for the Lv.4 upgrades
 };
-const RARE = { ammo: 1, scrap: 1, hide: 1 };   // bag slots that stay hidden until you first get one
+const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1 };   // bag slots that stay hidden until you first get one
+const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1 };                           // these live in the second bag row
+const BUFF_T = 30;
 const SPECS = {
   rabbit: { hp: 3,   r: 7,  speed: 55,  flee: 140, drop: { meat: 1 } },
   boar:   { hp: 10,  r: 12, speed: 45,  dmg: 12, rage: 2.2, atkCd: 1.3, wallDmg: 10, drop: { meat: 3, hide: 2 } },
@@ -285,6 +308,20 @@ const SPECS = {
   bear:   { hp: 55,  r: 15, speed: 50,  dmg: 18, rage: 2.3, atkCd: 1.5, wallDmg: 16, territory: 110, drop: { meat: 5, hide: 3 } }
 };
 const NIGHT_KINDS = { wolf: 1, zombie: 1, brute: 1 };
+/* ---- elites: stronger variants of wolves, zombies and bears, each with one affix ---- */
+const KIND_NAME = { rabbit: '토끼', boar: '멧돼지', wolf: '늑대', zombie: '좀비', brute: '거대 좀비', bear: '곰' };
+const ELITE_OK = { wolf: 3, zombie: 3, bear: 2.2 };      // kind -> hp multiplier of its elite
+const AFFIX = {
+  frenzy: { name: '광폭', col: '255,84,72',   ok: ['wolf', 'zombie', 'bear'], desc: '광폭: 훨씬 빠르고 더 자주 공격해요' },
+  armor:  { name: '강철', col: '132,178,235', ok: ['wolf', 'zombie', 'bear'], desc: '강철: 받는 피해가 40% 줄어요' },
+  regen:  { name: '재생', col: '110,226,124', ok: ['wolf', 'zombie', 'bear'], desc: '재생: 맞지 않으면 체력을 회복해요' },
+  split:  { name: '분열', col: '194,124,255', ok: ['wolf', 'zombie'],         desc: '분열: 죽으면 둘로 갈라져요' }
+};
+const ELITE_LOOT = { heal: [.45, 1, 1], swift: [.22, 1, 1], power: [.22, 1, 1], ammo: [.35, 10, 20], core: [.22, 1, 1] };   // item -> [chance, min, max]
+const AFFIX_LOOT = { frenzy: { swift: .42, power: .42 }, armor: { core: .42 }, regen: { heal: .7 }, split: { ammo: .55 } };   // each affix favours some drops
+const ELITE_BONUS = { wolf: { hide: [2, 3] }, zombie: { scrap: [3, 5] }, bear: { hide: [3, 4], meat: [3, 4] } };               // sure drops, picked up from the ground
+const PICK_COL = { heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110' };
+const PICK_BEAM = { heal: 1, swift: 1, power: 1, core: 1 };
 const TOOLS = {   // what each equipped tool does: yield per swing, damage, extra reach, swing cooldowns (wood / stone / attack)
   hand:    { name: '맨손',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 },
   axe:     { name: '도끼',   wood: 2, stone: 1, dmg: 2, reach: 0,  cdW: .38, cdS: .6,  cdA: .4 },
@@ -293,21 +330,21 @@ const TOOLS = {   // what each equipped tool does: yield per swing, damage, extr
   gun:     { name: '소총',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 }   // shots are handled by fireGun()
 };
 const TOOL_ORDER = ['hand', 'axe', 'spear', 'pickaxe', 'gun'];
-const TOOL_LV = {   // stats per upgrade level (index = level - 1)
-  axe:     { wood: [2, 3, 4], dmg: [2, 3, 4], cdW: [.38, .32, .26] },
-  spear:   { dmg: [4, 6, 9], reach: [12, 16, 22], cdA: [.5, .45, .4] },
-  pickaxe: { stone: [3, 4, 6], cdS: [.42, .36, .3] },
-  gun:     { dmg: [6, 9, 13], cd: [.55, .45, .36], range: [280, 320, 370] }
+const TOOL_LV = {   // stats per upgrade level (index = level - 1); Lv.4 needs elite cores
+  axe:     { wood: [2, 3, 4, 5], dmg: [2, 3, 4, 6], cdW: [.38, .32, .26, .2] },
+  spear:   { dmg: [4, 6, 9, 13], reach: [12, 16, 22, 28], cdA: [.5, .45, .4, .34] },
+  pickaxe: { stone: [3, 4, 6, 8], cdS: [.42, .36, .3, .24] },
+  gun:     { dmg: [6, 9, 13, 18], cd: [.55, .45, .36, .28], range: [280, 320, 370, 420] }
 };
-const UPGRADES = {  // cost of the next level (tools: Lv1->2, Lv2->3; armor: none->1->2->3)
-  axe:     [{ scrap: 2, wood: 5 }, { scrap: 5, stone: 6, hide: 2 }],
-  spear:   [{ scrap: 3, wood: 4 }, { scrap: 6, hide: 3 }],
-  pickaxe: [{ scrap: 2, stone: 5 }, { scrap: 5, stone: 8, hide: 1 }],
-  gun:     [{ scrap: 4, wood: 6 }, { scrap: 9, hide: 3, stone: 6 }],
-  armor:   [{ hide: 4, wood: 2 }, { hide: 6, scrap: 4 }, { scrap: 10, hide: 6 }]
+const UPGRADES = {  // cost of the next level (tools: Lv1->2 ... Lv3->4; armor: none->1->2->3->4)
+  axe:     [{ scrap: 2, wood: 5 }, { scrap: 5, stone: 6, hide: 2 }, { core: 1, scrap: 8, wood: 10 }],
+  spear:   [{ scrap: 3, wood: 4 }, { scrap: 6, hide: 3 }, { core: 2, scrap: 10, hide: 5 }],
+  pickaxe: [{ scrap: 2, stone: 5 }, { scrap: 5, stone: 8, hide: 1 }, { core: 1, scrap: 8, stone: 12 }],
+  gun:     [{ scrap: 4, wood: 6 }, { scrap: 9, hide: 3, stone: 6 }, { core: 2, scrap: 14, hide: 6, stone: 10 }],
+  armor:   [{ hide: 4, wood: 2 }, { hide: 6, scrap: 4 }, { scrap: 10, hide: 6 }, { core: 3, scrap: 14, hide: 10 }]
 };
 const UP_NAME = { axe: '돌도끼', spear: '나무 창', pickaxe: '곡괭이', gun: '사제 소총' };
-const ARMOR_RED = [0, .15, .3, .45], ARMOR_NAME = ['맨몸', '가죽 옷', '강화 가죽 갑옷', '철판 갑옷'];
+const ARMOR_RED = [0, .15, .3, .45, .6], ARMOR_NAME = ['맨몸', '가죽 옷', '강화 가죽 갑옷', '철판 갑옷', '정예 갑옷'];
 function stat(t){ const s = Object.assign({}, TOOLS[t]), lv = TOOL_LV[t]; if (lv) for (const k in lv) s[k] = lv[k][(P.lv[t] || 1) - 1]; return s; }
 const tw = o => { const l = (o.lv || 1) - 1; return { dmg: TOWER_LV.dmg[l], range: TOWER_LV.range[l], max: TOWER_LV.max[l], cd: TOWER_LV.cd[l] }; };
 const TOOL_SVG = {
@@ -358,9 +395,9 @@ let objs = [], grid = [], structs = [], creatures = [], floaters = [];
 let P = null, T = 0;
 let running = false, paused = false, sleeping = false, anim = 0;
 let target = null, actHeld = false;
-const bullets = [], parts = []; let aim = null, towerTip = false, dustT = 0;
+const bullets = [], parts = [], pickups = []; let aim = null, towerTip = false, dustT = 0;
 let hurtT = 0, shakeT = 0, lastDay = 1, lastPhase = '', lastLabel = '';
-let wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0;
+let wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
 const keys = {};
 const joy = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 
@@ -407,7 +444,7 @@ function collide(e, r){
 }
 
 function genWorld(){
-  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0;
+  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0;
   const C = WORLD / 2, noise = makeNoise();
   const tooClose = (x, y, d) => { let c = false; gridQuery(x - d - 100, y - d - 100, x + d + 100, y + d + 100, o => { if (!c && Math.hypot(o.x - x, o.y - y) < d + o.r) c = true; }); return c; };
 
@@ -457,24 +494,46 @@ function genWorld(){
   P = newPlayer();
   for (let i = 0; i < 40; i++) spawnCreature('rabbit', 300);
   for (let i = 0; i < 8; i++) spawnCreature('boar', 300);
-  for (let i = 0; i < 3; i++) spawnCreature('bear', 400);
+  for (let i = 0; i < 3; i++) spawnCreature('bear', 400, undefined, false);
 }
 
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {},
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0 }, buffs: { swift: 0, power: 0 }, stats: { elites: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {},
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
-function spawnCreature(kind, minD, maxD){
+function newCreature(kind, x, y){
+  const sp = SPECS[kind];
+  return { k: kind, x, y, hp: sp.hp, max: sp.hp, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6), sinceHit: 9 };
+}
+function spawnAt(kind, x, y){ const c = newCreature(kind, x, y); creatures.push(c); return c; }
+function eliteCount(){ let n = 0; for (const c of creatures) if (c.elite) n++; return n; }
+function rollElite(kind){            // elites get likelier as the days go by, but only a few can be alive at once
+  const day = dayOf(); if (eliteCount() >= 1 + Math.floor(day / 3)) return false;
+  return Math.random() < Math.min(.35, kind === 'bear' ? .06 + .04 * (day - 1) : .05 + .05 * (day - 1));
+}
+function makeElite(c, affix){
+  const sp = SPECS[c.k], a = affix || PICK(Object.keys(AFFIX).filter(k => AFFIX[k].ok.includes(c.k)));
+  c.elite = true; c.affix = a; c.scale = 1.28; c.r = Math.round(sp.r * 1.25);
+  c.hp = c.max = Math.round(sp.hp * ELITE_OK[c.k]); c.dmgMul = 1.5; c.spdMul = a === 'frenzy' ? 1.4 : 1.1; c.dr = a === 'armor' ? .4 : 0;
+  c.name = AFFIX[a].name + ' ' + KIND_NAME[c.k];
+  return c;
+}
+function announceElite(c){
+  toast('⚠ 엘리트 ' + josa(c.name, '이/가') + ' 나타났어요!'); setTimeout(() => toast(AFFIX[c.affix].desc), 1900);
+}
+function spawnCreature(kind, minD, maxD, elite){      // elite: true = force one, false = never, undefined = roll the dice
   const sp = SPECS[kind];
   for (let i = 0; i < 24; i++){
     let x, y;
     if (maxD){ const a = rand(0, TAU), d = rand(minD, maxD); x = P.x + Math.cos(a) * d; y = P.y + Math.sin(a) * d; }
     else { x = rand(60, WORLD - 60); y = rand(60, WORLD - 60); }
     if (inside(x, y) < 70 || Math.hypot(x - P.x, y - P.y) < minD || blocked(x, y, sp.r + 6)) continue;
-    const c = { k: kind, x, y, hp: sp.hp, max: sp.hp, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6) };
-    creatures.push(c); return c;
+    const c = newCreature(kind, x, y);
+    if (ELITE_OK[kind] && elite !== false && (elite === true || rollElite(kind))) makeElite(c, typeof elite === 'string' ? elite : undefined);
+    creatures.push(c); if (c.elite && running) announceElite(c);
+    return c;
   }
   return null;
 }
@@ -489,12 +548,15 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQbB12345'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB12345zZxXvV'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
   if (e.key === 'c' || e.key === 'C') toggleCraft();
   else if (e.key === 'e' || e.key === 'E'){ if (!paused) eatBest(); }
+  else if (e.key === 'z' || e.key === 'Z'){ if (!paused) useItem('heal'); }
+  else if (e.key === 'x' || e.key === 'X'){ if (!paused) useItem('swift'); }
+  else if (e.key === 'v' || e.key === 'V'){ if (!paused) useItem('power'); }
   else if (e.key >= '1' && e.key <= '5'){ if (!paused) buildMode ? selectBuild(BUILD_ORDER[+e.key - 1]) : manualEquip(ownedTools()[+e.key - 1]); }
   else if (e.key === 'q' || e.key === 'Q'){ if (!paused) buildMode ? selectBuild(BUILD_ORDER[(BUILD_ORDER.indexOf(buildSel) + 1) % BUILD_ORDER.length]) : cycleEquip(); }
   else if (e.key === 'b' || e.key === 'B'){ if (!paused) toggleBuild(); }
@@ -544,7 +606,7 @@ $('equip').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !running || paused) return;
   if (b.id === 'autoBtn') toggleAuto(); else manualEquip(b.dataset.t);
 });
-$('inv').addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
+for (const id of ['inv', 'inv2']) $(id).addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
 
 /* ================= actions ================= */
 function floater(x, y, text, color){ floaters.push({ x: x + rand(-6, 6), y, text, color: color || '#fff', t: 0 }); }
@@ -673,7 +735,7 @@ function buildEquip(){
 function syncEquip(){
   $('equip').querySelectorAll('.eq').forEach(b => {
     b.classList.toggle('on', b.dataset.t === P.equip);
-    const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 3 ? ' l3' : ''); }
+    const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 4 ? ' l4' : lv >= 3 ? ' l3' : ''); }
   });
   const a = $('autoBtn'); if (a){ a.classList.toggle('on', P.auto); a.textContent = P.auto ? '자동' : '수동'; }
 }
@@ -772,20 +834,51 @@ function act(){
 }
 
 function rollDrop(v){ return Array.isArray(v) ? v[0] + Math.floor(Math.random() * (v[1] - v[0] + 1)) : v; }
-function hitCreature(c, dmg, kx, ky, byPlayer){
-  const sp = SPECS[c.k]; c.hp -= dmg; c.hit = .18;
-  const d = Math.hypot(kx, ky) || 1, kb = c.k === 'brute' ? .25 : 1; c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
+function dropPickup(k, n, x, y){          // loot lies on the ground as a glowing orb; walk up to it to collect
+  const a = rand(0, TAU), d = rand(16, 38);
+  pickups.push({ k, n, ox: x, oy: y, x, y, tx: x + Math.cos(a) * d, ty: y + Math.sin(a) * d, z: 0, age: 0, life: 90 });
+}
+function eliteLoot(c){
+  P.stats.elites++;
+  floater(c.x, c.y - 44, '엘리트 처치!', '#ffd166'); fx('glow', c.x, c.y, 18, 16, '255,214,90'); fx('spark', c.x, c.y, 16, 10);
+  const aff = AFFIX_LOOT[c.affix] || {}, bonus = ELITE_BONUS[c.k] || {}, got = [];
+  for (const k in bonus) dropPickup(k, rollDrop(bonus[k]), c.x, c.y);
+  for (const k in ELITE_LOOT){
+    const L = ELITE_LOOT[k], p = aff[k] != null ? aff[k] : L[0];
+    if (Math.random() < p){ dropPickup(k, L[1] + Math.floor(Math.random() * (L[2] - L[1] + 1)), c.x, c.y); got.push(ITEMS[k].icon); }
+  }
+  toast('엘리트 ' + c.name + ' 처치!' + (got.length ? ' 전리품 ' + got.join(' ') : ''));
+  if (c.affix === 'split') for (let i = 0; i < 2; i++) spawnAt(c.k, c.x + rand(-22, 22), c.y + rand(-14, 14));
+}
+function updatePickups(dt){
+  for (let i = pickups.length - 1; i >= 0; i--){
+    const p = pickups[i]; p.age += dt;
+    if (p.age < .45){ const u = p.age / .45; p.x = p.ox + (p.tx - p.ox) * u; p.y = p.oy + (p.ty - p.oy) * u; p.z = 44 * 4 * u * (1 - u); } else p.z = 0;
+    const d = Math.hypot(P.x - p.x, P.y - p.y);
+    if (p.age > .5 && d < 110){ const k = Math.min(1, 230 * dt / (d || 1)); p.x += (P.x - p.x) * k; p.y += (P.y - p.y) * k; }   // magnet
+    if (p.age > .35 && d < 30){
+      gain(p.k, p.n); fx('spark', p.x, p.y, 10, 5); pickups.splice(i, 1);
+      if (p.k === 'core') toast('정예의 핵을 얻었어요! 장비를 Lv.4로 강화할 수 있어요.');
+    } else if (p.age > p.life) pickups.splice(i, 1);
+  }
+}
+function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
+  const sp = SPECS[c.k];
+  if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y - 34, '방어', '#8fc4ff'); dmg = red; }
+  c.hp -= dmg; c.hit = .18; c.sinceHit = 0;
+  const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' ? .25 : 1) * (c.elite ? .6 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
   fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : '196,44,44');
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
-    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]); if (n > 0) gain(k, n); }
+    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1); if (n > 0) gain(k, n); }
+    if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     creatures.splice(creatures.indexOf(c), 1);
   }
 }
 function attack(c){
   const eq = stat(P.equip); P.cd = eq.cdA;
-  hitCreature(c, eq.dmg, c.x - P.x, c.y - P.y, true);
+  hitCreature(c, Math.round(eq.dmg * (P.buffs.power > 0 ? 1.5 : 1)), c.x - P.x, c.y - P.y, true);
 }
 
 /* ================= guns, arrows, towers ================= */
@@ -809,7 +902,7 @@ function fireGun(){
   if (t){ const d = Math.hypot(t.x - P.x, t.y - P.y) || 1; ax = (t.x - P.x) / d; ay = (t.y - P.y) / d; }
   P.fx = ax; P.fy = ay; if (Math.abs(ax) > .2) P.flip = ax < 0 ? -1 : 1;
   const gs = stat('gun'); P.inv.ammo--; P.cd = gs.cd; P.flash = .1;
-  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: gs.dmg, life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
+  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1)), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
   fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2);
   try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
 }
@@ -839,7 +932,7 @@ function updateBullets(dt){
     let hit = false;
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
-      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400)); fx('spark', b.x, b.y, 12, 4); hit = true; break; }
+      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); fx('spark', b.x, b.y, 12, 4); hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
   }
@@ -854,8 +947,17 @@ function hurt(n, raw){
 }
 
 function useItem(k){
-  if (!ITEMS[k].food) return;
+  if (k === 'core'){ toast('정예의 핵: 장비를 Lv.4로 강화할 때 쓰여요'); return; }
+  if (!ITEMS[k].food && !ITEMS[k].use) return;
   if (P.inv[k] <= 0){ toast(josa(ITEMS[k].name, '이/가') + ' 없어요'); return; }
+  if (k === 'heal'){
+    if (P.hp >= 99){ toast('체력이 가득 차 있어요'); return; }
+    P.inv.heal--; P.hp = Math.min(100, P.hp + 50); floater(P.x, P.y - 30, '+50 체력', '#ff8aa0'); fx('glow', P.x, P.y, 20, 10, '255,120,150'); return;
+  }
+  if (k === 'swift' || k === 'power'){
+    P.inv[k]--; P.buffs[k] = BUFF_T; fx('glow', P.x, P.y, 20, 12, PICK_COL[k]);
+    toast(k === 'swift' ? '신속! ' + BUFF_T + '초 동안 이동이 빨라져요' : '괴력! ' + BUFF_T + '초 동안 공격력 1.5배'); return;
+  }
   if (P.hunger >= 98 && k !== 'meat'){ toast('배가 부릅니다'); return; }
   P.inv[k]--;
   if (k === 'berry'){ P.hunger = Math.min(100, P.hunger + 12); floater(P.x, P.y - 26, '+12 배고픔', '#f2b84b'); }
@@ -936,7 +1038,7 @@ function upgradeItem(t){
   for (const k in cost) P.inv[k] -= cost[k];
   if (isA) P.armor++; else P.lv[t]++;
   const nl = isA ? P.armor : P.lv[t];
-  toast(isA ? josa(ARMOR_NAME[nl], '을/를') + ' 입었어요! 받는 피해 -' + Math.round(ARMOR_RED[nl] * 100) + '%' : josa(UP_NAME[t], '이/가') + ' Lv.' + nl + '이 됐어요!');
+  toast(isA ? josa(ARMOR_NAME[nl], '을/를') + ' 입었어요! 받는 피해 -' + Math.round(ARMOR_RED[nl] * 100) + '%' : josa(UP_NAME[t], '이/가') + ' Lv.' + nl + (nl === 3 ? '이' : '가') + ' 됐어요!');
   syncEquip(); updateHUD(); renderCraft();
 }
 function renderUpgrades(){
@@ -945,7 +1047,7 @@ function renderUpgrades(){
   rows.forEach(t => {
     const isA = t === 'armor', lv = isA ? P.armor : P.lv[t], cost = UPGRADES[t][isA ? lv : lv - 1], max = !cost;
     const title = isA ? (lv === 0 ? '방어구' : ARMOR_NAME[lv]) : UP_NAME[t];
-    const tag = max ? '<span class="lvtag max">MAX</span>' : isA ? (lv === 0 ? '' : `<span class="lvtag">Lv.${lv} → ${lv + 1}</span>`) : `<span class="lvtag">Lv.${lv} → ${lv + 1}</span>`;
+    const tag = max ? '<span class="lvtag max">MAX</span>' : isA ? (lv === 0 ? '' : `<span class="lvtag${lv + 1 >= 4 ? ' l4' : ''}">Lv.${lv} → ${lv + 1}</span>`) : `<span class="lvtag${lv + 1 >= 4 ? ' l4' : ''}">Lv.${lv} → ${lv + 1}</span>`;
     const desc = max ? '현재: ' + effectText(t, lv) : (isA && lv === 0 ? '입으면 ' : '다음: ') + effectText(t, lv + 1);
     const can = !max && Object.keys(cost).every(k => P.inv[k] >= cost[k]);
     const div = document.createElement('div'); div.className = 'recipe';
@@ -982,13 +1084,28 @@ function toast(msg){
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; box.appendChild(d);
   setTimeout(() => d.remove(), 2500);
 }
-const invEl = $('inv');
+const invEl = $('inv'), inv2El = $('inv2');
 for (const k in ITEMS){
-  const b = document.createElement('button'); b.className = 'slot' + (ITEMS[k].food ? ' food' : ''); b.dataset.k = k;
+  const b = document.createElement('button'); b.className = 'slot' + (ITEMS[k].food ? ' food' : '') + (ITEMS[k].use ? ' use' : '') + (k === 'core' ? ' core' : ''); b.dataset.k = k;
   b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`;
-  invEl.appendChild(b);
+  (SPECIAL[k] ? inv2El : invEl).appendChild(b);
 }
+for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
 function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
+function updateEliteArrow(){            // red arrow at the screen edge pointing at the nearest elite that is off screen
+  const el = $('eliteArrow'); let best = null, bd = 1e9;
+  for (const c of creatures) if (c.elite){ const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
+  if (!best){ if (!el.hidden) el.hidden = true; return; }
+  const sx = (best.x - cam.x) * zoom, sy = (best.y - cam.y) * zy, land = H < 520;
+  const x0 = 36, x1 = W - (land ? 36 : 112), y0 = land ? 100 : 150, y1 = H - (land ? 70 : 150);    // keep clear of the top HUD, the equipment column and the buttons
+  if (sx > x0 && sx < x1 && sy > y0 && sy < y1){ if (!el.hidden) el.hidden = true; return; }
+  const dx = sx - W / 2, dy = sy - H / 2;
+  const k = Math.min(((dx > 0 ? x1 : x0) - W / 2) / (dx || 1e-3), ((dy > 0 ? y1 : y0) - H / 2) / (dy || 1e-3));
+  if (el.hidden) el.hidden = false;
+  el.style.transform = 'translate(' + (W / 2 + dx * k).toFixed(0) + 'px,' + (H / 2 + dy * k).toFixed(0) + 'px)';
+  el.firstElementChild.style.transform = 'rotate(' + Math.atan2(dy, dx).toFixed(2) + 'rad)';
+  setText(el.lastElementChild, '엘리트 ' + Math.round(bd / 10) + 'm');
+}
 function updateHUD(){
   for (const [id, v] of [['hp', P.hp], ['hunger', P.hunger], ['thirst', P.thirst], ['warmth', P.warmth]]){
     const el = $('st-' + id), pct = Math.round(clamp(v, 0, 100));
@@ -996,11 +1113,17 @@ function updateHUD(){
   }
   setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT()));
   $('clockHand').style.left = (dayT() * 100).toFixed(1) + '%';
-  invEl.querySelectorAll('.slot').forEach(s => {
+  document.querySelectorAll('#inv .slot, #inv2 .slot').forEach(s => {
     const k = s.dataset.k, n = P.inv[k] || 0; setText(s.querySelector('.n'), String(n));
     s.classList.toggle('dim', n === 0);
     const hide = !!(RARE[k] && n === 0 && !P.seen[k] && !(k === 'ammo' && P.tools.gun)); if (s.hidden !== hide) s.hidden = hide;
   });
+  for (const [id, k] of [['chipSwift', 'swift'], ['chipPower', 'power']]){
+    const el = $(id), on = P.buffs[k] > 0; if (el.hidden === on) el.hidden = !on; if (on) setText(el, el.dataset.ic + ' ' + Math.ceil(P.buffs[k]));
+  }
+  const row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || P.buffs.swift > 0 || P.buffs.power > 0;
+  if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', P.buffs.swift > 0 || P.buffs.power > 0);
+  updateEliteArrow();
   setText($('armorBadge'), P.armor ? '🛡' + P.armor : '');
   if (buildMode) syncBuildBar();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
@@ -1028,7 +1151,10 @@ function updateCreatures(dt){
   for (let i = creatures.length - 1; i >= 0; i--){
     const c = creatures[i], sp = SPECS[c.k];
     const dx = P.x - c.x, dy = P.y - c.y, d = Math.hypot(dx, dy) || 1;
-    c.hit = Math.max(0, c.hit - dt); c.atk = Math.max(0, c.atk - dt); c.timer -= dt; c.burn = Math.max(0, (c.burn || 0) - dt);
+    c.hit = Math.max(0, c.hit - dt); c.atk = Math.max(0, c.atk - dt / (c.affix === 'frenzy' ? .6 : 1)); c.timer -= dt; c.burn = Math.max(0, (c.burn || 0) - dt);
+    c.sinceHit = (c.sinceHit == null ? 9 : c.sinceHit) + dt;
+    if (c.affix === 'regen' && c.hp < c.max && c.sinceHit > 2){ c.hp = Math.min(c.max, c.hp + c.max * .04 * dt); if (Math.random() < dt * 7) fx('glow', c.x, c.y, 14, 1, '110,226,124'); }
+    if (c.affix === 'frenzy' && Math.random() < dt * 6) fx('glow', c.x, c.y, 16, 1, '255,84,72');
     let sx = 0, sy = 0, spd = 0;
     if (c.k === 'rabbit'){
       if (d < sp.flee){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 2.4; c.hop += dt * 16; }
@@ -1037,31 +1163,32 @@ function updateCreatures(dt){
       if (c.state !== 'angry' && sp.territory && d < sp.territory){ c.state = 'angry'; c.angry = 8; }
       if (c.state === 'angry'){
         c.angry -= dt; sx = dx / d; sy = dy / d; spd = sp.speed * sp.rage;
-        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(sp.dmg); c.atk = sp.atkCd; } }
-        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, sp.wallDmg); c.atk = sp.atkCd; } }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(sp.wallDmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
         if (c.angry <= 0 || d > 520) c.state = 'idle';
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
     } else if (c.k === 'zombie' || c.k === 'brute'){
       // shamble after the player all night; fire doesn't scare them but burns them, daylight turns them to ash
       const big = c.k === 'brute';
-      if (!night){ c.hp -= (big ? 4 : 10) * dt; c.burn = .3; }
-      for (const s of structs) if (s.t === 'fire' && s.fuel > 0 && Math.hypot(c.x - s.x, c.y - s.y) < FIRE_SAFE * .8){ c.hp -= (big ? 3 : 6) * dt; c.burn = .3; }
+      if (!night){ c.hp -= (big ? 4 : 10) * dt * (c.elite ? .6 : 1); c.burn = .3; }
+      for (const s of structs) if (s.t === 'fire' && s.fuel > 0 && Math.hypot(c.x - s.x, c.y - s.y) < FIRE_SAFE * .8){ c.hp -= (big ? 3 : 6) * dt * (c.elite ? .6 : 1); c.burn = .3; }
       if (c.burn > 0 && Math.random() < dt * 9) fx(Math.random() < .5 ? 'ember' : 'smoke', c.x, c.y, 22, 1);
       if (c.hp <= 0){ creatures.splice(i, 1); continue; }
       if (d < offD() + 260){
         sx = dx / d; sy = dy / d; spd = sp.speed;
-        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (1 + (day - 1) * .1))); c.atk = 1.2; } }
-        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, big ? 22 : 7); c.atk = 1.2; } }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (1 + (day - 1) * .1) * (c.dmgMul || 1))); c.atk = 1.2; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round((big ? 22 : 7) * (c.dmgMul || 1))); c.atk = 1.2; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .5; }
       c.hop += dt * (spd ? 5 : 0);
     } else {                                // wolf
       if (!night){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > offD() + 120){ creatures.splice(i, 1); continue; } }
       else if (d < offD() + 260){
         sx = dx / d; sy = dy / d; spd = sp.speed;
-        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.min(14, 6 + day)); c.atk = 1; } }
-        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.min(12, 5 + day)); c.atk = 1; } }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(Math.min(14, 6 + day) * (c.dmgMul || 1))); c.atk = 1; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(Math.min(12, 5 + day) * (c.dmgMul || 1))); c.atk = 1; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
+    spd *= c.spdMul || 1;
     if (sx > .1) c.fx = 1; else if (sx < -.1) c.fx = -1;
     c.x += (sx * spd + c.kvx) * dt; c.y += (sy * spd + c.kvy) * dt;
     c.kvx *= Math.max(0, 1 - 7 * dt); c.kvy *= Math.max(0, 1 - 7 * dt);
@@ -1096,9 +1223,11 @@ function update(dt){
   const m = Math.hypot(ix, iy);
   P.cd = Math.max(0, P.cd - dt); P.swing = Math.max(0, P.swing - dt); P.flash = Math.max(0, (P.flash || 0) - dt);
   P.moving = m > .1;
+  P.buffs.swift = Math.max(0, P.buffs.swift - dt); P.buffs.power = Math.max(0, P.buffs.power - dt);
+  if ((P.buffs.swift > 0 || P.buffs.power > 0) && Math.random() < dt * 8) fx('glow', P.x, P.y, 6, 1, P.buffs.swift > 0 ? '110,200,255' : '255,150,70');
   if (P.moving){
     P.fx = ix / m; P.fy = iy / m; if (Math.abs(P.fx) > .2) P.flip = P.fx < 0 ? -1 : 1;
-    const sp = SPEED * Math.min(1, m);
+    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1);
     P.x += P.fx * sp * dt; P.y += P.fy * sp * dt; P.step += dt * 11;
   }
   collide(P, PLAYER_R); clampIsland(P, PLAYER_R + 4);
@@ -1132,14 +1261,18 @@ function update(dt){
   if (P.auto){ const b = hasTool('gun') && P.inv.ammo > 0 && nearestHostile(AUTO_GUN_RANGE) ? 'gun' : bestFor(target); if (b) setEquip(b); }
   aim = P.equip === 'gun' ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); emitAmbient(dt);
+  updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
 
   if (isNight()){
     wolfTimer -= dt;
     if (wolfTimer <= 0){
       const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
       const want = { wolf: Math.min(7, 1 + day), zombie: day >= 2 ? Math.min(8, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(3, Math.floor((day - 2) / 2)) : 0 };
-      for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){ spawnCreature(k, offD(), offD() + 150); wolfTimer = 2.2; break; }
+      for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){
+        const force = day >= 2 && eliteNight !== day && !!ELITE_OK[k] && have.wolf + have.zombie >= 2;    // from night 2 there is always one elite
+        const c = spawnCreature(k, offD(), offD() + 150, force ? true : undefined);
+        if (c && c.elite) eliteNight = day; wolfTimer = 2.2; break;
+      }
     }
   }
   respawnTimer -= dt;
@@ -1165,7 +1298,8 @@ function save(){
   if (!running || !P) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, built: P.built },
+      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built },
+      drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)]),
       objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0), o.kind || 0, Math.round(o.hp || 0), Math.round(o.ammo || 0), o.lv || 1])
     }));
   } catch (_) {}
@@ -1173,7 +1307,7 @@ function save(){
 function readSave(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
 function loadGame(s){
-  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0;
+  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0;
   for (const a of s.objs){
     const o = { t: a[0], x: a[1], y: a[2], r: a[3], v: a[5] };
     if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush' || o.t === 'wreck') o.amt = a[4];
@@ -1186,16 +1320,18 @@ function loadGame(s){
   P = Object.assign(newPlayer(), s.p); T = s.T;
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
+  P.buffs = Object.assign({ swift: 0, power: 0 }, P.buffs); P.stats = Object.assign({ elites: 0 }, P.stats);
+  for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
   for (let i = 0; i < 36; i++) spawnCreature('rabbit', 300);
   for (let i = 0; i < 7; i++) spawnCreature('boar', 300);
-  for (let i = 0; i < 3; i++) spawnCreature('bear', 400);
+  for (let i = 0; i < 3; i++) spawnCreature('bear', 400, undefined, false);
 }
 
 /* ================= game flow ================= */
 function startRun(){
   running = true; paused = false; sleeping = false; actHeld = false; resetJoy();
-  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; saveTimer = 8; goalTimer = 0; target = null; lastLabel = '';
+  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; target = null; lastLabel = '';
   cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zy / 2;
   $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
   $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
@@ -1210,7 +1346,8 @@ function endGame(win){
   try { best = +localStorage.getItem(BEST_KEY) || 0; if (!win && days > best){ best = days; localStorage.setItem(BEST_KEY, String(days)); } } catch (_) {}
   $('endTitle').innerHTML = win ? '탈출 <em>성공!</em>' : '<em>쓰러졌습니다</em>';
   $('endText').textContent = win ? '뗏목이 파도를 가르며 섬에서 멀어집니다. 살아서 돌아가는 거예요.' : (P.hp <= 0 && isNight() ? '어둠 속에서 힘이 다했습니다.' : '섬은 만만치 않았습니다.');
-  $('endStat').innerHTML = win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`;
+  const ek = P.stats && P.stats.elites ? ' · 엘리트 ' + P.stats.elites + '마리 처치' : '';
+  $('endStat').innerHTML = (win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`) + ek;
   $('hud').hidden = true; $('end').hidden = false;
 }
 function toTitle(){
@@ -1440,7 +1577,7 @@ function drawLakes(lakes){
 const SHADOW_H = { rabbit: 12, boar: 20, wolf: 19, zombie: 34, brute: 54, bear: 28 };
 function casterSpec(d){          // [height, half width] of the thing standing there
   if (d.p) return [50, 9];
-  if (d.c) return [SHADOW_H[d.c.k], d.c.r * .85];
+  if (d.c) return [SHADOW_H[d.c.k] * (d.c.scale || 1), d.c.r * .85];
   const o = d.o;
   switch (o.t){
     case 'tree': { const sp = treeCache[Math.min(8, (o.v * 9) | 0)], s = treeScale(o) * (.75 + .25 * o.amt / 6); return [sp.hgt * s, 15 * s]; }
@@ -1488,6 +1625,7 @@ function fx(kind, x, y, z, n, col){
       case 'splat': addPart('chip', x, y, z, ca * rand(20, 70), sa * rand(8, 30), rand(30, 80), .5, rand(1.8, 3), col); break;
       case 'ember': addPart('ember', x + rand(-5, 5), y + rand(-3, 3), z, rand(-10, 10), rand(-6, 6), rand(28, 55), rand(.9, 1.5), rand(1.2, 2.2), PICK(['255,170,70', '255,120,40', '255,210,110'])); break;
       case 'smoke': addPart('smoke', x + rand(-3, 3), y, z, rand(-5, 5) + 6, rand(-3, 3), rand(10, 22), rand(1, 1.6), rand(4, 7), '190,195,200'); break;
+      case 'glow':  addPart('ember', x + rand(-6, 6), y + rand(-3, 3), z, rand(-8, 8), rand(-4, 4), rand(18, 42), rand(.7, 1.2), rand(1.4, 2.4), col || '255,214,90'); break;
     }
   }
 }
@@ -1636,10 +1774,46 @@ function drawWreck(o){
   ctx.fillStyle = '#b5472f'; ctx.fillRect(-14, -3, 4, 3);
   ctx.restore();
 }
+function drawAuras(draws){           // glowing ground ring under every elite, colored by its affix
+  for (const d of draws){
+    const c = d.c; if (!c || !c.elite) continue;
+    const col = AFFIX[c.affix].col, R = c.r * 3.3, pulse = .55 + .25 * Math.sin(anim * 4 + c.x);
+    const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, R); g.addColorStop(0, 'rgba(' + col + ',' + (.55 * pulse).toFixed(2) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(' + col + ',.75)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.lineDashOffset = -anim * 18; ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 1.9, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function drawBuffRings(){
+  if (!running) return;
+  for (const [k, col, r] of [['swift', '110,200,255', 26], ['power', '255,150,70', 32]]){
+    if (P.buffs[k] <= 0) continue;
+    ctx.strokeStyle = 'rgba(' + col + ',' + (.5 + .3 * Math.sin(anim * 6)).toFixed(2) + ')'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(P.x, P.y, r + Math.sin(anim * 5) * 2, 0, TAU); ctx.stroke();
+  }
+}
+const glowCache = {};
+function glowTex(col){
+  if (glowCache[col]) return glowCache[col];
+  const c = document.createElement('canvas'); c.width = c.height = 48; const g = c.getContext('2d'), gr = g.createRadialGradient(24, 24, 0, 24, 24, 24);
+  gr.addColorStop(0, 'rgba(' + col + ',.85)'); gr.addColorStop(.45, 'rgba(' + col + ',.3)'); gr.addColorStop(1, 'rgba(' + col + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, 48, 48);
+  return glowCache[col] = c;
+}
+function drawPickups(){              // after the darkness layer, so loot stays visible at night (upright space)
+  if (!pickups.length) return;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const p of pickups){
+    if (p.age > p.life - 10 && Math.floor(anim * 5) % 2) continue;
+    const col = PICK_COL[p.k] || '255,220,120', sy = p.y * TILT - p.z - 12 - Math.sin(anim * 3 + p.x) * 2;
+    ctx.globalAlpha = .6 + .3 * Math.sin(anim * 5 + p.y); ctx.drawImage(glowTex(col), p.x - 20, sy - 20, 40, 40);
+    if (PICK_BEAM[p.k]){ ctx.globalAlpha = .28; ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(p.x - 1.5, sy - 46, 3, 40); }
+    ctx.globalAlpha = 1; ctx.font = '17px system-ui,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.fillText(ITEMS[p.k].icon, p.x, sy);
+    if (p.n > 1){ ctx.font = '700 10px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText('×' + p.n, p.x + 12, sy + 8); ctx.fillStyle = '#fff'; ctx.fillText('×' + p.n, p.x + 12, sy + 8); }
+  }
+  ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+}
 function drawCreature(c){
-  const flash = c.hit > 0, hop = Math.abs(Math.sin(c.hop)) * (c.k === 'rabbit' ? 4 : 1.2);
-  ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.fx, 1);
-  ell(0, 3, c.r + 3, 4, 'rgba(0,0,0,.22)'); ctx.translate(0, -hop);
+  const flash = c.hit > 0, hop = Math.abs(Math.sin(c.hop)) * (c.k === 'rabbit' ? 4 : 1.2), sc = c.scale || 1;
+  ctx.save(); ctx.translate(c.x, c.y); ctx.scale(c.fx * sc, sc);
+  ell(0, 3, c.r / sc + 3, 4, 'rgba(0,0,0,.22)'); ctx.translate(0, -hop);
   if (c.k === 'rabbit'){
     ell(0, -5, 8, 6, flash ? '#fff' : '#e6dac2'); circ(6, -9, 4.5, flash ? '#fff' : '#efe5cf');
     ell(5, -16, 1.8, 5, '#efe5cf'); ell(8, -15, 1.8, 4.5, '#e2d6bd'); circ(-8, -6, 2.6, '#fff'); circ(7.5, -9.5, 1, '#222');
@@ -1672,7 +1846,11 @@ function drawCreature(c){
     ctx.fillStyle = '#4a2f1d'; ctx.fillRect(-13, -4, 6, 8); ctx.fillRect(7, -4, 6, 8);
   }
   ctx.restore();
-  if (c.max > 10 && c.hp < c.max){
+  if (c.elite){
+    const col = AFFIX[c.affix].col, w = 34, hk = Math.max(0, c.hp / c.max), by = c.y - SHADOW_H[c.k] * sc - 14;
+    ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(c.x - w / 2, by, w, 5); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 3);
+    ctx.font = '700 11px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText('★ ' + c.name, c.x, by - 4); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillText('★ ' + c.name, c.x, by - 4);
+  } else if (c.max > 10 && c.hp < c.max){
     const w = 22, hk = Math.max(0, c.hp / c.max), by = c.y - c.r - 30;
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(c.x - w / 2, by, w, 4);
     ctx.fillStyle = hk > .5 ? '#8fd16a' : hk > .25 ? '#f2b84b' : '#ec5a4d'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 2);
@@ -1690,7 +1868,7 @@ function drawPlayer(){
   ctx.fillStyle = '#d65a3a'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -22, 18, 17, 5) : ctx.rect(-9, -22, 18, 17); ctx.fill();
   ctx.fillStyle = '#b8472c'; ctx.fillRect(-9, -9, 18, 3);
   if (P.armor){
-    ctx.fillStyle = ['', '#8a5a2b', '#6e4a23', '#9aa3ab'][P.armor]; ctx.fillRect(-9, -22, 18, 11);
+    ctx.fillStyle = ['', '#8a5a2b', '#6e4a23', '#9aa3ab', '#b48cff'][P.armor]; ctx.fillRect(-9, -22, 18, 11);
     ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-9, -13, 18, 2);
     if (P.armor >= 2){ circ(-5, -18, 1.2, '#d8dde0'); circ(5, -18, 1.2, '#d8dde0'); }
     if (P.armor >= 3){ ctx.fillStyle = '#c4cbd0'; ctx.fillRect(-12, -22, 5, 4); ctx.fillRect(7, -22, 5, 4); }
@@ -1794,6 +1972,7 @@ function render(){
   for (const c of creatures) if (c.x > vx0 - 50 && c.x < vx1 + 50 && c.y > vy0 - 90 && c.y < vy1 + 130) draws.push({ y: c.y, c });
   if (running) draws.push({ y: P.y, p: 1 });
   draws.sort((a, b) => a.y - b.y);
+  drawAuras(draws); drawBuffRings();
   castShadows(draws, vx0, vy0, vx1, vy1, dk);
   for (const d of draws){          // every sprite is drawn upright: undo the ground squash around its base point
     ctx.save(); ctx.transform(1, 0, 0, 1 / TILT, 0, d.y * (1 - 1 / TILT));
@@ -1833,6 +2012,7 @@ function render(){
     }
     ctx.imageSmoothingEnabled = true; ctx.drawImage(lc, 0, 0, cv.width, cv.height);
   }
+  upright(); drawPickups(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   updateAtmosphere(t, dk);
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
 }
@@ -1863,7 +2043,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b) => spawnCreature(k, a, b), hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; } };
 })();
 </script>
 </body>

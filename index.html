@@ -53,6 +53,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #clock i{position:absolute;top:-3px;width:3px;height:13px;margin-left:-1px;background:var(--bone);border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
 #menuBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1}
 #inv,#inv2{display:flex;gap:5px;margin-top:8px}
+#inv3{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-width:256px}
 #inv2{align-items:center}
 .slot{position:relative;flex:1;min-width:0;max-width:52px;height:54px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
 .slot .ic{font-size:21px;line-height:1}
@@ -62,15 +63,19 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .slot.food:not(.dim){border-color:rgba(143,209,106,.55)}
 .slot.use:not(.dim){border-color:rgba(127,208,255,.6)}
 .slot.core:not(.dim){border-color:rgba(194,124,255,.75)}
+.slot.mini{flex:0 0 auto;max-width:none;height:30px;flex-direction:row;gap:3px;padding:0 7px;border-radius:999px}
+.slot.mini .ic{font-size:15px}
+.slot.mini .nm{display:none}
+.slot.mini .n{position:static;font-size:12.5px}
+.slot.ore:not(.dim){border-color:rgba(255,170,90,.55)}
+.slot.bar:not(.dim){border-color:rgba(255,222,130,.7)}
 .chip{height:34px;padding:0 9px;border-radius:999px;display:flex;align-items:center;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
 .chip.swift{border-color:#6ac8ff;color:#aee3ff}
 .chip.power{border-color:#ff9a5a;color:#ffc6a0}
-@media (min-height:521px){body.row2 #toasts{top:calc(max(10px,env(safe-area-inset-top)) + 158px + 62px)}}
-@media (max-width:520px){#inv2{flex-wrap:wrap;max-width:236px}#inv2 .slot{flex:0 0 42px}.chip{flex:none}}
-@media (max-width:520px) and (min-height:521px){body.row2.chips #toasts{top:calc(max(10px,env(safe-area-inset-top)) + 158px + 62px + 42px)}}
+@media (max-width:520px){#inv2{flex-wrap:wrap;max-width:252px}#inv2 .slot{flex:0 0 42px}.chip{flex:none}}
 #goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
 #goal b{color:var(--amber);font-weight:700}
-#toasts{position:fixed;left:0;right:0;top:calc(max(10px,env(safe-area-inset-top)) + 158px);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:7}
+#toasts{position:fixed;left:0;right:0;top:var(--tt,calc(max(10px,env(safe-area-inset-top)) + 158px));display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:7}
 .toast{max-width:min(86vw,420px);padding:7px 14px;border-radius:999px;background:rgba(10,18,16,.88);border:1px solid var(--line);font-size:13px;text-align:center;animation:tin .2s ease-out}
 @keyframes tin{from{opacity:0;transform:translateY(-6px)}}
 .spacer{flex:1}
@@ -93,9 +98,11 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .bp.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
 .bp.no{opacity:.5}
 body.building #equip{display:none}
+@media (max-height:520px){body.building #inv3{visibility:hidden}}
 .lv{position:absolute;top:2px;right:4px;font-size:8.5px;font-style:normal;font-weight:700;color:#7fd0ff}
 .lv.l3{color:#ffd166}
 .lv.l4{color:#d49bff}
+.lv.l5{color:#ffd166}
 #armorBadge{color:var(--amber);margin-left:3px}
 .tabs{display:flex;gap:6px;margin:4px 0 10px}
 .tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:transparent;font-weight:700;font-size:14px}
@@ -103,6 +110,8 @@ body.building #equip{display:none}
 .lvtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(127,208,255,.16);color:#7fd0ff;font-size:11px;font-weight:700}
 .lvtag.max{background:rgba(255,209,102,.18);color:#ffd166}
 .lvtag.l4{background:rgba(194,124,255,.2);color:#d9aeff}
+.lvtag.l5{background:rgba(255,209,102,.22);color:#ffd166}
+.btns{display:flex;flex-direction:column;gap:6px}
 #eliteArrow{position:fixed;left:0;top:0;width:64px;margin:-20px 0 0 -32px;z-index:6;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:1px}
 #eliteArrow i{display:block;width:0;height:0;border-left:15px solid #ff5a4a;border-top:9px solid transparent;border-bottom:9px solid transparent;filter:drop-shadow(0 0 4px rgba(255,90,74,.9))}
 #eliteArrow b{font-size:10.5px;font-weight:700;color:#ffb3a8;text-shadow:0 1px 3px #000;white-space:nowrap}
@@ -163,12 +172,30 @@ body.building #equip{display:none}
 #fxTint{position:fixed;inset:0;pointer-events:none;z-index:2;background:rgb(255,150,70);opacity:0}
 #fxVig{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at 50% 50%,rgba(2,8,6,0) 58%,rgba(2,8,6,.5) 100%)}
 #hurt{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;box-shadow:inset 0 0 110px 26px rgba(236,90,77,.85)}
-@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast,.eq.pop{animation:none}}
+#fxSnow1,#fxSnow2{position:fixed;left:0;top:0;pointer-events:none;z-index:3;opacity:0;background-repeat:repeat;will-change:transform;transition:opacity .6s}
+#fxSnow1{animation:snowA 7s linear infinite}
+#fxSnow2{animation:snowB 11s linear infinite}
+@keyframes snowA{from{transform:translate3d(0,-256px,0)}to{transform:translate3d(0,0,0)}}
+@keyframes snowB{from{transform:translate3d(0,-384px,0)}to{transform:translate3d(0,0,0)}}
+#zoneTag{display:block;margin-top:3px;font-size:9.5px;line-height:1;color:var(--dim);white-space:nowrap}
+#voyage{position:fixed;inset:0;z-index:45;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:linear-gradient(#a6d8f0 0%,#d7eef7 46%,#3a93ba 46%,#1d5f86 100%);opacity:0;transition:opacity .45s;overflow:hidden;pointer-events:auto}
+#voyage.night{background:linear-gradient(#0d1233 0%,#2a3566 46%,#16486a 46%,#0a2540 100%)}
+#voyage.on{opacity:1}
+#voyage .wv{position:absolute;left:-20%;width:140%;height:3px;border-radius:3px;background:rgba(255,255,255,.38);animation:wave linear infinite}
+@keyframes wave{from{transform:translateX(-12%)}to{transform:translateX(12%)}}
+#vboat{width:150px;margin-top:-40px;animation:bob 1.4s ease-in-out infinite;filter:drop-shadow(0 8px 6px rgba(0,0,0,.3))}
+@keyframes bob{50%{transform:translateY(7px) rotate(2.5deg)}}
+#voyageTxt{margin:6px 0 0;font-family:var(--font-display);font-size:22px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.45)}
+.vbar{width:min(240px,60vw);height:6px;border-radius:4px;background:rgba(0,0,0,.28);overflow:hidden}
+.vbar i{display:block;height:100%;width:0;background:#fff;border-radius:4px}
+#voyage.on .vbar i{animation:vfill 2.6s linear forwards}
+@keyframes vfill{to{width:100%}}
+@media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast,.eq.pop,#vboat,#voyage .wv,#fxSnow1,#fxSnow2{animation:none}}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div id="fxClouds"></div><div id="fxHaze"></div><div id="fxTint"></div><div id="fxVig"></div>
+<div id="fxClouds"></div><div id="fxSnow1"></div><div id="fxSnow2"></div><div id="fxHaze"></div><div id="fxTint"></div><div id="fxVig"></div>
 <div id="hurt"></div>
 <div id="joy"><div id="joyKnob"></div></div>
 
@@ -180,11 +207,12 @@ body.building #equip{display:none}
       <div class="stat" id="st-thirst" style="--c:var(--sea)"><label>갈증</label><div class="bar"><i></i></div></div>
       <div class="stat" id="st-warmth" style="--c:var(--ember)"><label>체온</label><div class="bar"><i></i></div></div>
     </div>
-    <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div></div>
+    <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div><small id="zoneTag"></small></div>
     <button id="menuBtn" aria-label="메뉴">☰</button>
   </div>
   <div id="inv"></div>
   <div id="inv2" hidden></div>
+  <div id="inv3" hidden></div>
   <div id="goal" class="panel"></div>
   <div id="eliteArrow" hidden><i></i><b></b></div>
   <div class="spacer"></div>
@@ -199,9 +227,17 @@ body.building #equip{display:none}
 <div id="craft" class="modal" hidden>
   <div class="sheet">
     <div class="head"><h2>제작</h2><button class="xbtn" id="craftClose" aria-label="닫기">✕</button></div>
-    <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button></div>
+    <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button><button class="tab" id="tabSmelt">제련</button></div>
     <p class="sub" id="craftSub">재료를 모아 도구와 시설을 만드세요.</p>
     <div id="craftList"></div>
+  </div>
+</div>
+
+<div id="sail" class="modal" hidden>
+  <div class="sheet">
+    <div class="head"><h2>항해</h2><button class="xbtn" id="sailClose" aria-label="닫기">✕</button></div>
+    <p class="sub" id="sailSub"></p>
+    <div id="sailList"></div>
   </div>
 </div>
 
@@ -234,6 +270,7 @@ body.building #equip{display:none}
     <li>밤에는 <b>늑대</b>와 <b>좀비</b>가 옵니다. 낮에도 <b>곰</b>을 조심하세요.</li>
     <li>가끔 나타나는 <b>엘리트</b>를 잡으면 아이템이 떨어져요 (치유약 Z · 신속약 X · 괴력약 V)</li>
     <li>전리품(고철, 가죽)으로 제작 창의 <b>강화</b> 탭에서 장비를 올려요</li>
+    <li>해안에서 <b>배</b>를 만들면 다른 섬으로 갈 수 있어요. <b>광산</b>에서 광석을 캐 <b>용광로</b>에서 주괴로 녹여 쓰세요</li>
   </ul>
 </div>
 
@@ -246,6 +283,12 @@ body.building #equip{display:none}
     <button class="btn ghost" id="btnHome">처음 화면으로</button>
   </div>
 </div>
+<div id="voyage" hidden>
+  <i class="wv" style="top:56%;animation-duration:2.6s"></i><i class="wv" style="top:64%;animation-duration:2s;animation-delay:-.7s"></i><i class="wv" style="top:73%;animation-duration:3.1s;animation-delay:-1.4s"></i><i class="wv" style="top:84%;animation-duration:2.3s;animation-delay:-.3s"></i>
+  <svg id="vboat" viewBox="0 0 140 110"><path d="M10 70 Q70 100 130 66 L122 80 Q70 106 20 84 Z" fill="#6d4624"/><path d="M8 66 L132 62 Q124 88 70 92 Q24 90 8 66Z" fill="#a8723a"/><path d="M16 72 H124" stroke="#6d4624" stroke-width="2"/><rect x="66" y="12" width="4" height="56" fill="#5a3a1c"/><path d="M70 14 L70 60 L112 60 Z" fill="#f4ecd6"/><path d="M66 20 L66 58 L30 58 Z" fill="#e6dcc0"/><path d="M70 12 L88 18 L70 24 Z" fill="#e0533f"/></svg>
+  <p id="voyageTxt"></p>
+  <div class="vbar"><i></i></div>
+</div>
 <div id="fade"></div>
 
 <script>
@@ -253,28 +296,45 @@ body.building #equip{display:none}
 'use strict';
 
 /* ================= constants ================= */
-const WORLD = 2400, ISL_M = 24, ISL_R = 230;      // island = rounded square
+let WORLD = 2400, ISL_M = 24, ISL_R = 230;      // the active zone's island = rounded square (setZone changes these)
 const DAY_LEN = 240, RAFT_DAY = 5;
 const PLAYER_R = 11, SPEED = 125;
 const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
-const CELL = 128, GN = Math.ceil(WORLD / CELL);
+const CELL = 128; let GN = Math.ceil(WORLD / CELL);
 const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
-const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1 };
+const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1, ore: 1, furnace: 1, boat: 1, mine: 1, exit: 1 };
+/* ---- zones: each one is its own map (an island, or the mine below one) with its own look and rules ---- */
+const LAKE_PAL = { rim: ['#d6c690', '#b7a874'], foam: '#e9f6fa', water: '#78cbe0', deep: '#4faad2', core: '#2f86b8' };
+const ZONES = {
+  home: { id: 'home', name: '무인도', world: 2400, margin: 24, rad: 230, ground: 'grass', bg: '#2f86ad', shallow: ['#4aa7cc', '#7cc4de'], shore: '#dcc790',
+    cliff: ['#4d3a28', '#624a30', '#785c3a', '#8f7248', '#a58a58'], lake: LAKE_PAL, cap: { rabbit: 36, boar: 7, bear: 3 }, fauna: { rabbit: 40, boar: 8, bear: 3 } },
+  mine: { id: 'mine', name: '광산섬', world: 2000, margin: 24, rad: 200, ground: 'rock', bg: '#2a7898', shallow: ['#3f94b8', '#6cb4d0'], shore: '#b4aa9a',
+    cliff: ['#34322e', '#46423c', '#58534a', '#6e685c', '#857e6e'], lake: LAKE_PAL, cap: { rabbit: 10, bear: 2 }, fauna: { rabbit: 12, bear: 2 } },
+  cave: { id: 'cave', name: '광산 갱도', world: 1700, margin: 20, rad: 250, ground: 'cave', bg: '#050608', cave: true, chill: .4, eliteBonus: .08, shallow: ['#16181c', '#1f2227'], shore: '#2a2d33',
+    cliff: ['#0e0f12', '#14161a', '#1a1c21', '#202328', '#272a30'], lake: { rim: ['#3b3e45', '#2b2e34'], foam: '#6f8494', water: '#2f6c86', deep: '#20516b', core: '#163a4d' }, cap: { bat: 10, golem: 6 }, fauna: { bat: 10, golem: 6 } },
+  snow: { id: 'snow', name: '설원섬', world: 2200, margin: 24, rad: 220, ground: 'snow', bg: '#4590b4', shallow: ['#68aecf', '#a6d3e6'], shore: '#e4ecf0', chill: .3, dayWolves: true, eliteBonus: .08,
+    cliff: ['#4e5862', '#626c76', '#79838d', '#939da7', '#aeb7c0'], lake: { rim: ['#e6eff3', '#c3d8e2'], foam: '#f4fafc', water: '#bfe3f2', deep: '#8fc7e2', core: '#6aaed6' }, cap: { rabbit: 14, bear: 4 }, fauna: { rabbit: 16, bear: 4 } }
+};
+const zoneSave = {}, zoneLeft = {};    // zone id -> its objects (packed away while you are elsewhere) / the game time you left it
+let Z = ZONES.home;
 const GUN_SPEED = 560, AUTO_GUN_RANGE = 190;
-const TOWER_LV = { dmg: [4, 6, 9, 14], range: [240, 270, 300, 340], max: [30, 40, 50, 70], cd: [1, .85, .7, .55] };   // index = tower level - 1
-const TOWER_UPG = [{ scrap: 4, wood: 6 }, { scrap: 8, stone: 8 }, { core: 2, scrap: 12, stone: 14 }];   // Lv.4 needs elite cores
+const TOWER_LV = { dmg: [4, 6, 9, 14, 20], range: [240, 270, 300, 340, 380], max: [30, 40, 50, 70, 90], cd: [1, .85, .7, .55, .45] };   // index = tower level - 1
+const TOWER_UPG = [{ scrap: 4, wood: 6 }, { scrap: 8, stone: 8 }, { core: 2, scrap: 12, stone: 14 }, { feBar: 4, auBar: 1, stone: 16 }];   // Lv.4 needs elite cores, Lv.5 needs ingots
 const GRID = 28, BUILD_RANGE = 150;     // walls sit on a 28px grid; you can build within 150px of yourself
 const WALLS = {
   wood:  { name: '울타리', hp: 40,  cost: { wood: 2 } },
   stone: { name: '돌담',   hp: 140, cost: { stone: 4 } },
+  iron:  { name: '철벽',   hp: 360, cost: { feBar: 2 }, need: 'feBar' },   // shows up in the palette once you own an iron ingot
   gate:  { name: '문',     hp: 50,  cost: { wood: 3, stone: 1 } },   // you walk through, animals do not
   tower: { name: '탑',     hp: 90,  cost: { wood: 10, stone: 6 } },   // shoots hostile animals by itself, needs ammo
   erase: { name: '철거',   hp: 0,   cost: {} }
 };
-const BUILD_ORDER = ['wood', 'stone', 'gate', 'tower', 'erase'];
+const BUILD_ORDER = ['wood', 'stone', 'iron', 'gate', 'tower', 'erase'];
+const buildList = () => BUILD_ORDER.filter(k => !WALLS[k].need || (P && P.seen[WALLS[k].need]));
 const WALL_SVG = {
   wood: '<svg viewBox="0 0 26 22"><path d="M2 8H24M2 14H24" stroke="#b58a52" stroke-width="2.2"/><rect x="3" y="3" width="4" height="16" rx="1" fill="#8b6035"/><rect x="11" y="3" width="4" height="16" rx="1" fill="#8b6035"/><rect x="19" y="3" width="4" height="16" rx="1" fill="#8b6035"/></svg>',
   stone: '<svg viewBox="0 0 26 22"><rect x="2" y="3" width="22" height="16" rx="2" fill="#8d9296"/><rect x="2" y="3" width="22" height="6" rx="2" fill="#aeb4b8"/><path d="M2 12.5H24M10 9V12.5M17 12.5V19" stroke="#5e6367" stroke-width="1.4"/></svg>',
+  iron: '<svg viewBox="0 0 26 22"><rect x="2" y="3" width="22" height="16" rx="2" fill="#6b7782"/><rect x="2" y="3" width="22" height="6" rx="2" fill="#97a5b2"/><path d="M2 12.5H24M13 9V12.5" stroke="#3d464e" stroke-width="1.4"/><circle cx="5" cy="6" r="1" fill="#d9e2ea"/><circle cx="21" cy="6" r="1" fill="#d9e2ea"/></svg>',
   gate: '<svg viewBox="0 0 26 22"><rect x="3" y="3" width="20" height="16" rx="2" fill="#a9783e" stroke="#6a4824" stroke-width="1.5"/><path d="M3 3L23 19M23 3L3 19" stroke="#6a4824" stroke-width="1.5"/><circle cx="19" cy="11" r="1.5" fill="#f2d9a0"/></svg>',
   tower: '<svg viewBox="0 0 26 22"><path d="M6 20L8 11M20 20L18 11" stroke="#7a5230" stroke-width="2.4"/><rect x="5" y="9" width="16" height="3" fill="#a87a40"/><rect x="8" y="3.5" width="10" height="6" fill="#8a5f33"/><path d="M6 4L13 0.5L20 4Z" fill="#6b3f2a"/><rect x="10.5" y="5.5" width="5" height="2" fill="#2b2118"/></svg>',
   erase: '<svg viewBox="0 0 26 22"><path d="M6 4L20 18M20 4L6 18" stroke="#ec5a4d" stroke-width="3.2" stroke-linecap="round"/></svg>'
@@ -294,9 +354,21 @@ const ITEMS = {
   heal:   { name: '치유약', icon: '🧪', use: 1 },     // elite loot: +50 hp
   swift:  { name: '신속약', icon: '💨', use: 1 },     // elite loot: 30 s of speed
   power:  { name: '괴력약', icon: '💥', use: 1 },     // elite loot: 30 s of x1.5 damage
-  core:   { name: '정예핵', icon: '💠' }              // elite loot: needed for the Lv.4 upgrades
+  core:   { name: '정예핵', icon: '💠' },             // elite loot: needed for the Lv.4 upgrades
+  copper: { name: '구리광석', icon: '🟠', ore: 1, info: '구리광석: 용광로에서 구리 주괴로 녹여요' },
+  iron:   { name: '철광석',   icon: '⚪', ore: 1, info: '철광석: 용광로에서 철 주괴로 녹여요 (캐려면 곡괭이 Lv.2)' },
+  gold:   { name: '금광석',   icon: '🟡', ore: 1, info: '금광석: 용광로에서 금 주괴로 녹여요 (캐려면 곡괭이 Lv.3)' },
+  cuBar:  { name: '구리 주괴', icon: '🟧', bar: 1, info: '구리 주괴: 랜턴과 곡괭이 Lv.3 강화에 써요' },
+  feBar:  { name: '철 주괴',   icon: '🟦', bar: 1, info: '철 주괴: 철벽, 범선, Lv.5 강화에 써요' },
+  auBar:  { name: '금 주괴',   icon: '🟨', bar: 1, info: '금 주괴: Lv.5 강화에 써요' }
 };
-const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1 };   // bag slots that stay hidden until you first get one
+const ORE = {     // minable nodes: pickaxe level needed, units per node, seconds to regrow, colors
+  copper: { tier: 1, amt: 6, regrow: 200, col: '#d9803f', hi: '#ffc58a', rgb: '255,150,80', bar: 'cuBar' },
+  iron:   { tier: 2, amt: 5, regrow: 260, col: '#9fb2c7', hi: '#e3eefa', rgb: '190,210,235', bar: 'feBar' },
+  gold:   { tier: 3, amt: 4, regrow: 360, col: '#f2c84b', hi: '#fff2a8', rgb: '255,215,90', bar: 'auBar' }
+};
+const mkOre = kind => (x, y) => ({ t: 'ore', kind, x, y, r: 15, amt: ORE[kind].amt, v: Math.random(), shake: 0, regrow: 0 });
+const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1 };   // bag slots that stay hidden until you first get one
 const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1 };                           // these live in the second bag row
 const BUFF_T = 30;
 const SPECS = {
@@ -305,22 +377,24 @@ const SPECS = {
   wolf:   { hp: 14,  r: 11, speed: 106, drop: { meat: 1, hide: 1 } },
   zombie: { hp: 24,  r: 11, speed: 46,  dmg: 9,  drop: { scrap: [1, 2] } },                 // night only, slow, ignores fire's fear but burns
   brute:  { hp: 110, r: 16, speed: 38,  dmg: 22, drop: { scrap: [4, 6], hide: 1 } },        // big zombie from day 4, breaks walls fast
-  bear:   { hp: 55,  r: 15, speed: 50,  dmg: 18, rage: 2.3, atkCd: 1.5, wallDmg: 16, territory: 110, drop: { meat: 5, hide: 3 } }
+  bear:   { hp: 55,  r: 15, speed: 50,  dmg: 18, rage: 2.3, atkCd: 1.5, wallDmg: 16, territory: 110, drop: { meat: 5, hide: 3 } },
+  bat:    { hp: 4,   r: 8,  speed: 108, dmg: 4,  atkCd: .9, drop: {} },                          // cave only: flutters, swoops at you in the dark
+  golem:  { hp: 70,  r: 17, speed: 32,  dmg: 17, atkCd: 1.6, wallDmg: 14, drop: { stone: [2, 4], copper: [1, 3], iron: [0, 2] } }   // cave only: sleeps like a rock until you come near
 };
 const NIGHT_KINDS = { wolf: 1, zombie: 1, brute: 1 };
 /* ---- elites: stronger variants of wolves, zombies and bears, each with one affix ---- */
-const KIND_NAME = { rabbit: '토끼', boar: '멧돼지', wolf: '늑대', zombie: '좀비', brute: '거대 좀비', bear: '곰' };
-const ELITE_OK = { wolf: 3, zombie: 3, bear: 2.2 };      // kind -> hp multiplier of its elite
+const KIND_NAME = { rabbit: '토끼', boar: '멧돼지', wolf: '늑대', zombie: '좀비', brute: '거대 좀비', bear: '곰', bat: '박쥐', golem: '골렘' };
+const ELITE_OK = { wolf: 3, zombie: 3, bear: 2.2, golem: 2.5 };      // kind -> hp multiplier of its elite
 const AFFIX = {
-  frenzy: { name: '광폭', col: '255,84,72',   ok: ['wolf', 'zombie', 'bear'], desc: '광폭: 훨씬 빠르고 더 자주 공격해요' },
-  armor:  { name: '강철', col: '132,178,235', ok: ['wolf', 'zombie', 'bear'], desc: '강철: 받는 피해가 40% 줄어요' },
-  regen:  { name: '재생', col: '110,226,124', ok: ['wolf', 'zombie', 'bear'], desc: '재생: 맞지 않으면 체력을 회복해요' },
+  frenzy: { name: '광폭', col: '255,84,72',   ok: ['wolf', 'zombie', 'bear', 'golem'], desc: '광폭: 훨씬 빠르고 더 자주 공격해요' },
+  armor:  { name: '강철', col: '132,178,235', ok: ['wolf', 'zombie', 'bear', 'golem'], desc: '강철: 받는 피해가 40% 줄어요' },
+  regen:  { name: '재생', col: '110,226,124', ok: ['wolf', 'zombie', 'bear', 'golem'], desc: '재생: 맞지 않으면 체력을 회복해요' },
   split:  { name: '분열', col: '194,124,255', ok: ['wolf', 'zombie'],         desc: '분열: 죽으면 둘로 갈라져요' }
 };
 const ELITE_LOOT = { heal: [.45, 1, 1], swift: [.22, 1, 1], power: [.22, 1, 1], ammo: [.35, 10, 20], core: [.22, 1, 1] };   // item -> [chance, min, max]
 const AFFIX_LOOT = { frenzy: { swift: .42, power: .42 }, armor: { core: .42 }, regen: { heal: .7 }, split: { ammo: .55 } };   // each affix favours some drops
-const ELITE_BONUS = { wolf: { hide: [2, 3] }, zombie: { scrap: [3, 5] }, bear: { hide: [3, 4], meat: [3, 4] } };               // sure drops, picked up from the ground
-const PICK_COL = { heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110' };
+const ELITE_BONUS = { wolf: { hide: [2, 3] }, zombie: { scrap: [3, 5] }, bear: { hide: [3, 4], meat: [3, 4] }, golem: { iron: [2, 3], copper: [2, 3], gold: [0, 1] } };               // sure drops, picked up from the ground
+const PICK_COL = { heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110', copper: '255,150,80', iron: '190,210,235', gold: '255,215,90', cuBar: '255,150,80', feBar: '190,210,235', auBar: '255,215,90' };
 const PICK_BEAM = { heal: 1, swift: 1, power: 1, core: 1 };
 const TOOLS = {   // what each equipped tool does: yield per swing, damage, extra reach, swing cooldowns (wood / stone / attack)
   hand:    { name: '맨손',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 },
@@ -329,22 +403,23 @@ const TOOLS = {   // what each equipped tool does: yield per swing, damage, extr
   pickaxe: { name: '곡괭이', wood: 1, stone: 3, dmg: 1, reach: 0,  cdW: .55, cdS: .42, cdA: .4 },
   gun:     { name: '소총',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 }   // shots are handled by fireGun()
 };
+for (const t in TOOLS) TOOLS[t].ore = t === 'pickaxe' ? 1 : 0;       // units of ore per swing (only a pickaxe can mine)
 const TOOL_ORDER = ['hand', 'axe', 'spear', 'pickaxe', 'gun'];
-const TOOL_LV = {   // stats per upgrade level (index = level - 1); Lv.4 needs elite cores
-  axe:     { wood: [2, 3, 4, 5], dmg: [2, 3, 4, 6], cdW: [.38, .32, .26, .2] },
-  spear:   { dmg: [4, 6, 9, 13], reach: [12, 16, 22, 28], cdA: [.5, .45, .4, .34] },
-  pickaxe: { stone: [3, 4, 6, 8], cdS: [.42, .36, .3, .24] },
-  gun:     { dmg: [6, 9, 13, 18], cd: [.55, .45, .36, .28], range: [280, 320, 370, 420] }
+const TOOL_LV = {   // stats per upgrade level (index = level - 1); Lv.4 needs elite cores, Lv.5 needs ingots
+  axe:     { wood: [2, 3, 4, 5, 6], dmg: [2, 3, 4, 6, 8], cdW: [.38, .32, .26, .2, .16] },
+  spear:   { dmg: [4, 6, 9, 13, 18], reach: [12, 16, 22, 28, 34], cdA: [.5, .45, .4, .34, .28] },
+  pickaxe: { stone: [3, 4, 6, 8, 10], ore: [1, 1, 2, 2, 3], cdS: [.42, .36, .3, .24, .2] },
+  gun:     { dmg: [6, 9, 13, 18, 24], cd: [.55, .45, .36, .28, .22], range: [280, 320, 370, 420, 470] }
 };
-const UPGRADES = {  // cost of the next level (tools: Lv1->2 ... Lv3->4; armor: none->1->2->3->4)
-  axe:     [{ scrap: 2, wood: 5 }, { scrap: 5, stone: 6, hide: 2 }, { core: 1, scrap: 8, wood: 10 }],
-  spear:   [{ scrap: 3, wood: 4 }, { scrap: 6, hide: 3 }, { core: 2, scrap: 10, hide: 5 }],
-  pickaxe: [{ scrap: 2, stone: 5 }, { scrap: 5, stone: 8, hide: 1 }, { core: 1, scrap: 8, stone: 12 }],
-  gun:     [{ scrap: 4, wood: 6 }, { scrap: 9, hide: 3, stone: 6 }, { core: 2, scrap: 14, hide: 6, stone: 10 }],
-  armor:   [{ hide: 4, wood: 2 }, { hide: 6, scrap: 4 }, { scrap: 10, hide: 6 }, { core: 3, scrap: 14, hide: 10 }]
+const UPGRADES = {  // cost of the next level (tools: Lv1->2 ... Lv4->5; armor: none->1->2->3->4->5)
+  axe:     [{ scrap: 2, wood: 5 }, { scrap: 5, stone: 6, hide: 2 }, { core: 1, scrap: 8, wood: 10 }, { feBar: 3, auBar: 1, wood: 12 }],
+  spear:   [{ scrap: 3, wood: 4 }, { scrap: 6, hide: 3 }, { core: 2, scrap: 10, hide: 5 }, { feBar: 4, auBar: 1, hide: 6 }],
+  pickaxe: [{ scrap: 2, stone: 5 }, { scrap: 5, stone: 8, hide: 1, cuBar: 2 }, { core: 1, scrap: 8, stone: 12 }, { feBar: 3, auBar: 1, stone: 15 }],
+  gun:     [{ scrap: 4, wood: 6 }, { scrap: 9, hide: 3, stone: 6 }, { core: 2, scrap: 14, hide: 6, stone: 10 }, { feBar: 5, auBar: 2, scrap: 12 }],
+  armor:   [{ hide: 4, wood: 2 }, { hide: 6, scrap: 4 }, { scrap: 10, hide: 6 }, { core: 3, scrap: 14, hide: 10 }, { feBar: 6, auBar: 2, hide: 12 }]
 };
 const UP_NAME = { axe: '돌도끼', spear: '나무 창', pickaxe: '곡괭이', gun: '사제 소총' };
-const ARMOR_RED = [0, .15, .3, .45, .6], ARMOR_NAME = ['맨몸', '가죽 옷', '강화 가죽 갑옷', '철판 갑옷', '정예 갑옷'];
+const ARMOR_RED = [0, .15, .3, .45, .6, .72], ARMOR_NAME = ['맨몸', '가죽 옷', '강화 가죽 갑옷', '철판 갑옷', '정예 갑옷', '합금 갑옷'];
 function stat(t){ const s = Object.assign({}, TOOLS[t]), lv = TOOL_LV[t]; if (lv) for (const k in lv) s[k] = lv[k][(P.lv[t] || 1) - 1]; return s; }
 const tw = o => { const l = (o.lv || 1) - 1; return { dmg: TOWER_LV.dmg[l], range: TOWER_LV.range[l], max: TOWER_LV.max[l], cd: TOWER_LV.cd[l] }; };
 const TOOL_SVG = {
@@ -362,6 +437,9 @@ const RECIPES = [
   { id: 'ammo',    name: '탄약 10발', desc: '소총과 탑에 쓰는 탄약입니다. 탑 앞에서 행동 버튼으로 채워요.', cost: { stone: 3, wood: 1 }, give: { ammo: 10 } },
   { id: 'fire',    name: '모닥불', desc: '빛과 온기를 주고 늑대를 막습니다. 고기도 구울 수 있어요.', cost: { wood: 5, stone: 2 }, place: 'fire' },
   { id: 'shelter', name: '움막', desc: '낮은 안전지대. 밤에 잠을 자서 아침까지 건너뜁니다.', cost: { wood: 12, stone: 5 }, place: 'shelter' },
+  { id: 'boat', name: '작은 배', desc: '바닷가에서 만들면 다른 섬으로 항해할 수 있어요. 배 앞에서 행동 버튼을 누르세요.', cost: { wood: 25, scrap: 4, hide: 3 }, boat: true },
+  { id: 'furnace', name: '용광로', desc: '광석을 주괴로 녹이는 시설이에요. 가까이에서 "제련" 탭을 쓰세요.', cost: { stone: 20, wood: 6 }, place: 'furnace' },
+  { id: 'lantern', name: '광부 랜턴', desc: '밤과 갱도에서 보이는 범위가 넓어져요. 한 번만 만들면 계속 써요.', cost: { cuBar: 2, scrap: 2 }, lantern: true },
   { id: 'raft',    name: '탈출 뗏목', desc: RAFT_DAY + '일차부터 해안에서 만들 수 있습니다. 완성하면 탈출!', cost: { wood: 30, stone: 10, cooked: 3 }, raft: true }
 ];
 
@@ -397,7 +475,7 @@ let running = false, paused = false, sleeping = false, anim = 0;
 let target = null, actHeld = false;
 const bullets = [], parts = [], pickups = []; let aim = null, towerTip = false, dustT = 0;
 let hurtT = 0, shakeT = 0, lastDay = 1, lastPhase = '', lastLabel = '';
-let wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
+let lastChillT = -99, wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
 const keys = {};
 const joy = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 
@@ -443,8 +521,57 @@ function collide(e, r){
     });
 }
 
+function setZone(id){ Z = ZONES[id]; WORLD = Z.world; ISL_M = Z.margin; ISL_R = Z.rad; GN = Math.ceil(WORLD / CELL); }
+function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; }
+function spawnFauna(){          // the animals a zone starts with (they are not saved; a zone repopulates when you arrive)
+  for (const k in Z.fauna) for (let i = 0; i < Z.fauna[k]; i++) spawnCreature(k, 300, undefined, false);
+}
+const GEN = {};                  // zone id -> function that fills a fresh zone with objects (added below)
+function packObjs(){
+  return objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0), o.kind || 0, Math.round(o.hp || 0), Math.round(o.ammo || 0), o.lv || 1]);
+}
+function unpackObjs(list){
+  for (const a of list){
+    const o = { t: a[0], x: a[1], y: a[2], r: a[3], v: a[5] };
+    if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush' || o.t === 'wreck') o.amt = a[4];
+    if (o.t === 'tree' || o.t === 'rock') o.shake = 0;
+    if (o.t === 'bush') o.regrow = a[7];
+    if (o.t === 'fire') o.fuel = a[6];
+    if (o.t === 'ore'){ o.kind = a[8]; o.amt = a[4]; o.regrow = a[7]; o.shake = 0; }
+    if (o.t === 'furnace') o.glow = 0;
+    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.ammo = a[10] || 0; o.lv = a[11] || 1; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
+    addObj(o);
+  }
+}
+function arriveAt(o){            // stand the player just in front of an object (a boat, a mine door), facing inland
+  const C = WORLD / 2, dx = C - o.x, dy = C - o.y, d = Math.hypot(dx, dy) || 1, base = Math.atan2(dy, dx);
+  for (let i = 0; i < 16; i++){
+    const a = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * .4, k = o.r + PLAYER_R + 18, x = o.x + Math.cos(a) * k, y = o.y + Math.sin(a) * k;
+    if (!blocked(x, y, PLAYER_R + 2) && inside(x, y) > PLAYER_R + 8){ P.x = x; P.y = y; P.fx = Math.cos(base); P.fy = Math.sin(base); return; }
+  }
+  P.x = C; P.y = C;
+}
+function catchUp(el){            // a zone you come back to has moved on: ore and bushes regrew, campfires burned down
+  for (const o of objs){
+    if ((o.t === 'ore' || o.t === 'bush') && o.regrow > 0){ o.regrow -= el; if (o.regrow <= 0){ o.regrow = 0; o.amt = o.t === 'ore' ? ORE[o.kind].amt : 3; } }
+    else if (o.t === 'fire' && o.fuel > 0 && o.fuel < 1e6) o.fuel = Math.max(0, o.fuel - el);
+  }
+}
+function enterZone(id, via){     // switch the active map; the one you leave is packed away and comes back as you left it
+  if (!ZONES[id] || Z.id === id) return false;
+  zoneSave[Z.id] = packObjs(); zoneLeft[Z.id] = T;
+  setZone(id); clearWorld();
+  if (zoneSave[id]){ unpackObjs(zoneSave[id]); delete zoneSave[id]; if (zoneLeft[id] != null && T > zoneLeft[id]) catchUp(T - zoneLeft[id]); } else if (GEN[id]) GEN[id]();
+  const o = via && objs.find(o => o.t === via);
+  if (o) arriveAt(o); else { P.x = P.y = WORLD / 2; }
+  target = null; lastLabel = ''; setBuild(false);
+  cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zy / 2;
+  spawnFauna();
+  return true;
+}
+
 function genWorld(){
-  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0;
+  setZone('home'); clearWorld(); for (const k in zoneSave) delete zoneSave[k]; for (const k in zoneLeft) delete zoneLeft[k];
   const C = WORLD / 2, noise = makeNoise();
   const tooClose = (x, y, d) => { let c = false; gridQuery(x - d - 100, y - d - 100, x + d + 100, y + d + 100, o => { if (!c && Math.hypot(o.x - x, o.y - y) < d + o.r) c = true; }); return c; };
 
@@ -492,14 +619,81 @@ function genWorld(){
   starter(4, tree); starter(3, rock); starter(2, bush);
 
   P = newPlayer();
-  for (let i = 0; i < 40; i++) spawnCreature('rabbit', 300);
-  for (let i = 0; i < 8; i++) spawnCreature('boar', 300);
-  for (let i = 0; i < 3; i++) spawnCreature('bear', 400, undefined, false);
+  spawnFauna();
 }
 
+function genKit(){              // shared helpers for generating a zone
+  const C = WORLD / 2;
+  const tooClose = (x, y, d) => { let c = false; gridQuery(x - d - 100, y - d - 100, x + d + 100, y + d + 100, o => { if (!c && Math.hypot(o.x - x, o.y - y) < d + o.r) c = true; }); return c; };
+  const scatter = (count, d, make, opt) => {       // opt: test(x, y), cx/cy/rad (stay within a circle), keep [x, y, r] (stay out of a circle), ins (min distance from the coast)
+    opt = opt || {}; let n = 0;
+    const keeps = !opt.keep ? [] : Array.isArray(opt.keep[0]) ? opt.keep : [opt.keep];
+    for (let tries = 0; n < count && tries < 30000; tries++){
+      let x, y;
+      if (opt.rad){ const a = rand(0, TAU), r = Math.sqrt(Math.random()) * opt.rad; x = opt.cx + Math.cos(a) * r; y = opt.cy + Math.sin(a) * r; } else { x = rand(50, WORLD - 50); y = rand(50, WORLD - 50); }
+      if (inside(x, y) < (opt.ins || 75)) continue;
+      if (keeps.some(k => Math.hypot(x - k[0], y - k[1]) < k[2])) continue;
+      if (opt.test && !opt.test(x, y)) continue;
+      if (tooClose(x, y, d)) continue;
+      addObj(make(x, y)); n++;
+    }
+    return n;
+  };
+  const lake = (cx, cy, k) => { for (let i = 0; i < k; i++){ const a = rand(0, TAU), d = i ? rand(26, 56) : 0; addObj({ t: 'water', x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, r: rand(34, 70) }); } };
+  return { C, tooClose, scatter, lake };
+}
+const treeObj = (x, y, v) => ({ t: 'tree', x, y, r: 11, amt: 6, v: v == null ? Math.random() : v, shake: 0 });
+const pineV = () => (PICK([2, 5, 8]) + .15 + Math.random() * .7) / 9;      // sprite slots 2, 5, 8 are the pines
+const rockObj = (x, y) => ({ t: 'rock', x, y, r: 15, amt: 8, v: Math.random() });
+const bushObj = (x, y) => ({ t: 'bush', x, y, r: 13, amt: 3, v: Math.random(), regrow: 0 });
+function oreClusters(kit, kind, nodes, clusters, avoid){
+  for (let c = 0, tries = 0; c < clusters && tries < 400; tries++){
+    const cx = rand(260, WORLD - 260), cy = rand(260, WORLD - 260);
+    if (inside(cx, cy) < 200 || avoid.some(a => Math.hypot(cx - a[0], cy - a[1]) < a[2])) continue;
+    kit.scatter(Math.ceil(nodes / clusters), 34, mkOre(kind), { cx, cy, rad: 150 }); c++;
+  }
+}
+GEN.mine = function(){
+  const kit = genKit(), C = kit.C, noise = makeNoise();
+  const dock = { x: ISL_M + 30, y: C + 60 }, door = { x: C + 60, y: 300 };
+  addObj({ t: 'boat', x: dock.x, y: dock.y, r: 22, v: Math.random() });
+  addObj({ t: 'mine', x: door.x, y: door.y, r: 30, v: Math.random() });
+  kit.lake(330, C - 170, 4);
+  const keep = [[dock.x, dock.y, 100], [door.x, door.y + 20, 110]];                                                               // the dock and the front of the mine door stay clear
+  kit.scatter(16, 22, rockObj, { cx: door.x, cy: door.y - 30, rad: 180, ins: 55, keep });                                       // the hillside around the mine door
+  kit.scatter(72, 26, rockObj, { keep });
+  kit.scatter(62, 22, (x, y) => treeObj(x, y, pineV()), { test: (x, y) => noise(x / 260, y / 260) > .5, keep });
+  kit.scatter(12, 28, bushObj, { keep });
+  const avoid = [[dock.x, dock.y, 380], [door.x, door.y, 260]];
+  oreClusters(kit, 'copper', 12, 3, avoid); oreClusters(kit, 'iron', 8, 2, avoid);
+};
+GEN.cave = function(){
+  const kit = genKit(), C = kit.C;
+  const ex = { x: C, y: WORLD - ISL_M - 135 };
+  addObj({ t: 'exit', x: ex.x, y: ex.y, r: 26, v: Math.random() });
+  addObj({ t: 'fire', x: ex.x + 78, y: ex.y - 14, r: 9, fuel: 1e9 });           // a lamp that never goes out by the way out
+  const pool = [C - 330, C - 220];
+  kit.lake(pool[0], pool[1], 3);
+  kit.scatter(74, 28, rockObj, { keep: [ex.x, ex.y, 150], ins: 70 });
+  oreClusters(kit, 'copper', 18, 4, [[ex.x, ex.y, 620], [pool[0], pool[1], 150]]);
+  oreClusters(kit, 'iron', 16, 4, [[ex.x, ex.y, 620], [pool[0], pool[1], 150]]);
+  oreClusters(kit, 'gold', 7, 2, [[ex.x, ex.y, 900], [pool[0], pool[1], 150]]);
+};
+GEN.snow = function(){
+  const kit = genKit(), C = kit.C, noise = makeNoise();
+  const dock = { x: C - 80, y: ISL_M + 30 };
+  addObj({ t: 'boat', x: dock.x, y: dock.y, r: 22, v: Math.random() });
+  kit.lake(C + 300, C + 190, 4); kit.lake(C - 430, C - 300, 3);
+  const keep = [[dock.x, dock.y, 110]];
+  kit.scatter(130, 22, (x, y) => treeObj(x, y), { test: (x, y) => { const f = noise(x / 220, y / 220); return Math.random() < (f > .5 ? .95 : f > .38 ? .3 : .05); }, keep });
+  kit.scatter(60, 26, rockObj, { keep });
+  kit.scatter(10, 28, bushObj, { keep });
+  const avoid = [[dock.x, dock.y, 380]];
+  oreClusters(kit, 'iron', 12, 3, avoid); oreClusters(kit, 'gold', 9, 3, avoid);
+};
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0 }, buffs: { swift: 0, power: 0 }, stats: { elites: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {},
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0 }, buffs: { swift: 0, power: 0 }, stats: { elites: 0 }, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, visited: { home: true },
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -511,7 +705,7 @@ function spawnAt(kind, x, y){ const c = newCreature(kind, x, y); creatures.push(
 function eliteCount(){ let n = 0; for (const c of creatures) if (c.elite) n++; return n; }
 function rollElite(kind){            // elites get likelier as the days go by, but only a few can be alive at once
   const day = dayOf(); if (eliteCount() >= 1 + Math.floor(day / 3)) return false;
-  return Math.random() < Math.min(.35, kind === 'bear' ? .06 + .04 * (day - 1) : .05 + .05 * (day - 1));
+  return Math.random() < Math.min(.35, (kind === 'bear' ? .06 + .04 * (day - 1) : .05 + .05 * (day - 1)) + (Z.eliteBonus || 0));
 }
 function makeElite(c, affix){
   const sp = SPECS[c.k], a = affix || PICK(Object.keys(AFFIX).filter(k => AFFIX[k].ok.includes(c.k)));
@@ -548,7 +742,7 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQbB12345zZxXvV'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB123456zZxXvV'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
@@ -557,8 +751,8 @@ addEventListener('keydown', e => {
   else if (e.key === 'z' || e.key === 'Z'){ if (!paused) useItem('heal'); }
   else if (e.key === 'x' || e.key === 'X'){ if (!paused) useItem('swift'); }
   else if (e.key === 'v' || e.key === 'V'){ if (!paused) useItem('power'); }
-  else if (e.key >= '1' && e.key <= '5'){ if (!paused) buildMode ? selectBuild(BUILD_ORDER[+e.key - 1]) : manualEquip(ownedTools()[+e.key - 1]); }
-  else if (e.key === 'q' || e.key === 'Q'){ if (!paused) buildMode ? selectBuild(BUILD_ORDER[(BUILD_ORDER.indexOf(buildSel) + 1) % BUILD_ORDER.length]) : cycleEquip(); }
+  else if (e.key >= '1' && e.key <= '6'){ if (!paused) buildMode ? selectBuild(buildList()[+e.key - 1]) : manualEquip(ownedTools()[+e.key - 1]); }
+  else if (e.key === 'q' || e.key === 'Q'){ if (!paused) { const bl = buildList(); buildMode ? selectBuild(bl[(bl.indexOf(buildSel) + 1) % bl.length]) : cycleEquip(); } }
   else if (e.key === 'b' || e.key === 'B'){ if (!paused) toggleBuild(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
@@ -606,7 +800,7 @@ $('equip').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !running || paused) return;
   if (b.id === 'autoBtn') toggleAuto(); else manualEquip(b.dataset.t);
 });
-for (const id of ['inv', 'inv2']) $(id).addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
+for (const id of ['inv', 'inv2', 'inv3']) $(id).addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
 
 /* ================= actions ================= */
 function floater(x, y, text, color){ floaters.push({ x: x + rand(-6, 6), y, text, color: color || '#fff', t: 0 }); }
@@ -681,7 +875,7 @@ function paintAt(w){
 }
 function renderBuildBar(){
   const box = $('build'); box.innerHTML = '';
-  for (const k of BUILD_ORDER){
+  for (const k of buildList()){
     const d = WALLS[k], b = document.createElement('button'); b.className = 'bp'; b.dataset.k = k;
     const cost = k === 'erase' ? '환급 50%' : Object.keys(d.cost).map(r => ITEMS[r].icon + d.cost[r]).join('');
     b.innerHTML = WALL_SVG[k] + '<b>' + d.name + '</b><small>' + cost + '</small>'; box.appendChild(b);
@@ -719,7 +913,7 @@ const hasTool = t => t === 'hand' || !!P.tools[t];
 const ownedTools = () => TOOL_ORDER.filter(hasTool);
 function bestFor(tg){          // tool that suits the thing in front of the player, or null to keep the current one
   if (!tg) return null;
-  const pref = tg.kind === 'creature' ? ['spear', 'axe'] : tg.o.t === 'tree' ? ['axe'] : tg.o.t === 'rock' ? ['pickaxe'] : null;
+  const pref = tg.kind === 'creature' ? ['spear', 'axe'] : tg.o.t === 'tree' ? ['axe'] : (tg.o.t === 'rock' || tg.o.t === 'ore') ? ['pickaxe'] : null;
   return pref ? (pref.find(hasTool) || 'hand') : null;
 }
 function buildEquip(){
@@ -735,7 +929,7 @@ function buildEquip(){
 function syncEquip(){
   $('equip').querySelectorAll('.eq').forEach(b => {
     b.classList.toggle('on', b.dataset.t === P.equip);
-    const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 4 ? ' l4' : lv >= 3 ? ' l3' : ''); }
+    const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 5 ? ' l5' : lv >= 4 ? ' l4' : lv >= 3 ? ' l3' : ''); }
   });
   const a = $('autoBtn'); if (a){ a.classList.toggle('on', P.auto); a.textContent = P.auto ? '자동' : '수동'; }
 }
@@ -765,7 +959,7 @@ function findTarget(){
     if (d < reach && d - 40 < bs){ bs = d - 40; best = { kind: 'creature', o: c }; }
   }
   gridQuery(P.x - 120, P.y - 120, P.x + 120, P.y + 120, o => {
-    if (o.t === 'bush' && o.amt <= 0) return;
+    if ((o.t === 'bush' || o.t === 'ore') && o.amt <= 0) return;
     if (o.t === 'wall' && o.hp >= o.max && !(o.kind === 'tower' && ((o.ammo < tw(o).max && P.inv.ammo > 0) || canTowerUpgrade(o)))) return;
     const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r;
     if (d < (o.t === 'water' ? 22 : 27) && d < bs){ bs = d; best = { kind: 'obj', o }; }
@@ -780,11 +974,16 @@ function labelFor(tg){
   switch (o.t){
     case 'tree': return '베기';
     case 'rock': return '캐기';
+    case 'ore': return '채굴';
+    case 'furnace': return '제련';
+    case 'boat': return '항해';
+    case 'mine': return '들어가기';
+    case 'exit': return '나가기';
     case 'bush': return '따기';
     case 'wall': return o.kind === 'tower' && P.inv.ammo > 0 && o.ammo < tw(o).max ? '장전' : o.hp < o.max ? '수리' : '강화';
     case 'wreck': return '뒤지기';
     case 'water': return '마시기';
-    case 'fire': return o.fuel > 0 && P.inv.meat > 0 ? '굽기' : '장작';
+    case 'fire': return o.fuel > 0 && P.inv.meat > 0 ? '굽기' : o.fuel > 1e6 ? '불' : '장작';
     case 'shelter': return isNight() ? '잠자기' : '움막';
   }
   return '행동';
@@ -803,6 +1002,19 @@ function act(){
   switch (o.t){
     case 'tree': { const eq = stat(P.equip), n = Math.min(o.amt, eq.wood); gain('wood', n); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
     case 'rock': { const eq = stat(P.equip), n = Math.min(o.amt, eq.stone); gain('stone', n); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'ore': {
+      const d = ORE[o.kind], eq = stat(P.equip), lv = P.lv.pickaxe || 1;
+      if (!P.tools.pickaxe){ P.cd = .5; toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
+      if (!eq.ore){ P.cd = .5; toast('곡괭이를 들어야 캘 수 있어요'); break; }
+      if (lv < d.tier){ P.cd = .6; floater(o.x, o.y - 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
+      const n = Math.min(o.amt, eq.ore); gain(o.kind, n); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
+      o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) o.regrow = d.regrow;
+      break;
+    }
+    case 'furnace': P.cd = .4; craftTab = 'smelt'; openCraft(); break;
+    case 'boat': P.cd = .5; openSail(); break;
+    case 'mine': P.cd = .6; transition(() => { enterZone('cave', 'exit'); const first = !P.visited.cave; P.visited.cave = true; if (first) setTimeout(() => toast('갱도예요! 박쥐와 골렘을 조심하세요. 모닥불을 놓으면 따뜻하고 밝아요.'), 800); }, '광산 갱도'); break;
+    case 'exit': P.cd = .6; transition(() => enterZone('mine', 'mine'), '광산섬'); break;
     case 'wall': {
       const ts = o.kind === 'tower' ? tw(o) : null;
       if (ts && P.inv.ammo > 0 && o.ammo < ts.max){                       // reload the tower
@@ -823,6 +1035,7 @@ function act(){
     case 'fire':
       P.cd = .35;
       if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y - 26, '구웠어요 🍖'); }
+      else if (o.fuel > 1e6) toast('꺼지지 않는 불이에요');
       else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + 45); floater(P.x, P.y - 26, '장작 -1 🪵'); }
       else toast('장작이 필요해요');
       break;
@@ -842,7 +1055,7 @@ function eliteLoot(c){
   P.stats.elites++;
   floater(c.x, c.y - 44, '엘리트 처치!', '#ffd166'); fx('glow', c.x, c.y, 18, 16, '255,214,90'); fx('spark', c.x, c.y, 16, 10);
   const aff = AFFIX_LOOT[c.affix] || {}, bonus = ELITE_BONUS[c.k] || {}, got = [];
-  for (const k in bonus) dropPickup(k, rollDrop(bonus[k]), c.x, c.y);
+  for (const k in bonus){ const n = rollDrop(bonus[k]); if (n > 0) dropPickup(k, n, c.x, c.y); }
   for (const k in ELITE_LOOT){
     const L = ELITE_LOOT[k], p = aff[k] != null ? aff[k] : L[0];
     if (Math.random() < p){ dropPickup(k, L[1] + Math.floor(Math.random() * (L[2] - L[1] + 1)), c.x, c.y); got.push(ITEMS[k].icon); }
@@ -866,9 +1079,9 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y - 34, '방어', '#8fc4ff'); dmg = red; }
   c.hp -= dmg; c.hit = .18; c.sinceHit = 0;
-  const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' ? .25 : 1) * (c.elite ? .6 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
+  const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y - 18, '-' + dmg, '#ffd166');
-  fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : '196,44,44');
+  fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : c.k === 'golem' ? '170,172,180' : '196,44,44');
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1); if (n > 0) gain(k, n); }
@@ -882,7 +1095,7 @@ function attack(c){
 }
 
 /* ================= guns, arrows, towers ================= */
-const isHostile = c => c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || (SPECS[c.k].rage && c.state === 'angry');
+const isHostile = c => c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || (SPECS[c.k].rage && c.state === 'angry');
 function nearestHostile(maxD){
   let best = null, bd = maxD;
   for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
@@ -948,6 +1161,7 @@ function hurt(n, raw){
 
 function useItem(k){
   if (k === 'core'){ toast('정예의 핵: 장비를 Lv.4로 강화할 때 쓰여요'); return; }
+  if (ITEMS[k].ore || ITEMS[k].bar){ toast(ITEMS[k].info); return; }
   if (!ITEMS[k].food && !ITEMS[k].use) return;
   if (P.inv[k] <= 0){ toast(josa(ITEMS[k].name, '이/가') + ' 없어요'); return; }
   if (k === 'heal'){
@@ -969,6 +1183,11 @@ function eatBest(){
   toast('먹을 것이 없어요');
 }
 
+function transition(fn, msg){        // fade out, change the map, fade back in
+  if (sleeping) return; sleeping = true; actHeld = false; $('fade').classList.add('on');
+  setTimeout(fn, 480);
+  setTimeout(() => { $('fade').classList.remove('on'); sleeping = false; if (msg) toast(msg); save(); }, 1100);
+}
 function sleep(){
   if (P.hunger < 20 || P.thirst < 20){ toast('너무 배고프거나 목말라서 잠들 수 없어요'); return; }
   sleeping = true; $('fade').classList.add('on');
@@ -983,6 +1202,7 @@ function sleep(){
 
 /* ================= crafting ================= */
 function nearCoast(){
+  if (Z.cave) return false;
   if (inside(P.x, P.y) < 120) return true;
   let n = false;
   gridQuery(P.x - 200, P.y - 200, P.x + 200, P.y + 200, o => { if (o.t === 'water' && Math.hypot(o.x - P.x, o.y - P.y) - o.r < 45) n = true; });
@@ -991,6 +1211,11 @@ function nearCoast(){
 function craftBlock(r){
   for (const k in r.cost) if (P.inv[k] < r.cost[k]) return '재료가 부족해요';
   if (r.tool && P.tools[r.tool]) return '이미 가지고 있어요';
+  if (r.lantern && P.lantern) return '이미 가지고 있어요';
+  if (r.boat){
+    if (P.boat) return '이미 만들었어요';
+    if (!seaSpot()) return '바다와 가까운 해안에서 만들 수 있어요';
+  }
   if (r.raft){
     if (dayOf() < RAFT_DAY) return RAFT_DAY + '일차부터 가능해요 (지금 ' + dayOf() + '일차)';
     if (!nearCoast()) return '해안이나 호숫가에서 만들 수 있어요';
@@ -998,7 +1223,7 @@ function craftBlock(r){
   return '';
 }
 function placeSpot(r){
-  const rad = r.place === 'shelter' ? 26 : 9, base = Math.atan2(P.fy, P.fx);
+  const rad = r.place === 'shelter' ? 26 : r.place === 'furnace' ? 20 : 9, base = Math.atan2(P.fy, P.fx);
   for (const extra of [0, 18, 36]) for (let i = 0; i < 12; i++){
     const a = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * .52, d = PLAYER_R + rad + 8 + extra;
     const x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d;
@@ -1006,10 +1231,24 @@ function placeSpot(r){
   }
   return null;
 }
+function seaSpot(){             // where a boat can be beached: the shore nearest to the player (null when the sea is too far)
+  if (Z.cave || inside(P.x, P.y) > 170) return null;
+  const e = 3, gx = inside(P.x + e, P.y) - inside(P.x - e, P.y), gy = inside(P.x, P.y + e) - inside(P.x, P.y - e), gl = Math.hypot(gx, gy);
+  let ox, oy;
+  if (gl > .05){ ox = -gx / gl; oy = -gy / gl; } else { ox = P.x - WORLD / 2; oy = P.y - WORLD / 2; const l = Math.hypot(ox, oy) || 1; ox /= l; oy /= l; }
+  for (const side of [0, 1, -1, 2, -2, 3, -3]){
+    let x = P.x - oy * side * 50, y = P.y + ox * side * 50;
+    for (let i = 0; i < 160 && inside(x, y) > 30; i++){ x += ox * 4; y += oy * 4; }
+    const ins = inside(x, y); if (ins < 14 || ins > 46) continue;
+    if (!blocked(x, y, 28)) return { x, y };
+  }
+  return null;
+}
 function craft(r){
   if (craftBlock(r)) return;
   let spot = null;
   if (r.place){ spot = placeSpot(r); if (!spot){ toast('주변이 빽빽해서 놓을 수 없어요. 탁 트인 곳으로 가세요.'); return; } }
+  if (r.boat){ spot = seaSpot(); if (!spot){ toast('바닷가에 배를 놓을 자리가 없어요. 다른 해안으로 가 보세요.'); return; } }
   for (const k in r.cost) P.inv[k] -= r.cost[k];
   if (r.tool){
     P.tools[r.tool] = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
@@ -1018,18 +1257,46 @@ function craft(r){
   }
   else if (r.place === 'fire'){ addObj({ t: 'fire', x: spot.x, y: spot.y, r: 9, fuel: 140 }); P.built.fire = true; toast('모닥불을 피웠어요. 가까이에서 몸을 녹이세요.'); }
   else if (r.place === 'shelter'){ addObj({ t: 'shelter', x: spot.x, y: spot.y, r: 26 }); P.built.shelter = true; toast('움막을 지었어요. 밤에 잘 수 있어요.'); }
+  else if (r.place === 'furnace'){ addObj({ t: 'furnace', x: spot.x, y: spot.y, r: 20, v: Math.random(), glow: 0 }); P.built.furnace = true; toast('용광로를 지었어요. 가까이에서 행동 버튼으로 제련하세요.'); }
+  else if (r.lantern){ P.lantern = true; toast('광부 랜턴을 만들었어요! 어두운 곳에서도 멀리 보여요.'); }
+  else if (r.boat){ P.boat = true; P.boatLv = 1; addObj({ t: 'boat', x: spot.x, y: spot.y, r: 22, v: Math.random() }); toast('작은 배를 만들었어요! 배 앞에서 행동 버튼으로 항해해요.'); }
   else if (r.give){ for (const k in r.give) P.inv[k] += r.give[k]; toast(r.name + ' 완성! 보유 ' + ITEMS.ammo.icon + P.inv.ammo); }
   else if (r.raft){ closeCraft(); setTimeout(() => endGame(true), 700); return; }
   renderCraft();
 }
 let craftTab = 'make';
+const nearFurnace = () => { let f = null; gridQuery(P.x - 130, P.y - 130, P.x + 130, P.y + 130, o => { if (!f && o.t === 'furnace' && Math.hypot(o.x - P.x, o.y - P.y) < 120) f = o; }); return f; };
+function smelt(m, all){
+  const f = nearFurnace(); if (!f){ toast('용광로 가까이에서 해야 해요'); return; }
+  const bar = ORE[m].bar, n = all ? Math.min(P.inv[m], P.inv.wood) : (P.inv[m] > 0 && P.inv.wood > 0 ? 1 : 0);
+  if (!n){ toast(P.inv[m] > 0 ? '나무가 필요해요' : josa(ITEMS[m].name, '이/가') + ' 없어요'); return; }
+  P.inv[m] -= n; P.inv.wood -= n; P.inv[bar] += n; P.seen[bar] = true; f.glow = 6;
+  floater(f.x, f.y - 44, '+' + n + ' ' + ITEMS[bar].icon, '#ffd166'); fx('spark', f.x, f.y, 14, 6); fx('glow', f.x, f.y, 16, 4, ORE[m].rgb);
+  renderCraft();
+}
+function renderSmelt(){
+  const list = $('craftList'); list.innerHTML = '';
+  const near = !!nearFurnace(), note = document.createElement('p'); note.className = 'sub'; note.style.marginTop = '0';
+  note.textContent = near ? '광석 1개와 나무 1개로 주괴 1개를 만들어요.' : '용광로 가까이에서만 제련할 수 있어요. 제작 탭에서 용광로(돌 20 · 나무 6)를 만드세요.';
+  list.appendChild(note);
+  for (const m of ['copper', 'iron', 'gold']){
+    const bar = ORE[m].bar, have = P.inv[m], can = near && have > 0 && P.inv.wood > 0;
+    const div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>${ITEMS[m].name} → ${ITEMS[bar].name}</b><p>${ITEMS[m].icon} ${have}개 보유 · ${ITEMS[bar].icon} ${P.inv[bar]}개 보유</p><div class="cost">${costChips({ [m]: 1, wood: 1 })}</div></div>`;
+    const box = document.createElement('div'); box.className = 'btns';
+    const b1 = document.createElement('button'); b1.className = 'btn small'; b1.textContent = '제련 ×1'; b1.disabled = !can; b1.addEventListener('click', () => smelt(m, false));
+    const b2 = document.createElement('button'); b2.className = 'btn small ghost'; b2.textContent = '모두'; b2.disabled = !can; b2.addEventListener('click', () => smelt(m, true));
+    box.appendChild(b1); box.appendChild(b2); div.appendChild(box); list.appendChild(div);
+  }
+}
+const recipeOwned = r => (r.tool && P.tools[r.tool]) || (r.lantern && P.lantern) || (r.boat && P.boat);
 const costChips = cost => Object.keys(cost).map(k => `<span class="${P.inv[k] >= cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${cost[k]}</span>`).join('');
 function effectText(t, lv){
   if (t === 'armor') return ARMOR_NAME[lv] + ' · 받는 피해 -' + Math.round(ARMOR_RED[lv] * 100) + '%';
   const L = TOOL_LV[t], i = lv - 1;
   if (t === 'axe') return '나무 ' + L.wood[i] + '개씩 · 공격 ' + L.dmg[i] + ' · 휘두르기 ' + L.cdW[i] + '초';
   if (t === 'spear') return '공격 ' + L.dmg[i] + ' · 사거리 +' + L.reach[i];
-  if (t === 'pickaxe') return '돌 ' + L.stone[i] + '개씩 · 휘두르기 ' + L.cdS[i] + '초';
+  if (t === 'pickaxe') return '돌 ' + L.stone[i] + '개씩 · 광석 ' + L.ore[i] + '개씩 · 휘두르기 ' + L.cdS[i] + '초';
   return '공격 ' + L.dmg[i] + ' · 사거리 ' + L.range[i] + ' · 연사 ' + (1 / L.cd[i]).toFixed(1) + '/초';
 }
 function upgradeItem(t){
@@ -1047,7 +1314,7 @@ function renderUpgrades(){
   rows.forEach(t => {
     const isA = t === 'armor', lv = isA ? P.armor : P.lv[t], cost = UPGRADES[t][isA ? lv : lv - 1], max = !cost;
     const title = isA ? (lv === 0 ? '방어구' : ARMOR_NAME[lv]) : UP_NAME[t];
-    const tag = max ? '<span class="lvtag max">MAX</span>' : isA ? (lv === 0 ? '' : `<span class="lvtag${lv + 1 >= 4 ? ' l4' : ''}">Lv.${lv} → ${lv + 1}</span>`) : `<span class="lvtag${lv + 1 >= 4 ? ' l4' : ''}">Lv.${lv} → ${lv + 1}</span>`;
+    const tag = max ? '<span class="lvtag max">MAX</span>' : isA ? (lv === 0 ? '' : `<span class="lvtag${lv + 1 >= 5 ? ' l5' : lv + 1 >= 4 ? ' l4' : ''}">Lv.${lv} → ${lv + 1}</span>`) : `<span class="lvtag${lv + 1 >= 5 ? ' l5' : lv + 1 >= 4 ? ' l4' : ''}">Lv.${lv} → ${lv + 1}</span>`;
     const desc = max ? '현재: ' + effectText(t, lv) : (isA && lv === 0 ? '입으면 ' : '다음: ') + effectText(t, lv + 1);
     const can = !max && Object.keys(cost).every(k => P.inv[k] >= cost[k]);
     const div = document.createElement('div'); div.className = 'recipe';
@@ -1055,18 +1322,19 @@ function renderUpgrades(){
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = max ? '최대' : isA && lv === 0 ? '제작' : '강화'; b.disabled = !can;
     b.addEventListener('click', () => upgradeItem(t)); div.appendChild(b); list.appendChild(div);
   });
-  if (rows.length === 1){ const p = document.createElement('p'); p.className = 'sub'; p.style.marginTop = '10px'; p.textContent = '도구를 만들면 여기서 강화할 수 있어요. 고철은 좀비와 해안의 난파 잔해에서, 가죽은 늑대·멧돼지·곰에게서 얻어요.'; list.appendChild(p); }
+  if (rows.length === 1){ const p = document.createElement('p'); p.className = 'sub'; p.style.marginTop = '10px'; p.textContent = '도구를 만들면 여기서 강화할 수 있어요. 고철은 좀비와 해안의 난파 잔해에서, 가죽은 늑대·멧돼지·곰에게서 얻어요. Lv.5는 광산의 주괴가 필요해요.'; list.appendChild(p); }
 }
 function renderCraft(){
-  $('tabMake').classList.toggle('on', craftTab === 'make'); $('tabUp').classList.toggle('on', craftTab === 'upgrade');
-  $('craftSub').textContent = craftTab === 'make' ? '재료를 모아 도구와 시설을 만드세요.' : '전리품(고철, 가죽)으로 장비를 강화하세요.';
+  $('tabMake').classList.toggle('on', craftTab === 'make'); $('tabUp').classList.toggle('on', craftTab === 'upgrade'); $('tabSmelt').classList.toggle('on', craftTab === 'smelt');
+  $('craftSub').textContent = craftTab === 'make' ? '재료를 모아 도구와 시설을 만드세요.' : craftTab === 'upgrade' ? '전리품과 주괴로 장비를 강화하세요.' : '광석을 용광로에서 주괴로 녹이세요.';
   if (craftTab === 'upgrade'){ renderUpgrades(); return; }
+  if (craftTab === 'smelt'){ renderSmelt(); return; }
   const list = $('craftList'); list.innerHTML = '';
   RECIPES.forEach(r => {
-    const why = craftBlock(r), owned = r.tool && P.tools[r.tool];
+    const why = craftBlock(r), owned = recipeOwned(r);
     const cost = Object.keys(r.cost).map(k => `<span class="${P.inv[k] >= r.cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${r.cost[k]}</span>`).join('');
     const div = document.createElement('div'); div.className = 'recipe';
-    div.innerHTML = `<div><b>${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${why && !owned && r.raft ? `<span class="note">${why}</span>` : ''}</div>`;
+    div.innerHTML = `<div><b>${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${why && !owned && (r.raft || r.boat) ? `<span class="note">${why}</span>` : ''}</div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = owned ? '보유 중' : '제작'; b.disabled = !!why;
     b.addEventListener('click', () => craft(r)); div.appendChild(b); list.appendChild(div);
   });
@@ -1077,6 +1345,55 @@ function closeCraft(){ $('craft').hidden = true; paused = false; }
 function openMenu(){ if (!running || sleeping) return; paused = true; actHeld = false; resetJoy(); $('menu').hidden = false; }
 function closeMenu(){ $('menu').hidden = true; paused = false; }
 
+/* ================= sailing ================= */
+const SAIL_T = 20;                                            // seconds of game time a voyage takes
+const BOAT_UPG = { feBar: 4, wood: 30, hide: 6 };            // small boat -> sailing ship (reaches the far island)
+const DEST = {
+  home: { need: 1, desc: '내가 표류해 온 섬이에요. 모닥불과 움막이 있어요.' },
+  mine: { need: 1, desc: '바위투성이 섬이에요. 구리와 철이 나고, 북쪽 바위산에 광산 입구가 있어요.' },
+  snow: { need: 2, desc: '눈 덮인 섬이에요. 몹시 춥고 낮에도 늑대가 돌아다녀요. 철과 금이 나요.' }
+};
+function openSail(){ if (sleeping) return; paused = true; actHeld = false; resetJoy(); renderSail(); $('sail').hidden = false; }
+function closeSail(){ $('sail').hidden = true; paused = false; }
+function upgradeBoat(){
+  if (!Object.keys(BOAT_UPG).every(k => P.inv[k] >= BOAT_UPG[k])) return;
+  for (const k in BOAT_UPG) P.inv[k] -= BOAT_UPG[k];
+  P.boatLv = 2; toast('범선으로 개조했어요! 이제 설원섬까지 갈 수 있어요.'); renderSail();
+}
+function renderSail(){
+  const list = $('sailList'); list.innerHTML = '';
+  $('sailSub').textContent = '지금은 ' + Z.name + '. 항해에는 약 ' + SAIL_T + '초가 걸리고, 그동안 배고픔과 갈증이 줄어요.';
+  for (const id of ['home', 'mine', 'snow']){
+    if (id === Z.id) continue;
+    const d = DEST[id], ok = (P.boatLv || 0) >= d.need, div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>${ZONES[id].name}${P.visited[id] ? '<span class="lvtag max">가 봄</span>' : ''}</b><p>${d.desc}</p>${ok ? '' : '<span class="note">범선으로 개조하면 갈 수 있어요</span>'}</div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = '출항'; b.disabled = !ok; b.addEventListener('click', () => sail(id)); div.appendChild(b); list.appendChild(div);
+  }
+  if ((P.boatLv || 0) < 2){
+    const can = Object.keys(BOAT_UPG).every(k => P.inv[k] >= BOAT_UPG[k]), div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>범선으로 개조<span class="lvtag">Lv.1 → 2</span></b><p>철 주괴로 선체를 보강하면 더 먼 바다로 나갈 수 있어요. (설원섬)</p><div class="cost">${costChips(BOAT_UPG)}</div></div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = '개조'; b.disabled = !can; b.addEventListener('click', upgradeBoat); div.appendChild(b); list.appendChild(div);
+  }
+}
+function sail(id){
+  if (!ZONES[id] || id === Z.id || sleeping) return;
+  closeSail(); sleeping = true; actHeld = false;
+  const v = $('voyage'); v.classList.toggle('night', isNight()); $('voyageTxt').textContent = josa(ZONES[id].name, '으로/로') + ' 가는 중…';
+  v.hidden = false; void v.offsetWidth; v.classList.add('on');
+  setTimeout(() => arrive(id), 2600);
+  setTimeout(() => v.classList.remove('on'), 3050);
+  setTimeout(() => { v.hidden = true; sleeping = false; }, 3600);
+}
+function arrive(id){
+  T += SAIL_T; P.hunger = Math.max(1, P.hunger - SAIL_T * .18); P.thirst = Math.max(1, P.thirst - SAIL_T * .28);
+  const first = !P.visited[id]; P.visited[id] = true;
+  enterZone(id, 'boat');
+  toast(ZONES[id].name + '에 도착했어요');
+  if (first && id === 'mine'){ setTimeout(() => toast('곡괭이로 광석을 캘 수 있어요. 북쪽 바위산에 광산 입구가 있어요.'), 2400); }
+  if (first && id === 'snow'){ setTimeout(() => toast('몹시 추워요! 모닥불이나 움막 곁에서 몸을 녹이세요. 낮에도 늑대가 있어요.'), 2400); }
+  save();
+}
+
 /* ================= UI ================= */
 function toast(msg){
   const box = $('toasts');
@@ -1084,11 +1401,11 @@ function toast(msg){
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = msg; box.appendChild(d);
   setTimeout(() => d.remove(), 2500);
 }
-const invEl = $('inv'), inv2El = $('inv2');
+const invEl = $('inv'), inv2El = $('inv2'), inv3El = $('inv3');
 for (const k in ITEMS){
-  const b = document.createElement('button'); b.className = 'slot' + (ITEMS[k].food ? ' food' : '') + (ITEMS[k].use ? ' use' : '') + (k === 'core' ? ' core' : ''); b.dataset.k = k;
-  b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`;
-  (SPECIAL[k] ? inv2El : invEl).appendChild(b);
+  const b = document.createElement('button'); b.className = 'slot' + (ITEMS[k].food ? ' food' : '') + (ITEMS[k].use ? ' use' : '') + (k === 'core' ? ' core' : '') + (ITEMS[k].ore ? ' ore' : '') + (ITEMS[k].bar ? ' bar' : ''); b.dataset.k = k;
+  b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`; if (ITEMS[k].ore || ITEMS[k].bar){ b.classList.add('mini'); b.title = ITEMS[k].name; b.setAttribute('aria-label', ITEMS[k].name); }
+  (ITEMS[k].ore || ITEMS[k].bar ? inv3El : SPECIAL[k] ? inv2El : invEl).appendChild(b);
 }
 for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
 function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
@@ -1106,14 +1423,20 @@ function updateEliteArrow(){            // red arrow at the screen edge pointing
   el.firstElementChild.style.transform = 'rotate(' + Math.atan2(dy, dx).toFixed(2) + 'rad)';
   setText(el.lastElementChild, '엘리트 ' + Math.round(bd / 10) + 'm');
 }
+let hudSig = '', lastGoal = '';
+function layoutHud(){            // keep the toasts just below the goal pill however many bag rows are showing
+  const sig = [...inv2El.children, ...inv3El.children].filter(c => !c.hidden).length + '|' + inv2El.hidden + inv3El.hidden + '|' + W + 'x' + H + '|' + lastGoal;
+  if (sig === hudSig) return; hudSig = sig;
+  const r = $('goal').getBoundingClientRect(); if (r.height) document.documentElement.style.setProperty('--tt', Math.round(r.bottom + 10) + 'px');
+}
 function updateHUD(){
   for (const [id, v] of [['hp', P.hp], ['hunger', P.hunger], ['thirst', P.thirst], ['warmth', P.warmth]]){
     const el = $('st-' + id), pct = Math.round(clamp(v, 0, 100));
     if (el._p !== pct){ el._p = pct; el.firstElementChild.nextElementSibling.firstElementChild.style.width = pct + '%'; el.classList.toggle('low', pct < 25); }
   }
-  setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT()));
+  setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT())); setText($('zoneTag'), Z.name);
   $('clockHand').style.left = (dayT() * 100).toFixed(1) + '%';
-  document.querySelectorAll('#inv .slot, #inv2 .slot').forEach(s => {
+  document.querySelectorAll('#inv .slot, #inv2 .slot, #inv3 .slot').forEach(s => {
     const k = s.dataset.k, n = P.inv[k] || 0; setText(s.querySelector('.n'), String(n));
     s.classList.toggle('dim', n === 0);
     const hide = !!(RARE[k] && n === 0 && !P.seen[k] && !(k === 'ammo' && P.tools.gun)); if (s.hidden !== hide) s.hidden = hide;
@@ -1122,8 +1445,9 @@ function updateHUD(){
     const el = $(id), on = P.buffs[k] > 0; if (el.hidden === on) el.hidden = !on; if (on) setText(el, el.dataset.ic + ' ' + Math.ceil(P.buffs[k]));
   }
   const row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || P.buffs.swift > 0 || P.buffs.power > 0;
+  const row3 = [...inv3El.querySelectorAll('.slot')].some(s => !s.hidden); if (inv3El.hidden === row3) inv3El.hidden = !row3;
   if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', P.buffs.swift > 0 || P.buffs.power > 0);
-  updateEliteArrow();
+  updateEliteArrow(); layoutHud();
   setText($('armorBadge'), P.armor ? '🛡' + P.armor : '');
   if (buildMode) syncBuildBar();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
@@ -1135,6 +1459,12 @@ function objective(){
   if (!P.built.fire) return '<b>목표</b> 해가 지기 전에 <b>모닥불</b> 피우기';
   if (!P.built.shelter) return '<b>목표</b> 나무 12 · 돌 5로 <b>움막</b> 짓기';
   if (!P.built.wall && day < RAFT_DAY) return '<b>목표</b> <b>건축</b> 버튼으로 울타리를 쳐서 늑대 막기';
+  if (day < RAFT_DAY){
+    if (!P.boat) return '<b>목표</b> 바닷가에서 <b>작은 배</b>를 만들어 다른 섬에 가보기 (나무 25 · 고철 4 · 가죽 3)';
+    if (!P.visited.mine) return '<b>목표</b> 배 앞에서 행동 버튼을 눌러 <b>광산섬</b>으로 항해하기';
+    if (!P.built.furnace && (P.seen.copper || P.seen.iron)) return '<b>목표</b> <b>용광로</b>(돌 20 · 나무 6)를 지어 광석을 녹이기';
+    if (!P.visited.cave) return '<b>목표</b> 광산섬 북쪽 바위산의 <b>광산 입구</b>로 들어가 보기';
+  }
   if (day < RAFT_DAY) return `<b>목표</b> ${RAFT_DAY}일차까지 생존 (뗏목 재료: 나무 30 · 돌 10 · 구운고기 3)`;
   return '<b>목표</b> 해안에서 <b>탈출 뗏목</b>을 만드세요!';
 }
@@ -1167,6 +1497,20 @@ function updateCreatures(dt){
         else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(sp.wallDmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
         if (c.angry <= 0 || d > 520) c.state = 'idle';
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
+    } else if (c.k === 'bat'){              // flutters erratically; swoops at the player in the dark
+      c.hop += dt * 18;
+      if (d < 240){
+        const a = Math.atan2(dy, dx) + Math.sin(anim * 5 + c.hop * .3) * 1.1; sx = Math.cos(a); sy = Math.sin(a); spd = sp.speed;
+        if (d < c.r + PLAYER_R + 4 && c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; c.kvx = -dx / d * 150; c.kvy = -dy / d * 150; }
+      } else { if (c.timer <= 0){ c.ang = rand(0, TAU); c.timer = rand(.5, 1.3); } sx = Math.cos(c.ang || 0); sy = Math.sin(c.ang || 0); spd = sp.speed * .5; }
+    } else if (c.k === 'golem'){            // dormant until you come close, then a slow, heavy chase that smashes walls
+      if (c.state !== 'awake' && d < 150){ c.state = 'awake'; c.atk = .8; }
+      if (c.state === 'awake'){
+        sx = dx / d; sy = dy / d; spd = sp.speed; c.hop += dt * 5;
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(sp.wallDmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
+        if (d > 560) c.state = 'idle';
+      }
     } else if (c.k === 'zombie' || c.k === 'brute'){
       // shamble after the player all night; fire doesn't scare them but burns them, daylight turns them to ash
       const big = c.k === 'brute';
@@ -1181,7 +1525,7 @@ function updateCreatures(dt){
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .5; }
       c.hop += dt * (spd ? 5 : 0);
     } else {                                // wolf
-      if (!night){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > offD() + 120){ creatures.splice(i, 1); continue; } }
+      if (!night && !Z.dayWolves){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > offD() + 120){ creatures.splice(i, 1); continue; } }
       else if (d < offD() + 260){
         sx = dx / d; sy = dy / d; spd = sp.speed;
         if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(Math.min(14, 6 + day) * (c.dmgMul || 1))); c.atk = 1; } }
@@ -1192,7 +1536,8 @@ function updateCreatures(dt){
     if (sx > .1) c.fx = 1; else if (sx < -.1) c.fx = -1;
     c.x += (sx * spd + c.kvx) * dt; c.y += (sy * spd + c.kvy) * dt;
     c.kvx *= Math.max(0, 1 - 7 * dt); c.kvy *= Math.max(0, 1 - 7 * dt);
-    collide(c, c.r); clampIsland(c, c.r + 30);
+    if (c.k !== 'bat') collide(c, c.r);
+    clampIsland(c, c.r + 30);
     if (c.k === 'wolf'){
       for (const s of structs){
         const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_SAFE : 0) : SHELTER_SAFE;
@@ -1208,7 +1553,8 @@ function update(dt){
   const day = dayOf(), t = dayT(), ph = phaseOf(t);
   if (ph !== lastPhase){
     lastPhase = ph;
-    if (ph === '해질녘') toast('해가 저물고 있어요. 모닥불을 준비하세요!');
+    if (Z.cave){}
+    else if (ph === '해질녘') toast('해가 저물고 있어요. 모닥불을 준비하세요!');
     else if (ph === '밤') toast('밤이 되었습니다. 늑대를 조심하세요.');
     else if (ph === '새벽') toast('동이 틉니다…');
   }
@@ -1242,9 +1588,11 @@ function update(dt){
     const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
     if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim){ warm = true; break; }
   }
+  const chill = Z.chill || 0;                                   // caves and the snow island keep draining warmth
   if (warm) P.warmth += 8 * dt;
-  else if (dark > .3) P.warmth -= (.7 + .12 * day) * dark * dt;
+  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt;
   else P.warmth += 1.6 * dt;
+  if (chill && !warm && P.warmth < 30 && T - lastChillT > 40){ lastChillT = T; toast('몸이 얼어붙어요! 모닥불이나 움막 곁에서 몸을 녹이세요.'); }
   P.warmth = clamp(P.warmth, 0, 100);
   const zeros = (P.hunger <= 0) + (P.thirst <= 0) + (P.warmth <= 0);
   if (zeros){ P.hp -= 1.8 * zeros * dt; hurtT = Math.max(hurtT, .22); if (P.hp <= 0){ P.hp = 0; endGame(false); return; } }
@@ -1255,6 +1603,8 @@ function update(dt){
     if (o.shake > 0) o.shake -= dt;
     if (o.hit > 0) o.hit -= dt;
     if (o.t === 'bush' && o.regrow > 0){ o.regrow -= dt; if (o.regrow <= 0) o.amt = 3; }
+    else if (o.t === 'ore' && o.regrow > 0){ o.regrow -= dt; if (o.regrow <= 0) o.amt = ORE[o.kind].amt; }
+    else if (o.t === 'furnace' && o.glow > 0){ o.glow -= dt; if (Math.random() < dt * 10) fx('ember', o.x, o.y, 10, 1); if (Math.random() < dt * 4) fx('smoke', o.x + 10, o.y, 42, 1); }
     else if (o.t === 'fire' && o.fuel > 0){ o.fuel -= dt; if (o.fuel <= 0) toast('모닥불이 꺼졌어요. 장작을 넣어 다시 피우세요.'); }
   }
   target = findTarget();
@@ -1263,7 +1613,7 @@ function update(dt){
   if ((actHeld || keys.act) && !paused) act();
   updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
 
-  if (isNight()){
+  if (isNight() && !Z.cave){
     wolfTimer -= dt;
     if (wolfTimer <= 0){
       const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
@@ -1277,9 +1627,10 @@ function update(dt){
   }
   respawnTimer -= dt;
   if (respawnTimer <= 0){
-    respawnTimer = 5;
-    let r = 0, b = 0, br = 0; for (const c of creatures){ if (c.k === 'rabbit') r++; else if (c.k === 'boar') b++; else if (c.k === 'bear') br++; }
-    if (r < 36) spawnCreature('rabbit', offD()); if (b < 7) spawnCreature('boar', offD()); if (br < 3) spawnCreature('bear', offD());
+    respawnTimer = Z.cave ? 14 : 5;
+    const have = {}; for (const c of creatures) have[c.k] = (have[c.k] || 0) + 1;
+    for (const k in Z.cap) if ((have[k] || 0) < Z.cap[k]) spawnCreature(k, offD());
+    if (Z.dayWolves && !isNight() && (have.wolf || 0) < 3) spawnCreature('wolf', offD(), offD() + 150);       // snow island: wolves hunt by day too
   }
 
   for (let i = floaters.length - 1; i >= 0; i--){ const f = floaters[i]; f.t += dt; f.y -= 24 * dt; if (f.t > 1) floaters.splice(i, 1); }
@@ -1288,7 +1639,7 @@ function update(dt){
   const k = Math.min(1, dt * 7);
   cam.x += (P.x - W / zoom / 2 - cam.x) * k; cam.y += (P.y - H / zy / 2 - cam.y) * k;
 
-  goalTimer -= dt; if (goalTimer <= 0){ goalTimer = .4; $('goal').innerHTML = objective(); }
+  goalTimer -= dt; if (goalTimer <= 0){ goalTimer = .4; const html = objective(); if (html !== lastGoal){ lastGoal = html; $('goal').innerHTML = html; } }
   saveTimer -= dt; if (saveTimer <= 0){ saveTimer = 8; save(); }
   updateHUD();
 }
@@ -1298,40 +1649,32 @@ function save(){
   if (!running || !P) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 1, T, p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built },
-      drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)]),
-      objs: objs.map(o => [o.t, Math.round(o.x), Math.round(o.y), Math.round(o.r * 10) / 10, o.amt || 0, Math.round((o.v || 0) * 1000) / 1000, Math.round(o.fuel || 0), Math.round(o.regrow || 0), o.kind || 0, Math.round(o.hp || 0), Math.round(o.ammo || 0), o.lv || 1])
+      v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, visited: P.visited },
+      drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
 }
 function readSave(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
 function loadGame(s){
-  objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0;
-  for (const a of s.objs){
-    const o = { t: a[0], x: a[1], y: a[2], r: a[3], v: a[5] };
-    if (o.t === 'tree' || o.t === 'rock' || o.t === 'bush' || o.t === 'wreck') o.amt = a[4];
-    if (o.t === 'tree' || o.t === 'rock') o.shake = 0;
-    if (o.t === 'bush') o.regrow = a[7];
-    if (o.t === 'fire') o.fuel = a[6];
-    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.ammo = a[10] || 0; o.lv = a[11] || 1; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
-    addObj(o);
-  }
+  for (const k in zoneSave) delete zoneSave[k]; for (const k in zoneLeft) delete zoneLeft[k];
+  Object.assign(zoneSave, s.zones || { home: s.objs }); Object.assign(zoneLeft, s.left || {});            // v1 saves held just the home island
+  const id = ZONES[s.zone] && zoneSave[s.zone] ? s.zone : 'home';
+  setZone(id); clearWorld(); unpackObjs(zoneSave[id] || []); delete zoneSave[id];
   P = Object.assign(newPlayer(), s.p); T = s.T;
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
-  P.buffs = Object.assign({ swift: 0, power: 0 }, P.buffs); P.stats = Object.assign({ elites: 0 }, P.stats);
+  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0 }, P.buffs); P.stats = Object.assign({ elites: 0 }, P.stats);
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
-  for (let i = 0; i < 36; i++) spawnCreature('rabbit', 300);
-  for (let i = 0; i < 7; i++) spawnCreature('boar', 300);
-  for (let i = 0; i < 3; i++) spawnCreature('bear', 400, undefined, false);
+  spawnFauna();
 }
 
 /* ================= game flow ================= */
 function startRun(){
   running = true; paused = false; sleeping = false; actHeld = false; resetJoy();
-  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; target = null; lastLabel = '';
+  lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; lastGoal = ''; target = null; lastLabel = '';
   cam.x = P.x - W / zoom / 2; cam.y = P.y - H / zy / 2;
   $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
   $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
@@ -1374,8 +1717,11 @@ $('btnContinue').addEventListener('click', continueGame);
 $('btnAgain').addEventListener('click', newGame);
 $('btnHome').addEventListener('click', toTitle);
 $('craftClose').addEventListener('click', closeCraft);
+$('sailClose').addEventListener('click', closeSail);
+$('sail').addEventListener('click', e => { if (e.target === $('sail')) closeSail(); });
 $('tabMake').addEventListener('click', () => { craftTab = 'make'; renderCraft(); });
 $('tabUp').addEventListener('click', () => { craftTab = 'upgrade'; renderCraft(); });
+$('tabSmelt').addEventListener('click', () => { craftTab = 'smelt'; renderCraft(); });
 $('craft').addEventListener('click', e => { if (e.target === $('craft')) closeCraft(); });
 $('menu').addEventListener('click', e => { if (e.target === $('menu')) closeMenu(); });
 $('menuResume').addEventListener('click', closeMenu);
@@ -1415,10 +1761,59 @@ function paintSoft(g, size, count, rmin, rmax, seed, cols){      // seamless sof
     }
   }
 }
-function makeGroundTile(){
+function makeRockBase(){
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(31);
+  g.fillStyle = '#7f7869'; g.fillRect(0, 0, 256, 256);
+  const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 34; i++){ const x = r() * 256, y = r() * 256, rx = 20 + r() * 30, ry = rx * (.6 + r() * .4); g.fillStyle = r() < .5 ? 'rgba(170,160,138,.28)' : 'rgba(70,64,54,.3)'; wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); }); }
+  for (let i = 0; i < 120; i++){
+    const x = r() * 256, y = r() * 256, rx = 1.6 + r() * 3.4, ry = rx * .7;
+    wrap((ox, oy) => { g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(x + ox + 1, y + oy + 1.2, rx, ry, 0, 0, TAU); g.fill(); g.fillStyle = r() < .5 ? '#a39b89' : '#8e8674'; g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); });
+  }
+  g.strokeStyle = 'rgba(40,36,30,.35)'; g.lineWidth = 1;
+  for (let i = 0; i < 12; i++){ const x = r() * 256, y = r() * 256; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + 10 + r() * 12, y + oy + 4); g.lineTo(x + ox + 18 + r() * 10, y + oy - 3); g.stroke(); }); }
+  g.lineCap = 'round'; for (let i = 0; i < 46; i++){ const x = r() * 256, y = r() * 256, s = 2 + r() * 3; g.strokeStyle = r() < .5 ? 'rgba(122,128,66,.7)' : 'rgba(150,146,84,.6)'; g.lineWidth = 1.2; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox - 1.5, y + oy); g.lineTo(x + ox - 2.5, y + oy - s); g.moveTo(x + ox + 1.5, y + oy); g.lineTo(x + ox + 2.5, y + oy - s - 1); g.stroke(); }); }
+  return c;
+}
+function makeSnowBase(){
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(53);
+  g.fillStyle = '#e8eff4'; g.fillRect(0, 0, 256, 256);
+  const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 34; i++){ const x = r() * 256, y = r() * 256, rx = 24 + r() * 32, ry = rx * (.5 + r() * .4); g.fillStyle = r() < .55 ? 'rgba(190,210,226,.34)' : 'rgba(255,255,255,.5)'; wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); }); }
+  for (let i = 0; i < 90; i++){ const x = r() * 256, y = r() * 256, rx = 2 + r() * 5; g.fillStyle = 'rgba(150,176,200,.28)'; wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy + 1, rx, rx * .35, 0, 0, TAU); g.fill(); }); }
+  for (let i = 0; i < 40; i++){ const x = r() * 256, y = r() * 256; g.fillStyle = 'rgba(255,255,255,.95)'; wrap((ox, oy) => { g.fillRect(x + ox, y + oy, 1.6, 1.6); }); }
+  g.lineCap = 'round'; for (let i = 0; i < 26; i++){ const x = r() * 256, y = r() * 256, s = 2 + r() * 3; g.strokeStyle = 'rgba(138,150,102,.75)'; g.lineWidth = 1.1; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox - 1.5, y + oy); g.lineTo(x + ox - 2.5, y + oy - s); g.moveTo(x + ox + 1.5, y + oy); g.lineTo(x + ox + 2.5, y + oy - s - 1); g.stroke(); }); }
+  return c;
+}
+function makeCaveBase(){
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(71);
+  g.fillStyle = '#2b2d33'; g.fillRect(0, 0, 256, 256);
+  const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 36; i++){ const x = r() * 256, y = r() * 256, rx = 20 + r() * 32, ry = rx * (.55 + r() * .4); g.fillStyle = r() < .5 ? 'rgba(80,86,98,.3)' : 'rgba(8,9,12,.4)'; wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); }); }
+  for (let i = 0; i < 90; i++){ const x = r() * 256, y = r() * 256, rx = 1.4 + r() * 3.2; wrap((ox, oy) => { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x + ox + 1, y + oy + 1, rx, rx * .7, 0, 0, TAU); g.fill(); g.fillStyle = r() < .5 ? '#474a53' : '#3a3d45'; g.beginPath(); g.ellipse(x + ox, y + oy, rx, rx * .7, 0, 0, TAU); g.fill(); }); }
+  g.strokeStyle = 'rgba(10,11,14,.6)'; g.lineWidth = 1.3;
+  for (let i = 0; i < 14; i++){ const x = r() * 256, y = r() * 256; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + 12 + r() * 14, y + oy + 5); g.lineTo(x + ox + 22 + r() * 12, y + oy - 4); g.stroke(); }); }
+  for (let i = 0; i < 26; i++){ const x = r() * 256, y = r() * 256; g.fillStyle = r() < .5 ? 'rgba(120,150,170,.65)' : 'rgba(170,150,110,.55)'; wrap((ox, oy) => { g.fillRect(x + ox, y + oy, 1.5, 1.5); }); }
+  return c;
+}
+function makeGroundTile(kind){
   const c = document.createElement('canvas'); c.width = c.height = 768; const g = c.getContext('2d');
-  g.fillStyle = g.createPattern(makeGrassTile(), 'repeat'); g.fillRect(0, 0, 768, 768);
-  paintSoft(g, 768, 46, 70, 190, 11, [['rgba(255,246,170,.11)', 'rgba(255,246,170,0)'], ['rgba(8,38,18,.13)', 'rgba(8,38,18,0)']]);
+  const base = kind === 'rock' ? makeRockBase() : kind === 'snow' ? makeSnowBase() : kind === 'cave' ? makeCaveBase() : makeGrassTile();
+  g.fillStyle = g.createPattern(base, 'repeat'); g.fillRect(0, 0, 768, 768);
+  const soft = kind === 'rock' ? [['rgba(255,246,214,.08)', 'rgba(255,246,214,0)'], ['rgba(30,26,20,.13)', 'rgba(30,26,20,0)']]
+    : kind === 'snow' ? [['rgba(255,255,255,.3)', 'rgba(255,255,255,0)'], ['rgba(120,150,190,.14)', 'rgba(120,150,190,0)']]
+    : kind === 'cave' ? [['rgba(110,120,140,.12)', 'rgba(110,120,140,0)'], ['rgba(0,0,0,.22)', 'rgba(0,0,0,0)']]
+    : [['rgba(255,246,170,.11)', 'rgba(255,246,170,0)'], ['rgba(8,38,18,.13)', 'rgba(8,38,18,0)']];
+  paintSoft(g, 768, 46, 70, 190, 11, soft);
+  return c;
+}
+function makeSnowTile(size, count, seed, rmin, rmax, alpha){
+  const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'), r = mulberry32(seed);
+  for (let i = 0; i < count; i++){
+    const x = r() * size, y = r() * size, rad = rmin + r() * (rmax - rmin);
+    g.fillStyle = 'rgba(255,255,255,' + (alpha * (.6 + r() * .4)).toFixed(2) + ')';
+    for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]){ g.beginPath(); g.arc(x + ox, y + oy, rad, 0, TAU); g.fill(); }
+  }
   return c;
 }
 function makeCloudTile(){
@@ -1435,7 +1830,7 @@ function makePuff(rgb){       // soft round smoke / dust sprite
   gr.addColorStop(0, 'rgba(' + rgb + ',.9)'); gr.addColorStop(.5, 'rgba(' + rgb + ',.45)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, 48, 48);
   return c;
 }
-let grassPat = null, blob = null, puffSmoke = null, puffDust = null;
+let blob = null, puffSmoke = null, puffDust = null;
 const CLOUD_W = 1024;   // world px covered by one cloud-shadow tile
 function rrPath(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 const ell = (x, y, rx, ry, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); ctx.fill(); };
@@ -1447,7 +1842,7 @@ function mkSprite(w, h, ax, ay, hgt, draw){
   return { cv: c, w, h, ax, ay, hgt };
 }
 const TREE_PAL = [['#17482a', '#2b6f3a', '#4fa75c', '#a6e58f'], ['#26501f', '#3f7a30', '#6fae45', '#c0e47a'], ['#14463f', '#2a7360', '#4fae8c', '#9ae6c4']];
-const treeCache = [], rockCache = [], bushCache = [];
+const treeCache = [], rockCache = [], bushCache = [], snowTreeCache = [];
 function shade(g, w, h, y0, y1, a){ g.globalCompositeOperation = 'source-atop'; const sh = g.createLinearGradient(0, y0, 0, y1); sh.addColorStop(0, 'rgba(0,10,4,0)'); sh.addColorStop(1, 'rgba(0,10,4,' + a + ')'); g.fillStyle = sh; g.fillRect(0, 0, w, h); g.globalCompositeOperation = 'source-over'; }
 function buildTree(i){
   const pine = i % 3 === 2, pal = TREE_PAL[(i / 3) | 0], rnd = mulberry32(300 + i);
@@ -1504,7 +1899,49 @@ function buildBush(i){
     shade(g, 64, 44, by - 26, by - 2, .38);
   });
 }
-function initSprites(){ for (let i = 0; i < 9; i++) treeCache.push(buildTree(i)); for (let i = 0; i < 6; i++) rockCache.push(buildRock(i)); for (let i = 0; i < 4; i++) bushCache.push(buildBush(i)); }
+const SNOW_PAL = [['#25454e', '#3c6a74', '#a8cdd2', '#fbfdff'], ['#2b4d46', '#46766c', '#b3d4cb', '#ffffff'], ['#33485a', '#4f6f88', '#b9d0e2', '#ffffff']];
+function buildSnowPine(i){
+  const pal = SNOW_PAL[i % 3];
+  return mkSprite(84, 116, 42, 104, 98, g => {
+    const bx = 42, by = 104;
+    const tg = g.createLinearGradient(bx - 5, 0, bx + 5, 0); tg.addColorStop(0, '#9a6f40'); tg.addColorStop(.55, '#6e4a2a'); tg.addColorStop(1, '#45301c');
+    g.fillStyle = tg; g.beginPath(); g.moveTo(bx - 6.5, by + 2); g.quadraticCurveTo(bx - 3, by - 8, bx - 3.5, by - 30); g.lineTo(bx + 3.5, by - 30); g.quadraticCurveTo(bx + 4, by - 8, bx + 7, by + 2); g.closePath(); g.fill();
+    for (let k = 0; k < 4; k++){
+      const baseY = by - 26 - k * 17, hw = 27 - k * 5.5, tipY = baseY - 30 + k * 2, h = baseY - tipY;
+      const lg = g.createLinearGradient(bx - hw, 0, bx + hw, 0); lg.addColorStop(0, pal[2]); lg.addColorStop(.5, pal[1]); lg.addColorStop(1, pal[0]);
+      g.fillStyle = lg; g.beginPath(); g.moveTo(bx, tipY); g.lineTo(bx + hw, baseY); g.lineTo(bx + hw * .55, baseY - 3); g.lineTo(bx, baseY + 2); g.lineTo(bx - hw * .55, baseY - 3); g.lineTo(bx - hw, baseY); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.94)'; g.beginPath(); g.moveTo(bx, tipY - .5); g.lineTo(bx + hw * .62, tipY + h * .56); g.lineTo(bx + hw * .34, tipY + h * .5); g.lineTo(bx + hw * .15, tipY + h * .66); g.lineTo(bx - hw * .1, tipY + h * .52); g.lineTo(bx - hw * .38, tipY + h * .66); g.lineTo(bx - hw * .62, tipY + h * .56); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(150,180,215,.35)'; g.beginPath(); g.moveTo(bx + hw * .3, tipY + h * .5); g.lineTo(bx + hw * .62, tipY + h * .56); g.lineTo(bx + hw * .34, tipY + h * .5); g.closePath(); g.fill();
+    }
+    shade(g, 84, 116, by - 84, by - 22, .3);
+  });
+}
+const oreCache = {};
+function buildOre(kind, i){
+  const d = ORE[kind], rnd = mulberry32(900 + i * 17 + kind.charCodeAt(0));
+  return mkSprite(64, 52, 32, 46, 24, g => {
+    const bx = 32, by = 46, pts = [[-19, 0], [-17, -9], [-9, -19], [3, -22], [13, -15], [19, -6], [18, 0]].map(([x, y]) => [x + (rnd() - .5) * 4, y + (y ? (rnd() - .5) * 3 : 0)]);
+    const poly = (arr, fill) => { g.fillStyle = fill; g.beginPath(); arr.forEach(([x, y], j) => j ? g.lineTo(bx + x, by + y) : g.moveTo(bx + x, by + y)); g.closePath(); g.fill(); };
+    const body = g.createLinearGradient(bx - 18, by - 22, bx + 18, by + 2); body.addColorStop(0, '#6c7378'); body.addColorStop(.5, '#4a5055'); body.addColorStop(1, '#2f3438'); poly(pts, body);
+    poly([pts[1], pts[2], pts[3], pts[4], [8, -10], [-4, -9]], 'rgba(220,228,232,.18)');
+    poly([pts[4], pts[5], pts[6], [6, 0], [8, -7]], 'rgba(10,14,18,.34)');
+    g.strokeStyle = d.col; g.lineWidth = 2.2; g.lineCap = 'round'; g.globalAlpha = .8;
+    for (let k = 0; k < 3; k++){ const sx = bx - 13 + k * 11 + rnd() * 4, sy = by - 3 - rnd() * 9; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + 4 + rnd() * 4, sy - 6 - rnd() * 5); g.lineTo(sx + 1, sy - 12 - rnd() * 4); g.stroke(); }
+    g.globalAlpha = 1;
+    const cr = (cx, cy, h, w) => {
+      const gr = g.createLinearGradient(cx - w, cy, cx + w, cy - h); gr.addColorStop(0, d.col); gr.addColorStop(1, d.hi);
+      g.fillStyle = gr; g.beginPath(); g.moveTo(cx - w, cy); g.lineTo(cx - w * .5, cy - h * .8); g.lineTo(cx, cy - h); g.lineTo(cx + w * .6, cy - h * .7); g.lineTo(cx + w, cy); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = .8; g.stroke(); g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.moveTo(cx - w * .3, cy - h * .3); g.lineTo(cx, cy - h * .9); g.lineTo(cx + w * .1, cy - h * .35); g.closePath(); g.fill();
+    };
+    cr(bx - 8, by - 7, 13, 5); cr(bx + 6, by - 11, 16, 5.5); cr(bx - 1, by - 2, 9, 4);
+    g.globalCompositeOperation = 'source-atop'; const ao = g.createLinearGradient(0, by - 9, 0, by + 1); ao.addColorStop(0, 'rgba(0,0,0,0)'); ao.addColorStop(1, 'rgba(0,0,0,.4)'); g.fillStyle = ao; g.fillRect(0, 0, 64, 52); g.globalCompositeOperation = 'source-over';
+  });
+}
+function initSprites(){
+  for (let i = 0; i < 9; i++) treeCache.push(buildTree(i)); for (let i = 0; i < 6; i++) rockCache.push(buildRock(i)); for (let i = 0; i < 4; i++) bushCache.push(buildBush(i));
+  for (let i = 0; i < 3; i++) snowTreeCache.push(buildSnowPine(i));
+  for (const k in ORE){ oreCache[k] = []; for (let i = 0; i < 3; i++) oreCache[k].push(buildOre(k, i)); }
+}
 
 const windAt = (x, y) => (Math.sin(anim * 1.4 + x * .011 + y * .007) * .6 + Math.sin(anim * 3.3 + x * .031) * .25) * (1 + .5 * Math.sin(anim * .37)) * .035;
 const treeScale = o => .8 + frac(o.v * 97.3) * .26;
@@ -1516,7 +1953,7 @@ function putSprite(sp, x, y, sc, sway){
   ctx.save(); ctx.translate(x, y); ctx.transform(1, 0, sway, 1, 0, 0); ctx.drawImage(sp.cv, -sp.ax * sc, -sp.ay * sc, sp.w * sc, sp.h * sc); ctx.restore();
 }
 function drawTree(o){
-  const sp = treeCache[Math.min(8, (o.v * 9) | 0)], s = treeScale(o), k = .75 + .25 * o.amt / 6;
+  const sp = Z.ground === 'snow' ? snowTreeCache[Math.min(2, (o.v * 3) | 0)] : treeCache[Math.min(8, (o.v * 9) | 0)], s = treeScale(o), k = .75 + .25 * o.amt / 6;
   ell(o.x, o.y + 3, 12 * s, 4.5 * s, 'rgba(0,0,0,.26)');
   putSprite(sp, o.x, o.y, s * k, windAt(o.x, o.y) + (o.shake > 0 ? Math.sin(o.shake * 70) * .09 : 0));
 }
@@ -1524,6 +1961,76 @@ function drawRock(o){
   const sp = rockCache[Math.min(5, (frac(o.v * 31.7) * 6) | 0)], s = rockScale(o), x = o.x + (o.shake > 0 ? Math.sin(o.shake * 70) * 1.5 : 0);
   ell(x, o.y + 3, 15 * s, 4.5 * s, 'rgba(0,0,0,.24)');
   putSprite(sp, x, o.y, s, 0);
+}
+function drawBoat(o){
+  const x = o.x, y = o.y, fl = o.x < WORLD / 2 ? -1 : 1, bob = Math.sin(anim * 1.8 + o.x * .1) * 1.1, big = (P.boatLv || 1) > 1;
+  ell(x, y + 8, 34, 7, 'rgba(0,0,0,.26)');
+  ctx.save(); ctx.translate(x, y + bob); ctx.scale(fl, 1);
+  ctx.fillStyle = big ? '#4d3e32' : '#7d5430'; ctx.beginPath(); ctx.moveTo(-31, -8); ctx.quadraticCurveTo(-24, 11, 0, 12); ctx.quadraticCurveTo(24, 11, 34, -10); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = big ? '#6a5848' : '#a8723a'; ctx.beginPath(); ctx.moveTo(-31, -8); ctx.lineTo(34, -10); ctx.lineTo(31, -4); ctx.lineTo(-27, -2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(40,24,10,.5)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-26, 3); ctx.quadraticCurveTo(0, 8, 28, 1); ctx.stroke();
+  if (big){ ctx.fillStyle = '#9aa3ab'; for (const px of [-18, -6, 6, 18]) ctx.fillRect(px, -5, 2.4, 9); }
+  ctx.fillStyle = '#4a3018'; ctx.fillRect(-1.5, -50, 3, 46);
+  ctx.fillStyle = '#f4ecd6'; ctx.beginPath(); ctx.moveTo(2, -48); ctx.lineTo(2, -9); ctx.lineTo(26, -9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#e1d6b6'; ctx.beginPath(); ctx.moveTo(-2, -42); ctx.lineTo(-2, -9); ctx.lineTo(-20, -9); ctx.closePath(); ctx.fill();
+  if (big){ ctx.fillStyle = '#4a3018'; ctx.fillRect(18, -36, 2.4, 28); ctx.fillStyle = '#f4ecd6'; ctx.beginPath(); ctx.moveTo(18, -34); ctx.lineTo(18, -12); ctx.lineTo(36, -12); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = big ? '#3b6fd6' : '#e0533f'; ctx.beginPath(); ctx.moveTo(-1, -50); ctx.lineTo(13, -46); ctx.lineTo(-1, -42); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function drawMineDoor(o){
+  const x = o.x, y = o.y;
+  ell(x, y + 12, 56, 10, 'rgba(0,0,0,.3)');
+  const g = ctx.createLinearGradient(x - 48, y - 72, x + 48, y + 10); g.addColorStop(0, '#9a9da1'); g.addColorStop(.55, '#666a6f'); g.addColorStop(1, '#3d4146');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 50, y + 11); ctx.lineTo(x - 47, y - 26); ctx.lineTo(x - 31, y - 57); ctx.lineTo(x - 6, y - 70); ctx.lineTo(x + 24, y - 62); ctx.lineTo(x + 45, y - 35); ctx.lineTo(x + 50, y + 11); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(240,244,248,.2)'; ctx.beginPath(); ctx.moveTo(x - 47, y - 26); ctx.lineTo(x - 31, y - 57); ctx.lineTo(x - 6, y - 70); ctx.lineTo(x - 10, y - 44); ctx.lineTo(x - 30, y - 30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(10,14,18,.28)'; ctx.beginPath(); ctx.moveTo(x + 24, y - 62); ctx.lineTo(x + 45, y - 35); ctx.lineTo(x + 50, y + 11); ctx.lineTo(x + 30, y + 11); ctx.lineTo(x + 32, y - 40); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#06070a'; ctx.beginPath(); ctx.moveTo(x - 17, y + 11); ctx.lineTo(x - 17, y - 24); ctx.quadraticCurveTo(x, y - 41, x + 17, y - 24); ctx.lineTo(x + 17, y + 11); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#8a5f33'; ctx.lineWidth = 5; ctx.lineCap = 'butt';
+  ctx.beginPath(); ctx.moveTo(x - 19, y + 11); ctx.lineTo(x - 19, y - 28); ctx.moveTo(x + 19, y + 11); ctx.lineTo(x + 19, y - 28); ctx.moveTo(x - 24, y - 28); ctx.lineTo(x + 24, y - 28); ctx.stroke();
+  ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 19, y - 14); ctx.lineTo(x - 8, y - 28); ctx.moveTo(x + 19, y - 14); ctx.lineTo(x + 8, y - 28); ctx.stroke();
+  ctx.fillStyle = '#6b4a2a'; ctx.fillRect(x - 15, y - 47, 30, 11); ctx.strokeStyle = '#3d2a16'; ctx.lineWidth = 1.2; ctx.strokeRect(x - 15, y - 47, 30, 11);
+  ctx.fillStyle = '#f2e6c8'; ctx.font = '700 9px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('광산', x, y - 38.5);
+  for (const lx of [-31, 31]){ const fl = .85 + Math.sin(anim * 8 + lx) * .15; ctx.fillStyle = 'rgba(255,196,90,' + (.28 * fl).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(x + lx, y - 18, 12, 0, TAU); ctx.fill(); ctx.fillStyle = '#ffd27a'; ctx.fillRect(x + lx - 2.5, y - 21, 5, 7); ctx.fillStyle = '#3a3026'; ctx.fillRect(x + lx - 3, y - 23, 6, 2); }
+  ctx.strokeStyle = '#4a4f55'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 12, y + 12); ctx.lineTo(x - 22, y + 24); ctx.moveTo(x + 12, y + 12); ctx.lineTo(x + 22, y + 24); ctx.stroke();
+}
+function drawCaveExit(o){
+  const x = o.x, y = o.y;
+  ell(x, y + 10, 46, 9, 'rgba(0,0,0,.35)');
+  ctx.fillStyle = 'rgba(255,236,170,.1)'; ctx.beginPath(); ctx.moveTo(x - 22, y + 10); ctx.lineTo(x + 22, y + 10); ctx.lineTo(x + 52, y + 44); ctx.lineTo(x - 52, y + 44); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#4a4e55'; ctx.beginPath(); ctx.moveTo(x - 36, y + 11); ctx.lineTo(x - 36, y - 34); ctx.quadraticCurveTo(x, y - 74, x + 36, y - 34); ctx.lineTo(x + 36, y + 11); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(x - 36, y - 34, 6, 45);
+  const g = ctx.createLinearGradient(x, y - 60, x, y + 10); g.addColorStop(0, '#fff6d0'); g.addColorStop(1, '#ffd98a');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 23, y + 11); ctx.lineTo(x - 23, y - 32); ctx.quadraticCurveTo(x, y - 58, x + 23, y - 32); ctx.lineTo(x + 23, y + 11); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#7b5230'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 9, y + 10); ctx.lineTo(x - 9, y - 38); ctx.moveTo(x + 9, y + 10); ctx.lineTo(x + 9, y - 38); ctx.stroke();
+  ctx.lineWidth = 2.2; ctx.beginPath(); for (let i = 0; i < 6; i++){ ctx.moveTo(x - 9, y + 4 - i * 8); ctx.lineTo(x + 9, y + 4 - i * 8); } ctx.stroke();
+  ctx.fillStyle = '#e8dcc0'; ctx.font = '700 9px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('출구', x, y + 24);
+}
+function drawOre(o){
+  const d = ORE[o.kind], x = o.x + (o.shake > 0 ? Math.sin(o.shake * 70) * 1.5 : 0);
+  if (o.amt <= 0){                                         // mined out: a heap of rubble until it grows back
+    ell(x, o.y + 3, 12, 4, 'rgba(0,0,0,.2)'); putSprite(rockCache[0], x, o.y, .5, 0);
+    for (let i = 0; i < 4; i++) circ(x - 9 + i * 6, o.y - 2 - (i % 2) * 3, 1.8, d.col);
+    return;
+  }
+  const sp = oreCache[o.kind][(frac(o.v * 31.7) * 3) | 0], s = .92 + .1 * o.amt / d.amt;
+  ell(x, o.y + 3, 17 * s, 5 * s, 'rgba(0,0,0,.26)'); putSprite(sp, x, o.y, s, 0);
+  if (!lowFx){                                             // glints
+    for (let i = 0; i < 2; i++){
+      const tw = Math.sin(anim * 2.6 + o.x * .37 + i * 2.4); if (tw < .55) continue;
+      const gx = x + (i ? 7 : -7), gy = o.y - (i ? 18 : 12), k = (tw - .55) * 7;
+      ctx.strokeStyle = 'rgba(255,255,255,' + (.35 + (tw - .55)).toFixed(2) + ')'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(gx - k, gy); ctx.lineTo(gx + k, gy); ctx.moveTo(gx, gy - k); ctx.lineTo(gx, gy + k); ctx.stroke();
+    }
+  }
+}
+function drawFurnace(o){
+  const x = o.x, y = o.y, on = o.glow > 0;
+  ell(x, y + 8, 26, 7, 'rgba(0,0,0,.26)');
+  ctx.fillStyle = '#5b524a'; ctx.fillRect(x + 6, y - 42, 10, 24); ctx.fillStyle = '#756b61'; ctx.fillRect(x + 4, y - 44, 14, 4);
+  ctx.fillStyle = '#858a8e'; ctx.fillRect(x - 20, y - 22, 40, 29); ctx.fillStyle = '#a2a8ac'; ctx.fillRect(x - 20, y - 27, 40, 6);
+  ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(x + 12, y - 27, 8, 34);
+  ctx.strokeStyle = 'rgba(40,46,50,.55)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - 20, y - 12); ctx.lineTo(x + 20, y - 12); ctx.moveTo(x - 20, y - 2); ctx.lineTo(x + 20, y - 2); ctx.moveTo(x - 8, y - 22); ctx.lineTo(x - 8, y - 12); ctx.moveTo(x + 6, y - 12); ctx.lineTo(x + 6, y - 2); ctx.stroke();
+  ctx.fillStyle = on ? '#ff8a2b' : '#1c1a18'; ctx.beginPath(); ctx.moveTo(x - 9, y + 7); ctx.lineTo(x - 9, y - 6); ctx.quadraticCurveTo(x, y - 19, x + 9, y - 6); ctx.lineTo(x + 9, y + 7); ctx.closePath(); ctx.fill();
+  if (on){ const f = Math.sin(anim * 14 + x) * 2; ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.moveTo(x - 5, y + 7); ctx.quadraticCurveTo(x - 4, y - 4, x + f * .4, y - 11 + f); ctx.quadraticCurveTo(x + 5, y - 4, x + 5, y + 7); ctx.closePath(); ctx.fill(); }
 }
 function drawBush(o){
   const sp = bushCache[Math.min(3, (frac(o.v * 41.3) * 4) | 0)];
@@ -1533,33 +2040,44 @@ function drawBush(o){
 }
 
 /* ---- ground: island slab, cliff, grass, soft hills ---- */
+const groundTiles = {};
+function groundPat(kind){ return groundTiles[kind] || (groundTiles[kind] = ctx.createPattern(makeGroundTile(kind), 'repeat')); }
+function drawCavern(){
+  const M = ISL_M, S = WORLD - 2 * M, pat = groundPat(Z.ground);
+  rrPath(M - 90, M - 90, S + 180, S + 180, ISL_R + 90); ctx.fillStyle = '#0d0e11'; ctx.fill();
+  rrPath(M - 30, M - 30, S + 60, S + 60, ISL_R + 30); ctx.fillStyle = '#1a1c21'; ctx.fill();
+  rrPath(M - 10, M - 10, S + 20, S + 20, ISL_R + 10); ctx.fillStyle = '#2a2d33'; ctx.fill();
+  rrPath(M, M, S, S, ISL_R); ctx.fillStyle = pat; ctx.fill();
+  ctx.save(); rrPath(M, M, S, S, ISL_R); ctx.clip(); rrPath(M, M, S, S, ISL_R); ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 90; ctx.stroke(); ctx.restore();
+}
 function drawIsland(vy1){
-  const M = ISL_M, S = WORLD - 2 * M, CL = 26, south = vy1 > WORLD - M - ISL_R - 80;
+  if (Z.cave) return drawCavern();
+  const M = ISL_M, S = WORLD - 2 * M, CL = 26, south = vy1 > WORLD - M - ISL_R - 80, pal = Z.shallow, pat = groundPat(Z.ground);
   if (south){ rrPath(M - 30, M - 30 + CL + 14, S + 60, S + 60, ISL_R + 30); ctx.fillStyle = 'rgba(6,36,66,.30)'; ctx.fill(); }
-  rrPath(M - 40, M - 40, S + 80, S + 80, ISL_R + 40); ctx.fillStyle = '#4aa7cc'; ctx.fill();
-  rrPath(M - 14, M - 14, S + 28, S + 28, ISL_R + 14); ctx.fillStyle = '#7cc4de'; ctx.fill();
+  rrPath(M - 40, M - 40, S + 80, S + 80, ISL_R + 40); ctx.fillStyle = pal[0]; ctx.fill();
+  rrPath(M - 14, M - 14, S + 28, S + 28, ISL_R + 14); ctx.fillStyle = pal[1]; ctx.fill();
   rrPath(M - 40 - Math.sin(anim * 1.4) * 4, M - 40 - Math.sin(anim * 1.4) * 4, S + 80 + Math.sin(anim * 1.4) * 8, S + 80 + Math.sin(anim * 1.4) * 8, ISL_R + 40);
   ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 3; ctx.setLineDash([16, 20]); ctx.lineDashOffset = -anim * 12; ctx.stroke(); ctx.setLineDash([]);
   if (south){
-    const cols = ['#4d3a28', '#624a30', '#785c3a', '#8f7248', '#a58a58'];
+    const cols = Z.cliff;
     for (let k = 0; k < cols.length; k++){ rrPath(M, M + CL * (1 - k / cols.length), S, S, ISL_R); ctx.fillStyle = cols[k]; ctx.fill(); }
     rrPath(M, M + CL + 3, S, S, ISL_R); ctx.strokeStyle = 'rgba(255,255,255,.38)'; ctx.lineWidth = 3; ctx.setLineDash([14, 18]); ctx.lineDashOffset = anim * 10; ctx.stroke(); ctx.setLineDash([]);
   }
-  rrPath(M, M, S, S, ISL_R); ctx.fillStyle = '#dcc790'; ctx.fill();
-  rrPath(M + 42, M + 42, S - 84, S - 84, ISL_R - 42); ctx.fillStyle = grassPat; ctx.fill();
+  rrPath(M, M, S, S, ISL_R); ctx.fillStyle = Z.shore; ctx.fill();
+  rrPath(M + 42, M + 42, S - 84, S - 84, ISL_R - 42); ctx.fillStyle = pat; ctx.fill();
   rrPath(M + 42, M + 42, S - 84, S - 84, ISL_R - 42); ctx.strokeStyle = 'rgba(60,110,50,.5)'; ctx.lineWidth = 3; ctx.stroke();
 }
 function drawGround(vx0, vy0, vx1, vy1){
   const mx = (vx0 + vx1) / 2, my = (vy0 + vy1) / 2;
   const pts = [[vx0, vy0], [vx1, vy0], [vx0, vy1], [vx1, vy1], [mx, vy0], [mx, vy1], [vx0, my], [vx1, my]];
   if (pts.some(p => inside(p[0], p[1]) < 110)) drawIsland(vy1);
-  else { ctx.fillStyle = grassPat; ctx.fillRect(vx0 - 2, vy0 - 2, vx1 - vx0 + 4, vy1 - vy0 + 4); }
+  else { ctx.fillStyle = groundPat(Z.ground); ctx.fillRect(vx0 - 2, vy0 - 2, vx1 - vx0 + 4, vy1 - vy0 + 4); }
 }
 function drawLakes(lakes){
   if (!lakes.length) return;
   const layer = (d, col) => { ctx.fillStyle = col; for (const o of lakes){ ctx.beginPath(); ctx.arc(o.x, o.y, Math.max(0, o.r + d), 0, TAU); ctx.fill(); } };
-  layer(9, '#d6c690'); layer(5, '#b7a874'); layer(2, '#e9f6fa'); layer(0, '#78cbe0'); layer(-11, '#4faad2');
-  ctx.fillStyle = '#2f86b8'; for (const o of lakes) if (o.r > 44){ ctx.beginPath(); ctx.arc(o.x, o.y, o.r - 27, 0, TAU); ctx.fill(); }
+  const L = Z.lake; layer(9, L.rim[0]); layer(5, L.rim[1]); layer(2, L.foam); layer(0, L.water); layer(-11, L.deep);
+  ctx.fillStyle = L.core; for (const o of lakes) if (o.r > 44){ ctx.beginPath(); ctx.arc(o.x, o.y, o.r - 27, 0, TAU); ctx.fill(); }
   ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2;
   for (const o of lakes){
     const k = (anim * .4 + o.x * .01) % 1;
@@ -1574,18 +2092,23 @@ function drawLakes(lakes){
 }
 
 /* ---- cast shadows: the sun by day, campfires by night ---- */
-const SHADOW_H = { rabbit: 12, boar: 20, wolf: 19, zombie: 34, brute: 54, bear: 28 };
+const SHADOW_H = { rabbit: 12, boar: 20, wolf: 19, zombie: 34, brute: 54, bear: 28, bat: 14, golem: 44 };
 function casterSpec(d){          // [height, half width] of the thing standing there
   if (d.p) return [50, 9];
   if (d.c) return [SHADOW_H[d.c.k] * (d.c.scale || 1), d.c.r * .85];
   const o = d.o;
   switch (o.t){
-    case 'tree': { const sp = treeCache[Math.min(8, (o.v * 9) | 0)], s = treeScale(o) * (.75 + .25 * o.amt / 6); return [sp.hgt * s, 15 * s]; }
+    case 'tree': { const sp = Z.ground === 'snow' ? snowTreeCache[0] : treeCache[Math.min(8, (o.v * 9) | 0)], s = treeScale(o) * (.75 + .25 * o.amt / 6); return [sp.hgt * s, 15 * s]; }
     case 'rock': { const s = rockScale(o); return [17 * s, 12 * s]; }
+    case 'ore': return o.amt > 0 ? [20, 14] : null;
+    case 'furnace': return [34, 20];
+    case 'boat': return [30, 18];
+    case 'exit': return [56, 30];
+    case 'mine': return [64, 38];
     case 'bush': return null;                 // too small to matter, contact shadow is enough
     case 'shelter': return [40, 22];
     case 'wreck': return [16, 12];
-    case 'wall': return o.kind === 'tower' ? [50, 13] : [20, o.kind === 'stone' ? 13 : 8];
+    case 'wall': return o.kind === 'tower' ? [50, 13] : [20, o.kind === 'stone' || o.kind === 'iron' ? 13 : 8];
   }
   return null;
 }
@@ -1595,7 +2118,7 @@ function castShadow(x, y, h, rw, dx, dy, len, a){
 }
 function castShadows(draws, vx0, vy0, vx1, vy1, dk){
   const t = dayT(), st = t >= .9 ? 0 : clamp(t / .56, 0, 1), ex = 2 * st - 1, n = Math.hypot(ex * .95, .55);
-  const sdx = ex * .95 / n, sdy = .55 / n, slen = .28 + 1.25 * Math.pow(Math.abs(ex), 1.6), sa = .36 * (1 - dk);
+  const sdx = ex * .95 / n, sdy = .55 / n, slen = .28 + 1.25 * Math.pow(Math.abs(ex), 1.6), sa = Z.cave ? 0 : .36 * (1 - dk);
   const fires = dk > .05 ? structs.filter(f => f.t === 'fire' && f.fuel > 0 && f.x > vx0 - 280 && f.x < vx1 + 280 && f.y > vy0 - 280 && f.y < vy1 + 280) : [];
   for (const d of draws){
     const sp = casterSpec(d); if (!sp) continue;
@@ -1693,6 +2216,13 @@ function drawWall(o, alpha){
     ctx.fillStyle = o.ammo > 0 ? '#7fd0ff' : '#ec5a4d'; ctx.fillRect(x - 12, y + 9, 24 * Math.min(1, (o.ammo || 0) / tw(o).max), 3);
     for (let i = 1; i < (o.lv || 1); i++) circ(x - 11 + i * 7, y - 12, 2.4, '#ffd166');
     if (!alpha && !(o.ammo > 0)){ circ(x, y - 56, 6.5, '#ec5a4d'); ctx.fillStyle = '#fff'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', x, y - 52.5); }
+  } else if (o.kind === 'iron'){
+    ctx.fillStyle = 'rgba(0,0,0,.24)'; ctx.fillRect(x - 14, y + 4, 28, 7);
+    ctx.fillStyle = flash ? '#fff' : '#56606a'; ctx.fillRect(x - 14, y - 8, 28, 16);
+    ctx.fillStyle = flash ? '#fff' : '#808c97'; ctx.fillRect(x - 14, y - 19, 28, 11);
+    ctx.fillStyle = 'rgba(255,255,255,.24)'; ctx.fillRect(x - 14, y - 19, 28, 2); ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x + 9, y - 19, 5, 27);
+    ctx.strokeStyle = 'rgba(20,26,32,.65)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - 14, y - 8); ctx.lineTo(x + 14, y - 8); ctx.moveTo(x, y - 19); ctx.lineTo(x, y - 8); ctx.moveTo(x - 7, y - 8); ctx.lineTo(x - 7, y + 8); ctx.moveTo(x + 7, y - 8); ctx.lineTo(x + 7, y + 8); ctx.stroke();
+    for (const [rx, ry] of [[-10, -14], [10, -14], [-10, 2], [10, 2]]) circ(x + rx, y + ry, 1.4, '#cfd8df');
   } else if (o.kind === 'stone'){
     ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(x - 14, y + 4, 28, 7);
     ctx.fillStyle = flash ? '#fff' : '#7b8185'; ctx.fillRect(x - 14, y - 8, 28, 16);
@@ -1839,6 +2369,22 @@ function drawCreature(c){
     ctx.fillStyle = skin; ctx.fillRect(5, -20 + sw * .3, 11, 4); ctx.fillRect(5, -14 - sw * .3, 11, 4);
     circ(0, -26, 7, skin); ctx.fillStyle = 'rgba(40,30,20,.6)'; ctx.fillRect(-7, -32, 14, 3);
     circ(3.5, -27, 1.6, '#e33'); circ(-1, -27, 1.6, '#e33'); ctx.fillStyle = '#2a1a1a'; ctx.fillRect(1, -22.5, 5, 1.6);
+  } else if (c.k === 'bat'){
+    const fl = Math.sin(c.hop), body = flash ? '#fff' : '#3b3447'; ctx.translate(0, -18);
+    ctx.fillStyle = flash ? '#fff' : '#2a2434';
+    for (const sg of [-1, 1]){ ctx.beginPath(); ctx.moveTo(sg * 2, -2); ctx.quadraticCurveTo(sg * 9, -12 - fl * 8, sg * 19, -4 + fl * 5); ctx.quadraticCurveTo(sg * 15, -3, sg * 14, 2); ctx.quadraticCurveTo(sg * 10, -1, sg * 7, 3); ctx.quadraticCurveTo(sg * 5, 0, sg * 2, 3); ctx.closePath(); ctx.fill(); }
+    ell(0, 0, 4.5, 5.5, body); circ(-2.2, -5.5, 1.7, body); circ(2.2, -5.5, 1.7, body); circ(-1.7, -1, 1, '#ff4a4a'); circ(1.7, -1, 1, '#ff4a4a');
+  } else if (c.k === 'golem'){
+    const awake = c.state === 'awake', sw = awake ? Math.sin(c.hop) * 1.5 : 0, rk = flash ? '#fff' : '#6c7278', rk2 = flash ? '#fff' : '#555b61', rk3 = flash ? '#fff' : '#848b91', glow = awake ? '#ff9a4a' : '#6b5238';
+    ctx.fillStyle = rk2; ctx.fillRect(-11 + sw, -9, 9, 10); ctx.fillRect(2 - sw, -9, 9, 10);
+    ctx.fillStyle = rk; ctx.beginPath(); ctx.moveTo(-15, -10); ctx.lineTo(-17, -28); ctx.lineTo(-9, -37); ctx.lineTo(9, -37); ctx.lineTo(17, -28); ctx.lineTo(15, -10); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = rk3; ctx.beginPath(); ctx.moveTo(-17, -28); ctx.lineTo(-9, -37); ctx.lineTo(0, -37); ctx.lineTo(-4, -26); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(7, -36, 9, 26);
+    ctx.fillStyle = rk2; ctx.fillRect(-25, -31 + sw * .4, 9, 17); ctx.fillRect(16, -31 - sw * .4, 9, 17);
+    ctx.fillStyle = rk; ctx.fillRect(-27, -17 + sw * .4, 11, 8); ctx.fillRect(16, -17 - sw * .4, 11, 8);
+    ctx.fillStyle = rk; ctx.fillRect(-7, -47, 14, 11); ctx.fillStyle = rk3; ctx.fillRect(-7, -47, 14, 3);
+    ctx.fillStyle = glow; ctx.fillRect(-4.5, -43, 3, 2.6); ctx.fillRect(1.5, -43, 3, 2.6);
+    ctx.strokeStyle = glow; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-9, -30); ctx.lineTo(-3, -22); ctx.lineTo(-8, -15); ctx.moveTo(6, -33); ctx.lineTo(10, -24); ctx.stroke();
   } else if (c.k === 'bear'){
     ell(0, -11, 21, 13, flash ? '#fff' : '#5a3a24'); circ(18, -12, 9, flash ? '#fff' : '#6a4529');
     circ(15, -20, 3.4, '#4a2f1d'); circ(22, -19, 3.2, '#4a2f1d'); ell(25, -9, 4.5, 3.5, '#a98462'); circ(26, -10.5, 1.4, '#111');
@@ -1868,12 +2414,13 @@ function drawPlayer(){
   ctx.fillStyle = '#d65a3a'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -22, 18, 17, 5) : ctx.rect(-9, -22, 18, 17); ctx.fill();
   ctx.fillStyle = '#b8472c'; ctx.fillRect(-9, -9, 18, 3);
   if (P.armor){
-    ctx.fillStyle = ['', '#8a5a2b', '#6e4a23', '#9aa3ab', '#b48cff'][P.armor]; ctx.fillRect(-9, -22, 18, 11);
+    ctx.fillStyle = ['', '#8a5a2b', '#6e4a23', '#9aa3ab', '#b48cff', '#e8c15a'][P.armor]; ctx.fillRect(-9, -22, 18, 11);
     ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-9, -13, 18, 2);
     if (P.armor >= 2){ circ(-5, -18, 1.2, '#d8dde0'); circ(5, -18, 1.2, '#d8dde0'); }
     if (P.armor >= 3){ ctx.fillStyle = '#c4cbd0'; ctx.fillRect(-12, -22, 5, 4); ctx.fillRect(7, -22, 5, 4); }
   }
   circ(0, -28, 8, '#f0c9a0'); ctx.fillStyle = '#3a2a1e'; ctx.beginPath(); ctx.arc(0, -30, 8.2, Math.PI, TAU); ctx.fill(); circ(3.5, -27.5, 1.2, '#222');
+  if (P.lantern){ const fl = .85 + Math.sin(anim * 9) * .1; ctx.fillStyle = 'rgba(255,196,90,' + (.3 * fl).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(-11, -12, 11, 0, TAU); ctx.fill(); ctx.fillStyle = '#3a3026'; ctx.fillRect(-13.5, -17, 5, 2); ctx.fillStyle = '#ffd27a'; ctx.fillRect(-13, -15, 4, 6); ctx.fillStyle = '#3a3026'; ctx.fillRect(-13.5, -9, 5, 1.6); }
   // held tool
   const tool = (P.equip === 'hand' || P.equip === 'gun') ? null : P.equip;
   ctx.save(); ctx.translate(8, -15);
@@ -1905,9 +2452,11 @@ function resize(){
   zoom = clamp(Math.min(W, H) / 440, .95, 1.7); zy = zoom * TILT;
   const cw = CLOUD_W * zoom / 2, ch = CLOUD_W * zy / 2, el = $('fxClouds');      // cloud tile is 512 px wide, drawn at 2x world scale
   el.style.width = (W + cw + 2) + 'px'; el.style.height = (H + ch + 2) + 'px'; el.style.backgroundSize = cw + 'px ' + ch + 'px';
+  for (const [id, tile] of [['fxSnow1', 256], ['fxSnow2', 384]]){ const sn = $(id); sn.style.width = W + 'px'; sn.style.height = (H + tile) + 'px'; sn.style.backgroundSize = tile + 'px ' + tile + 'px'; }
 }
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
 
+const lightR = () => (Z.cave ? 135 : 110) + (P.lantern ? 70 : 0);
 function punch(x, y, r){         // light hole in the darkness layer; an ellipse because the ground is foreshortened
   const k = zoom * .5, cx = (x - cam.x) * k, cy = (y - cam.y) * zy * .5, R = r * k;
   lx.save(); lx.translate(cx, cy); lx.scale(1, TILT);
@@ -1927,9 +2476,10 @@ function goldenHour(t){          // warm grading around sunrise and sunset
 let fxCache = {};
 function fxStyle(id, prop, v){ const key = id + prop; if (fxCache[key] !== v){ fxCache[key] = v; $(id).style[prop] = v; } }
 function updateAtmosphere(t, dk){   // CSS layers over the canvas: haze, warm grading, drifting cloud shadows
-  const day = 1 - dk, gh = goldenHour(t);
+  const day = Z.cave ? 0 : 1 - dk, gh = Z.cave ? 0 : goldenHour(t);
+  const sn = Z.ground === 'snow' ? (day > .5 ? '.9' : '.5') : '0'; fxStyle('fxSnow1', 'opacity', sn); fxStyle('fxSnow2', 'opacity', sn);
   fxStyle('fxHaze', 'opacity', day.toFixed(2)); fxStyle('fxTint', 'opacity', gh.toFixed(3));
-  const co = dk < .9 ? (.9 * day).toFixed(2) : '0'; fxStyle('fxClouds', 'opacity', co);
+  const co = dk < .9 && !Z.cave ? (.9 * day).toFixed(2) : '0'; fxStyle('fxClouds', 'opacity', co);
   if (co !== '0'){
     const cw = CLOUD_W * zoom / 2, ch = CLOUD_W * zy / 2;
     const ox = (((-(cam.x - anim * 16) * zoom) % cw) + cw) % cw - cw, oy = (((-(cam.y - anim * 6) * zy) % ch) + ch) % ch - ch;
@@ -1942,10 +2492,10 @@ function render(){
   const tx = (-cam.x + shx) * sc, ty = (-cam.y * TILT + shy) * sc;
   const world = () => ctx.setTransform(sc, 0, 0, sc * TILT, tx, ty);      // ground plane: foreshortened
   const upright = () => ctx.setTransform(sc, 0, 0, sc, tx, ty);            // overlays: y_s = y * TILT - height
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#2f86ad'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = Z.bg; ctx.fillRect(0, 0, cv.width, cv.height);
   world();
   const vx0 = cam.x, vy0 = cam.y, vx1 = cam.x + W / zoom, vy1 = cam.y + H / zy;
-  const t = dayT(), dk = darkness(t);
+  const t = dayT(), dk = Z.cave ? .94 : darkness(t);
   drawGround(vx0, vy0, vx1, vy1);
 
   const lakes = [], list = [];
@@ -1978,7 +2528,7 @@ function render(){
     ctx.save(); ctx.transform(1, 0, 0, 1 / TILT, 0, d.y * (1 - 1 / TILT));
     if (d.p) drawPlayer();
     else if (d.c) drawCreature(d.c);
-    else switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; }
+    else switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'ore': drawOre(d.o); break; case 'furnace': drawFurnace(d.o); break; case 'boat': drawBoat(d.o); break; case 'mine': drawMineDoor(d.o); break; case 'exit': drawCaveExit(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; }
     ctx.restore();
   }
   if (buildMode && running) drawGhost();
@@ -2002,9 +2552,10 @@ function render(){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (dk > .01){
     lx.globalCompositeOperation = 'source-over'; lx.setTransform(1, 0, 0, 1, 0, 0); lx.clearRect(0, 0, lc.width, lc.height);
-    lx.fillStyle = `rgba(5,9,28,${.86 * dk})`; lx.fillRect(0, 0, lc.width, lc.height);
+    lx.fillStyle = Z.cave ? `rgba(3,4,10,${.88 * dk})` : `rgba(5,9,28,${.86 * dk})`; lx.fillRect(0, 0, lc.width, lc.height);
     lx.globalCompositeOperation = 'destination-out';
-    if (running) punch(P.x, P.y - 8, 110);
+    if (running) punch(P.x, P.y - 8, lightR());
+    for (const o of list) if (o.t === 'furnace' && o.glow > 0) punch(o.x, o.y - 6, 120);
     for (const s of structs){
       if (s.x < vx0 - 300 || s.x > vx1 + 300 || s.y < vy0 - 300 || s.y > vy1 + 300) continue;
       if (s.t === 'fire' && s.fuel > 0) punch(s.x, s.y - 6, 250 + Math.sin(anim * 11 + s.x) * 8);
@@ -2031,8 +2582,7 @@ function frame(ts){
 }
 
 resize();
-grassPat = ctx.createPattern(makeGroundTile(), 'repeat');
-try { $('fxClouds').style.backgroundImage = 'url(' + makeCloudTile().toDataURL() + ')'; } catch (_) {}
+try { $('fxClouds').style.backgroundImage = 'url(' + makeCloudTile().toDataURL() + ')'; $('fxSnow1').style.backgroundImage = 'url(' + makeSnowTile(256, 34, 5, 1, 2.2, .85).toDataURL() + ')'; $('fxSnow2').style.backgroundImage = 'url(' + makeSnowTile(384, 16, 9, 1.8, 3.4, .6).toDataURL() + ')'; } catch (_) {}
 blob = makeBlob(); puffSmoke = makePuff('190,195,200'); puffDust = makePuff('216,198,152'); initSprites();
 function boot(data){ refreshTitle(); demoWorld(); if (data && data.resume) continueGame(); }
 requestAnimationFrame(frame);
@@ -2043,7 +2593,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, get zoom(){ return zoom; }, get zoomY(){ return zy; }, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

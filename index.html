@@ -43,6 +43,10 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .stat label{display:block;font-size:10.5px;line-height:1.2;color:var(--dim);margin-bottom:3px;white-space:nowrap}
 .bar{height:7px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
 .bar i{display:block;height:100%;width:100%;background:var(--c);border-radius:4px;transition:width .15s linear}
+.xp{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin-top:-1px}
+.xp span{font-size:10px;line-height:1;color:#d2b6ff;font-weight:700;min-width:27px}
+.xp .bar{flex:1;height:4px}
+.xp .bar i{background:#b48cff;transition:width .3s}
 .stat.low .bar i{animation:blink .6s steps(2) infinite}
 @keyframes blink{50%{opacity:.35}}
 #dayBox{padding:6px 9px 8px;width:104px;flex:none}
@@ -78,12 +82,30 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .slot.mini .n{position:static;font-size:12.5px}
 .slot.ore:not(.dim){border-color:rgba(255,170,90,.55)}
 .slot.bar:not(.dim){border-color:rgba(255,222,130,.7)}
+#perk{z-index:21}
+.perkhead{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+.perkhead b{font-family:var(--font-display);font-size:20px;font-weight:400;color:#e2cfff}
+.perkhead .bar{flex:1;height:8px}
+.perkhead .bar i{background:#b48cff}
+.perkhead small{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.perkcards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.perkcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 10px 12px;border-radius:14px;border:1.5px solid #b48cff;background:rgba(60,40,96,.45);color:var(--bone);text-align:center}
+.perkcard:active{transform:scale(.97)}
+.perkcard .pi{font-size:30px;line-height:1}
+.perkcard b{font-size:15px}
+.perkcard em{font-style:normal;font-size:11px;color:#d2b6ff}
+.perkcard p{margin:2px 0 0;font-size:12px;line-height:1.4;color:var(--dim)}
+.perkown{display:flex;flex-direction:column;gap:8px}
+.perkown>div{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.perkown span{font-size:22px;line-height:1.1}
+.perkown b{font-size:13.5px}
+.perkown p{margin:2px 0 0;font-size:12px;color:var(--dim);line-height:1.4}
 .chip{height:34px;padding:0 9px;border-radius:999px;display:flex;align-items:center;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
 .chip.swift{border-color:#6ac8ff;color:#aee3ff}
 .chip.power{border-color:#ff9a5a;color:#ffc6a0}
 .chip.warm{border-color:#ff8a3d;color:#ffd0a8}
 .chip.full{border-color:#8fd16a;color:#cdeeb5}
-@media (max-width:520px){#inv2{flex-wrap:wrap;max-width:252px}#inv2 .slot{flex:0 0 42px}.chip{flex:none}}
+@media (max-width:520px){#inv2{flex-wrap:wrap;max-width:min(252px,calc(100vw - 132px))}#inv2 .slot{flex:0 0 42px}.chip{flex:none}#inv3{max-width:min(256px,calc(100vw - 132px))}}
 #goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
 #goal b{color:var(--amber);font-weight:700}
 #toasts{position:fixed;left:0;right:0;top:var(--tt,calc(max(10px,env(safe-area-inset-top)) + 158px));display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:7}
@@ -123,14 +145,16 @@ body.building #equip{display:none}
 .lvtag.l4{background:rgba(194,124,255,.2);color:#d9aeff}
 .lvtag.l5{background:rgba(255,209,102,.22);color:#ffd166}
 .btns{display:flex;flex-direction:column;gap:6px}
-#mini{position:absolute;right:max(10px,env(safe-area-inset-right));top:clamp(150px,30vh,300px);width:104px;height:104px;border:1px solid var(--line);border-radius:10px;background:rgba(8,16,14,.7);image-rendering:pixelated;pointer-events:none;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+#mini{position:absolute;right:max(10px,env(safe-area-inset-right));top:clamp(150px,28vh,300px);width:104px;height:104px;border:1px solid var(--line);border-radius:10px;background:rgba(8,16,14,.7);image-rendering:pixelated;pointer-events:none;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 @media (max-height:520px){#mini{top:66px;width:88px;height:88px}}
-#ctx{position:fixed;z-index:6;right:max(184px,calc(env(safe-area-inset-right) + 172px));bottom:max(52px,calc(env(safe-area-inset-bottom) + 40px));display:flex;flex-direction:row-reverse;gap:8px;pointer-events:none}
-#ctx button{width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:14px;color:var(--bone);pointer-events:auto;padding:0}
+#ctx{position:fixed;z-index:6;right:max(190px,calc(env(safe-area-inset-right) + 178px));bottom:max(52px,calc(env(safe-area-inset-bottom) + 40px));display:flex;flex-direction:row-reverse;gap:6px;pointer-events:none}
+#ctx button{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:14px;color:var(--bone);pointer-events:auto;padding:0}
 #ctx button[hidden]{display:none}
 #btnFish{border-color:#6ac8ff!important}
 #btnFish.on{background:#2a6f94!important;border-color:#9bdcff!important}
 #btnCook{border-color:#ffb066!important}
+#btnPerk{border-color:#b48cff!important;color:#e6d6ff!important;animation:perkpulse 1.3s ease-in-out infinite}
+@keyframes perkpulse{50%{box-shadow:0 0 0 6px rgba(180,140,255,.32)}}
 body.building #ctx{display:none}
 #fishUI{position:fixed;z-index:6;left:max(12px,env(safe-area-inset-left));bottom:max(156px,calc(env(safe-area-inset-bottom) + 144px));width:min(62vw,260px);padding:10px 12px 9px;border-radius:14px;background:rgba(8,16,14,.86);border:1px solid rgba(106,200,255,.5);text-align:center;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 #fishUI[hidden]{display:none}
@@ -161,6 +185,7 @@ body.building #ctx{display:none}
 @keyframes pop{40%{transform:scale(1.14)}}
 .auto{width:48px;height:26px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:11.5px;font-weight:700;color:var(--dim);padding:0}
 .auto.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
+@media (max-height:860px) and (min-height:521px){.eq{height:42px}#equip{gap:3px}}
 @media (max-height:520px){#equip{flex-direction:row-reverse;right:calc(max(30px,calc(env(safe-area-inset-right) + 12px)) + 72px);bottom:max(144px,calc(env(safe-area-inset-bottom) + 132px))}}
 #joy{position:fixed;left:0;top:0;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,230,210,.38);background:rgba(239,230,210,.07);pointer-events:none;z-index:6;opacity:0;transition:opacity .12s}
 #joy.on{opacity:1}
@@ -251,6 +276,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
       <div class="stat" id="st-hunger" style="--c:var(--amber)"><label>배고픔</label><div class="bar"><i></i></div></div>
       <div class="stat" id="st-thirst" style="--c:var(--sea)"><label>갈증</label><div class="bar"><i></i></div></div>
       <div class="stat" id="st-warmth" style="--c:var(--ember)"><label>체온</label><div class="bar"><i></i></div></div>
+      <div class="xp" id="xpRow"><span id="xpLv">Lv.1</span><div class="bar"><i style="width:0"></i></div></div>
     </div>
     <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div><small id="zoneTag"></small></div>
     <div class="sys"><button id="menuBtn" aria-label="메뉴">☰</button><button id="sndBtn" aria-label="소리 켜고 끄기" aria-pressed="false">🔊</button></div>
@@ -267,7 +293,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <div id="build" hidden></div>
   <div id="equip" hidden></div>
   <button id="btnCraft">제작</button>
-  <div id="ctx"><button id="btnFish" hidden>낚시</button><button id="btnCook" hidden>요리</button></div>
+  <div id="ctx"><button id="btnPerk" hidden>기술</button><button id="btnFish" hidden>낚시</button><button id="btnCook" hidden>요리</button></div>
   <div id="fishUI" hidden><div id="fishMsg"></div><div id="fishBar" hidden><i id="fishZone"></i><i id="fishCur"></i></div><div id="fishPips" hidden><b></b><b></b><b></b></div><small>화면이나 행동 버튼을 눌러요 · 움직이면 줄을 감아요</small></div>
   <button id="btnAct"><span id="actLabel">행동</span></button>
 </div>
@@ -279,6 +305,14 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button><button class="tab" id="tabSmelt">제련</button></div>
     <p class="sub" id="craftSub">재료를 모아 도구와 시설을 만드세요.</p>
     <div id="craftList"></div>
+  </div>
+</div>
+
+<div id="perk" class="modal" hidden>
+  <div class="sheet">
+    <div class="head"><h2>기술</h2><button class="xbtn" id="perkClose" aria-label="닫기">✕</button></div>
+    <p class="sub" id="perkSub"></p>
+    <div id="perkBody"></div>
   </div>
 </div>
 
@@ -304,6 +338,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <p class="sub">진행 상황은 자동으로 저장됩니다.</p>
     <div class="stack" style="width:100%;margin:0">
       <button class="btn" id="menuResume">계속하기</button>
+      <button class="btn ghost" id="menuPerk">기술 · 레벨</button>
       <button class="btn ghost" id="optSfx">효과음·환경음</button>
       <button class="btn ghost" id="optMusic">음악</button>
       <button class="btn ghost" id="menuTitle">처음 화면으로</button>
@@ -323,6 +358,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>기술</b> 베고, 캐고, 싸우고, 만들고, 하루를 버티면 경험치가 쌓여요 (왼쪽 위의 보라 막대). 레벨이 오르면 <b>기술</b> 버튼이 깜빡이고, 둘 중 하나를 골라요</li>
     <li><b>낚시·요리</b> 낚싯대(나무 5 · 고철 1)를 만들면 물가에 <b>낚시</b> 버튼이 나타나요 (F). 입질이 오면 바로 누르고, 움직이는 막대가 초록 칸에 올 때 세 번 눌러 끌어올려요. 모닥불 곁의 <b>요리</b> 버튼 (K)으로 구이·스튜·수프를 만들어요</li>
     <li><b>소리</b> 위쪽 스피커 버튼으로 끄고 켜요 (N). 일시정지 메뉴에서 음악만 따로 끌 수 있어요</li>
     <li><b>미니맵</b> 오른쪽의 작은 지도를 누르면 섬 전체 ↔ 내 주변으로 바뀌어요 (M)</li>
@@ -791,7 +827,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0 }, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, visited: { home: true },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0 }, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true },
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -1108,14 +1144,14 @@ function act(){
   P.swing = .26;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, eq.wood); gain('wood', n); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, eq.stone); gain('stone', n); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, eq.wood + perk('lumber')); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, eq.stone + perk('miner')); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
     case 'ore': {
       const d = ORE[o.kind], eq = stat(P.equip), lv = P.lv.pickaxe || 1;
       if (!P.tools.pickaxe){ P.cd = .5; SND.play('deny'); toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
       if (!eq.ore){ P.cd = .5; SND.play('deny'); toast('곡괭이를 들어야 캘 수 있어요'); break; }
       if (lv < d.tier){ P.cd = .6; SND.play('deny'); floater(o.x, o.y, 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
-      SND.play('ore'); const n = Math.min(o.amt, eq.ore); gain(o.kind, n); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
+      SND.play('ore'); const n = Math.min(o.amt, eq.ore + perk('miner')); gain(o.kind, n); addXp(d.tier * 2 + 1); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
       o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) o.regrow = d.regrow;
       break;
     }
@@ -1137,15 +1173,15 @@ function act(){
       if (ts && canTowerUpgrade(o)){ upgradeTower(o); P.cd = .5; }
       break;
     }
-    case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
-    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
+    case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1 + perk('scavenger')); addXp(2); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
+    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', 1 + perk('forager')); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
     case 'water': { SND.play('drink'); P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
     case 'fire':
       P.cd = .35;
       if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y, 26, '구웠어요 🍖'); SND.play('smelt'); }
       else if (o.fuel > 0 && P.inv.fish > 0){ P.inv.fish--; P.inv.grilled++; P.seen.grilled = true; floater(P.x, P.y, 26, '구웠어요 🍢'); SND.play('smelt'); }
       else if (o.fuel > 1e6) toast('꺼지지 않는 불이에요');
-      else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + 45); floater(P.x, P.y, 26, '장작 -1 🪵'); SND.play('build'); }
+      else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + (perk('warm') ? 68 : 45)); floater(P.x, P.y, 26, '장작 -1 🪵'); SND.play('build'); }
       else { SND.play('deny'); toast('장작이 필요해요'); }
       break;
     case 'shelter':
@@ -1266,7 +1302,8 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
   bloodAt(c.x, c.y, c.k, c.hp <= 0);
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
-    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1); if (n > 0) gain(k, n); }
+    if (byPlayer) addXp((KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1));
+    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0); if (n > 0) gain(k, n); }
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     if (c.boss && (byPlayer || byTower)) bossLoot(c);
     if (SHEET[c.k] && SHEET[c.k].m.cols.die) corpses.push({ k: c.k, x: c.x, y: c.y, hd: c.hd == null ? Math.PI / 4 : c.hd, t: 0, vx: c.kvx * .5, vy: c.kvy * .5, en: !!c.enraged });
@@ -1275,7 +1312,7 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
 }
 function attack(c){
   const eq = stat(P.equip); P.cd = eq.cdA; SND.play('swing');
-  hitCreature(c, Math.round(eq.dmg * (P.buffs.power > 0 ? 1.5 : 1)), c.x - P.x, c.y - P.y, true);
+  hitCreature(c, Math.round(eq.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler'))), c.x - P.x, c.y - P.y, true);
 }
 
 /* ================= guns, arrows, towers ================= */
@@ -1298,8 +1335,8 @@ function fireGun(){
   const t = aimTarget(); let ax = P.fx, ay = P.fy;
   if (t){ const d = Math.hypot(t.x - P.x, t.y - P.y) || 1; ax = (t.x - P.x) / d; ay = (t.y - P.y) / d; }
   P.fx = ax; P.fy = ay; if (Math.abs(ax - ay) > .2) P.flip = ax < ay ? -1 : 1;
-  const gs = stat('gun'); P.inv.ammo--; P.cd = gs.cd; P.flash = .1;
-  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1)), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
+  const gs = stat('gun'); if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd; P.flash = .1;
+  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman'))), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
   fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2); SND.play('gun');
   try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
 }
@@ -1344,7 +1381,7 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
   }
 }
 function hurt(n, raw){
-  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0])));
+  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')])));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
   floater(P.x, P.y, 28, '-' + Math.round(n), '#ff6b5e');
@@ -1382,7 +1419,7 @@ const FOOD = {       // what the fish dishes do (raw: damage taken from eating i
 function eatFood(k){
   const f = FOOD[k]; P.hunger = Math.min(100, P.hunger + f.hunger); floater(P.x, P.y, 26, '+' + f.hunger + ' 배고픔', '#f2b84b');
   if (f.hp) P.hp = Math.min(100, P.hp + f.hp); if (f.thirst) P.thirst = Math.min(100, P.thirst + f.thirst);
-  if (f.warm) P.buffs.warm = Math.max(P.buffs.warm, f.warm); if (f.full) P.buffs.full = Math.max(P.buffs.full, f.full);
+  if (f.warm) P.buffs.warm = Math.max(P.buffs.warm, f.warm * (perk('cook') ? 1.5 : 1)); if (f.full) P.buffs.full = Math.max(P.buffs.full, f.full * (perk('cook') ? 1.5 : 1));
   if (f.say) toast(f.say); if (f.raw) hurt(f.raw, true);
 }
 function eatBest(){
@@ -1460,6 +1497,7 @@ function craft(r){
   if (r.place){ spot = placeSpot(r); if (!spot){ toast('주변이 빽빽해서 놓을 수 없어요. 탁 트인 곳으로 가세요.'); return; } }
   if (r.boat){ spot = seaSpot(); if (!spot){ toast('바닷가에 배를 놓을 자리가 없어요. 다른 해안으로 가 보세요.'); return; } }
   for (const k in r.cost) P.inv[k] -= r.cost[k]; SND.play(r.tool || r.boat || r.lantern || r.rod || r.pot ? 'upgrade' : 'craft');
+  if (!P.xpDone[r.id] && !r.give){ P.xpDone[r.id] = true; addXp(r.tool || r.boat || r.lantern ? 20 : 12); }
   if (r.tool){
     P.tools[r.tool] = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
     if (r.tool === 'gun') setTimeout(() => toast('탄약은 제작 메뉴에서 만들어요. 탑에도 같은 탄약을 써요.'), 3000);
@@ -1516,7 +1554,7 @@ function upgradeItem(t){
   if (!cost || !Object.keys(cost).every(k => P.inv[k] >= cost[k])) return;
   for (const k in cost) P.inv[k] -= cost[k]; SND.play('upgrade');
   if (isA) P.armor++; else P.lv[t]++;
-  const nl = isA ? P.armor : P.lv[t];
+  const nl = isA ? P.armor : P.lv[t]; addXp(8 * nl);
   toast(isA ? josa(ARMOR_NAME[nl], '을/를') + ' 입었어요! 받는 피해 -' + Math.round(ARMOR_RED[nl] * 100) + '%' : josa(UP_NAME[t], '이/가') + ' Lv.' + nl + (nl === 3 ? '이' : '가') + ' 됐어요!');
   syncEquip(); updateHUD(); renderCraft();
 }
@@ -1726,7 +1764,7 @@ function updateHUD(){
   const boss = creatures.find(c => c.boss), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
   if (boss){ setText($('bossName'), '👑 ' + boss.name); setText($('bossHp'), Math.ceil(boss.hp) + ' / ' + boss.max); const w = (Math.max(0, boss.hp / boss.max) * 100).toFixed(1) + '%'; if ($('bossFill')._w !== w){ $('bossFill')._w = w; $('bossFill').style.width = w; } }
   updateEliteArrow(); layoutHud();
-  setText($('armorBadge'), P.armor ? '🛡' + P.armor : '');
+  setText($('armorBadge'), P.armor ? '🛡' + P.armor : ''); updatePerkHUD();
   if (buildMode) syncBuildBar(); updateCtx();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
@@ -1845,7 +1883,7 @@ function update(dt){
     else if (ph === '새벽') toast('동이 틉니다…');
   }
   if (day !== lastDay){
-    lastDay = day; SND.play('dawn', { key: 1 }); toast(day + '일차 아침이 밝았습니다');
+    lastDay = day; if (day > 1) addXp(15 + day * 5); SND.play('dawn', { key: 1 }); toast(day + '일차 아침이 밝았습니다');
     if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스가 나타나요. 미리 준비하세요!'), 1800);
     if (day === RAFT_DAY) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
   }
@@ -1860,7 +1898,7 @@ function update(dt){
   if ((P.buffs.swift > 0 || P.buffs.power > 0) && Math.random() < dt * 8) fx('glow', P.x, P.y, 6, 1, P.buffs.swift > 0 ? '110,200,255' : '255,150,70');
   if (P.moving){
     const wd = scr2world(ix, iy); P.fx = wd.x; P.fy = wd.y; if (Math.abs(ix / m) > .2) P.flip = ix < 0 ? -1 : 1;
-    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1);
+    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1) * (1 + .1 * perk('swift'));
     P.x += P.fx * sp * dt; P.y += P.fy * sp * dt; P.step += dt * 11;
   }
   collide(P, PLAYER_R); clampIsland(P, PLAYER_R + 4);
@@ -1868,8 +1906,8 @@ function update(dt){
 
   // survival stats
   const dark = darkness(t);
-  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1));
-  P.thirst = Math.max(0, P.thirst - .28 * dt);
+  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1) * [1, .8, .65][perk('hardy')]);
+  P.thirst = Math.max(0, P.thirst - .28 * dt * [1, .85, .75][perk('hardy')]);
   let warm = false;
   for (const s of structs){
     const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
@@ -1877,13 +1915,13 @@ function update(dt){
   }
   const chill = Z.chill || 0;                                   // caves and the snow island keep draining warmth
   if (warm) P.warmth += 8 * dt;
-  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1);
+  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1);
   else P.warmth += 1.6 * dt;
   if (chill && !warm && P.warmth < 30 && T - lastChillT > 40){ lastChillT = T; toast('몸이 얼어붙어요! 모닥불이나 움막 곁에서 몸을 녹이세요.'); }
   P.warmth = clamp(P.warmth, 0, 100);
   const zeros = (P.hunger <= 0) + (P.thirst <= 0) + (P.warmth <= 0);
   if (zeros){ P.hp -= 1.8 * zeros * dt; hurtT = Math.max(hurtT, .22); if (P.hp <= 0){ P.hp = 0; endGame(false); return; } }
-  else if (P.hunger > 50 && P.thirst > 50 && P.warmth > 40) P.hp = Math.min(100, P.hp + .8 * dt);
+  else if (P.hunger > 50 && P.thirst > 50 && P.warmth > 40) P.hp = Math.min(100, P.hp + .8 * dt * (perk('regen') ? 1.8 : 1));
 
   // world
   for (const o of objs){
@@ -1945,7 +1983,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, rod: P.rod, pot: P.pot, visited: P.visited, bossKills: P.bossKills },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -1960,7 +1998,7 @@ function loadGame(s){
   P = Object.assign(newPlayer(), s.p); T = s.T;
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
-  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0 }, P.buffs); P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {};
+  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0 }, P.buffs); P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {}; P.perk = P.perk || {}; P.xpDone = P.xpDone || {};
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
   spawnFauna();
@@ -3065,7 +3103,7 @@ function resize(){
 }
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
 
-const lightR = () => (Z.cave ? 135 : 110) + (P.lantern ? 70 : 0);
+const lightR = () => (Z.cave ? 135 : 110) + (P.lantern ? 70 : 0) + (perk('night') ? 35 : 0);
 function punchCone(x, y, ang, len, half, h){          // a soft wedge of light ahead of the player (like a flashlight)
   const cx = w2sx(x, y) / 2, cy = (w2sy(x, y) - (h || 0)) / 2, L = len * zoom * .5 * Math.hypot(ux(P.fx, P.fy), uy(P.fx, P.fy));
   lx.save(); lx.translate(cx, cy); lx.rotate(ang);
@@ -3194,6 +3232,90 @@ function render(){
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
 }
 
+/* ================= skills: experience from almost everything you do; every level lets you pick one of two perks ================= */
+const PERKS = {
+  lumber:    { name: '벌목꾼',     icon: '🪓', max: 1, desc: '나무를 벨 때마다 1개 더 얻어요' },
+  miner:     { name: '채석공',     icon: '⛏️', max: 1, desc: '돌과 광석을 캘 때마다 1개 더 얻어요' },
+  forager:   { name: '채집가',     icon: '🍒', max: 1, desc: '열매를 딸 때마다 1개 더 얻어요' },
+  scavenger: { name: '고철 수집가', icon: '🔩', max: 1, desc: '난파 잔해를 뒤지거나 좀비를 쓰러뜨릴 때 고철 +1' },
+  brawler:   { name: '강타',       icon: '⚔️', max: 2, desc: '근접 공격력 +25% (2단계는 +50%)' },
+  marksman:  { name: '명사수',     icon: '🎯', max: 1, desc: '소총 피해 +25%' },
+  ammo:      { name: '탄약 절약',  icon: '🔸', max: 2, desc: '소총을 쏠 때 25% 확률로 탄약이 닳지 않아요 (2단계는 45%)' },
+  tough:     { name: '맷집',       icon: '🛡️', max: 2, desc: '받는 피해 -12% (2단계는 -22%)' },
+  swift:     { name: '가벼운 발',  icon: '👟', max: 2, desc: '이동 속도 +10% (2단계는 +20%)' },
+  warm:      { name: '불의 벗',    icon: '🔥', max: 1, desc: '체온이 25% 덜 떨어지고, 장작 하나가 50% 더 오래 타요' },
+  hardy:     { name: '억센 위장',  icon: '🥩', max: 2, desc: '배고픔과 갈증이 천천히 줄어요 (-20% / 2단계 -35%)' },
+  regen:     { name: '회복력',     icon: '🩹', max: 1, desc: '체력이 저절로 차오르는 속도가 1.8배' },
+  cook:      { name: '요리사',     icon: '🍳', max: 1, desc: '요리하면 20% 확률로 하나 더 나오고, 음식 효과가 50% 더 오래가요' },
+  angler:    { name: '낚시꾼',     icon: '🎣', max: 1, desc: '입질이 빨리 오고, 초록 칸이 넓어지고 막대가 느려져요' },
+  night:     { name: '야행성',     icon: '🌙', max: 1, desc: '밤과 갱도에서 시야가 넓어져요' }
+};
+const MAXLV = 12, xpNeed = lv => 40 + 28 * (lv - 1) + 4 * (lv - 1) * (lv - 1);       // experience from level lv to lv+1
+const xpTotal = lv => { let n = 0; for (let i = 1; i < lv; i++) n += xpNeed(i); return n; };       // experience at which you reach level lv
+const perk = k => (P.perk && P.perk[k]) || 0;
+const KILL_XP = { rabbit: 3, boar: 12, wolf: 10, zombie: 12, brute: 45, bear: 36, bat: 5, golem: 35, wolfking: 150, zombielord: 250, mountainking: 400 };
+function levelInfo(){ const lv = P.level, a = xpTotal(lv), b = lv >= MAXLV ? a : xpTotal(lv + 1); return { lv, into: P.xp - a, need: b - a, max: lv >= MAXLV }; }
+function rollOffer(){
+  if (P.perkPts <= 0){ P.offer = null; return; }
+  const pool = Object.keys(PERKS).filter(k => perk(k) < PERKS[k].max);
+  for (let i = pool.length - 1; i > 0; i--){ const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  P.offer = pool.slice(0, 2); if (!P.offer.length){ P.offer = null; P.perkPts = 0; }
+}
+function addXp(n, label){
+  if (!P || !running || !(n > 0)) return;
+  n = Math.round(n); P.xp += n; let up = 0;
+  while (P.level < MAXLV && P.xp >= xpTotal(P.level + 1)){ P.level++; P.perkPts++; up++; }
+  if (n >= 15 && !up) floater(P.x, P.y, 46, '+' + n + ' XP', '#d2b6ff');
+  if (up){
+    if (!P.offer) rollOffer();
+    SND.play('levelup', { key: 1 }); fx('glow', P.x, P.y, 20, 16, '200,170,255'); floater(P.x, P.y, 52, 'LEVEL UP!', '#e2cfff');
+    toast('★ 레벨 ' + P.level + '! 기술 버튼을 눌러 새 기술을 고르세요');
+  }
+  updatePerkHUD();
+}
+function choosePerk(k){
+  if (!P.offer || !P.offer.includes(k) || P.perkPts <= 0) return;
+  P.perk[k] = perk(k) + 1; P.perkPts--; P.offer = null; if (P.perkPts > 0) rollOffer();
+  SND.play('perk', { key: 1 }); fx('glow', P.x, P.y, 20, 10, '200,170,255');
+  toast(PERKS[k].icon + ' ' + PERKS[k].name + (PERKS[k].max > 1 ? ' ' + perk(k) + '단계' : '') + ' — ' + PERKS[k].desc);
+  renderPerk(); updatePerkHUD();
+}
+function renderPerk(){
+  const li = levelInfo(), box = $('perkBody'); box.innerHTML = '';
+  const pct = li.max ? 100 : Math.round(li.into / li.need * 100);
+  const head = document.createElement('div'); head.className = 'perkhead';
+  head.innerHTML = `<b>Lv.${li.lv}${li.max ? ' (최고)' : ''}</b><div class="bar"><i style="width:${pct}%"></i></div><small>${li.max ? '' : li.into + ' / ' + li.need + ' XP'}</small>`;
+  box.appendChild(head);
+  const sub = $('perkSub');
+  if (P.perkPts > 0 && P.offer){
+    sub.textContent = '새 기술을 하나 고르세요' + (P.perkPts > 1 ? ' (고를 수 있는 기술 ' + P.perkPts + '개)' : '');
+    const row = document.createElement('div'); row.className = 'perkcards';
+    for (const k of P.offer){
+      const d = PERKS[k], b = document.createElement('button'); b.className = 'perkcard';
+      b.innerHTML = `<span class="pi">${d.icon}</span><b>${d.name}</b>${d.max > 1 ? `<em>${perk(k) + 1}단계</em>` : ''}<p>${d.desc}</p>`;
+      b.addEventListener('click', () => choosePerk(k)); row.appendChild(b);
+    }
+    box.appendChild(row);
+  } else sub.textContent = li.max ? '더 이상 오를 수 없어요' : '다음 레벨까지 ' + (li.need - li.into) + ' XP — 베고, 캐고, 싸우고, 만들고, 낚시하고, 요리하고, 하루를 버티면 쌓여요';
+  const own = Object.keys(P.perk).filter(k => P.perk[k] > 0);
+  if (own.length){
+    const h = document.createElement('p'); h.className = 'sub'; h.style.margin = '14px 0 6px'; h.textContent = '내 기술'; box.appendChild(h);
+    const ul = document.createElement('div'); ul.className = 'perkown';
+    for (const k of own){ const d = PERKS[k], r = document.createElement('div'); r.innerHTML = `<span>${d.icon}</span><div><b>${d.name}${d.max > 1 ? ' ' + P.perk[k] + '단계' : ''}</b><p>${d.desc}</p></div>`; ul.appendChild(r); }
+    box.appendChild(ul);
+  }
+}
+function openPerk(){ if (!running || sleeping) return; paused = true; actHeld = false; resetJoy(); if (P.perkPts > 0 && !P.offer) rollOffer(); renderPerk(); $('perk').hidden = false; updatePerkHUD(); }
+function closePerk(){ $('perk').hidden = true; paused = !$('menu').hidden; updatePerkHUD(); }
+$('btnPerk').addEventListener('click', () => { if (running && !paused) openPerk(); });
+$('menuPerk').addEventListener('click', openPerk);
+$('perkClose').addEventListener('click', closePerk);
+$('perk').addEventListener('click', e => { if (e.target === $('perk')) closePerk(); });
+function updatePerkHUD(){
+  const li = levelInfo(), pct = li.max ? 100 : li.into / li.need * 100, el = $('xpRow');
+  setText($('xpLv'), 'Lv.' + li.lv); const w = pct.toFixed(1) + '%'; if (el._w !== w){ el._w = w; el.querySelector('i').style.width = w; }
+  const on = running && !paused && P.perkPts > 0 && !!P.offer; if ($('btnPerk').hidden === on) $('btnPerk').hidden = !on; if (on) setText($('btnPerk'), '기술 ' + P.perkPts);
+}
 /* ================= fishing: cast, wait for a nibble, hook it when the bobber dives, then time three taps on the moving bar ================= */
 const FISH_KIND = {
   small: { name: '작은 물고기', n: 1, zw: .36, sp: .85, bite: 1.25 },
@@ -3223,7 +3345,7 @@ function fishSpotNow(){
   }
   return null;
 }
-const fishWait = () => rand(2.6, 6.8) * (isNight() ? .75 : 1) * (rainAmt() > .5 ? .8 : 1);
+const fishWait = () => rand(2.6, 6.8) * (isNight() ? .75 : 1) * (rainAmt() > .5 ? .8 : 1) * (perk('angler') ? .7 : 1);
 function fishMsg(m, hold){ fish.msgT = hold || 0; if (fish.msg !== m){ fish.msg = m; $('fishMsg').textContent = m; } }
 function fishUI(){
   const ui = $('fishUI'); if (ui.hidden === fish.on) ui.hidden = !fish.on; if (!fish.on) return;
@@ -3258,7 +3380,7 @@ function fishEnd(ok, msg){
     fish.caught++; const k = FISH_KIND[fish.kind];
     if (fish.kind === 'chest'){ const [loot, nm] = PICK(CHEST_LOOT); for (const it in loot) gain(it, loot[it]); toast('📦 표류 상자! ' + nm + ' ' + Object.values(loot)[0] + '개를 얻었어요'); }
     else { gain('fish', k.n); toast('🐟 ' + josa(k.name, '을/를') + ' 낚았어요! +' + k.n); }
-    fx('splash', fish.bx, fish.by, 4, 10); SND.play('catch', { key: 1 }); try { navigator.vibrate && navigator.vibrate(20); } catch (_) {}
+    addXp({ small: 6, big: 12, rare: 30, chest: 14 }[fish.kind]); fx('splash', fish.bx, fish.by, 4, 10); SND.play('catch', { key: 1 }); try { navigator.vibrate && navigator.vibrate(20); } catch (_) {}
     fishMsg('잡았다!');
   } else { SND.play('escape'); fishMsg(msg || '놓쳤어요…'); fx('splash', fish.bx, fish.by, 2, 4); }
   fish.st = 'done'; fish.t = 1.3; fish.dip = 0; fishUI();
@@ -3267,7 +3389,7 @@ function fishTap(){
   if (!fish.on || !fish.armed) return; fish.armed = false;
   if (fish.st === 'wait'){ fish.t += 1.6; fish.nib += 1; SND.play('reelMiss'); fishMsg('너무 일렀어요! 물고기가 놀랐어요', 1.6); }
   else if (fish.st === 'bite'){
-    const k = FISH_KIND[fish.kind]; fish.st = 'reel'; fish.prog = 0; fish.miss = 0; fish.cur = rand(0, .15); fish.dir = 1; fish.sp = k.sp; fish.zw = k.zw; fish.zc = fishZone(); fish.t = 14;
+    const k = FISH_KIND[fish.kind]; fish.st = 'reel'; fish.prog = 0; fish.miss = 0; fish.cur = rand(0, .15); fish.dir = 1; fish.sp = k.sp * (perk('angler') ? .85 : 1); fish.zw = k.zw * (perk('angler') ? 1.25 : 1); fish.zc = fishZone(); fish.t = 14;
     SND.play('hook'); fx('splash', fish.bx, fish.by, 4, 6); fishMsg('');
   } else if (fish.st === 'reel'){
     if (Math.abs(fish.cur - fish.zc) <= fish.zw / 2){
@@ -3338,8 +3460,8 @@ function cookIt(r){
   if (r.pot && !P.pot){ toast('냄비가 필요해요 (제작 메뉴)'); return; }
   if (!canCook(r)){ toast('재료가 부족해요'); return; }
   for (const k in r.from) P.inv[k] -= r.from[k];
-  P.inv[r.to]++; P.seen[r.to] = true; SND.play(r.pot ? 'simmer' : 'smelt'); fx('smoke', f.x, f.y, 30, 3); fx('ember', f.x, f.y, 18, 4);
-  floater(f.x, f.y, 44, '+1 ' + ITEMS[r.to].icon, '#ffd166'); renderCook();
+  const dbl = Math.random() < .2 * perk('cook'); P.inv[r.to] += dbl ? 2 : 1; P.seen[r.to] = true; SND.play(r.pot ? 'simmer' : 'smelt'); addXp(r.pot ? 10 : 5); fx('smoke', f.x, f.y, 30, 3); fx('ember', f.x, f.y, 18, 4);
+  floater(f.x, f.y, 44, '+' + (dbl ? 2 : 1) + ' ' + ITEMS[r.to].icon, '#ffd166'); renderCook();
 }
 function renderCook(){
   const list = $('cookList'); list.innerHTML = '';
@@ -3482,6 +3604,8 @@ const SND = (() => {
     cricket:{ d: .5, cd: 250, fn: (c, o, t) => { const f = rnd(4300, 5000); for (let i = 0; i < 4; i++) tone(c, o, t + i * .04, { f, d: .03, v: .05, a: .004 }); } },
     heart:  { d: .5, cd: 300, v: .8, fn: (c, o, t) => { tone(c, o, t, { f: 62, f1: 38, d: .17, v: 1 }); tone(c, o, t + .19, { f: 58, f1: 36, d: .15, v: .7 }); } },
     kick:   { d: .5, cd: 100, wet: .35, fn: (c, o, t) => { tone(c, o, t, { f: 120, f1: 36, d: .35, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 900, d: .05, v: .5 }); } },
+    levelup:{ d: 1.6, cd: 500, wet: .6, fn: (c, o, t) => { arp(c, o, t, [523, 659, 784, 1047, 1319], .07, { type: 'triangle', d: .9, v: .22 }); tone(c, o, t + .35, { f: 2093, d: .8, v: .08 }); } },
+    perk:   { d: 1, cd: 300, wet: .5, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 784, d: .5, v: .22 }); tone(c, o, t + .1, { type: 'triangle', f: 1175, d: .8, v: .22 }); tone(c, o, t + .1, { f: 2350, d: .6, v: .05 }); } },
     cast:   { d: .7, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 500, f1: 1800, q: .8, d: .18, a: .05, v: .25 }); burst(c, o, t + .2, { f: 700, f1: 300, q: 1.2, d: .22, v: .55 }); tone(c, o, t + .2, { f: 420, f1: 160, d: .13, v: .35 }); } },
     plip:   { d: .3, cd: 120, v: .7, fn: (c, o, t) => { tone(c, o, t, { f: 950, f1: 520, d: .09, v: .2 }); burst(c, o, t, { f: 1600, q: 1.5, d: .04, v: .12 }); } },
     bite:   { d: .7, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 800, f1: 300, q: 1, d: .3, v: .6 }); tone(c, o, t + .04, { f: 1200, d: .18, v: .22 }); tone(c, o, t + .12, { f: 1600, d: .25, v: .2 }); } },
@@ -3709,7 +3833,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

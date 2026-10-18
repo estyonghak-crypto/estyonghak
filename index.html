@@ -51,7 +51,9 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 #clock{position:relative;height:7px;margin-top:6px;border-radius:4px;
   background:linear-gradient(90deg,#f2c35b 0%,#f2c35b 49%,#e8793a 54%,#2c2f6b 62%,#1b1f4b 89%,#8a6fa8 95%,#f2c35b 100%)}
 #clock i{position:absolute;top:-3px;width:3px;height:13px;margin-left:-1px;background:var(--bone);border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
-#menuBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1}
+#menuBtn,#sndBtn{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:17px;line-height:1;padding:0}
+.sys{display:flex;flex-direction:column;gap:6px;flex:none}
+@media (max-height:520px){.sys{flex-direction:row}}
 #bossBar{margin-top:8px;align-self:center;width:min(100%,340px);padding:6px 10px 8px;border-color:rgba(255,205,90,.6)}
 #bossBar .bn{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:13px;color:#ffd98a}
 #bossBar small{font-size:11px;font-weight:400;color:var(--dim);font-variant-numeric:tabular-nums}
@@ -227,7 +229,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
       <div class="stat" id="st-warmth" style="--c:var(--ember)"><label>체온</label><div class="bar"><i></i></div></div>
     </div>
     <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div><small id="zoneTag"></small></div>
-    <button id="menuBtn" aria-label="메뉴">☰</button>
+    <div class="sys"><button id="menuBtn" aria-label="메뉴">☰</button><button id="sndBtn" aria-label="소리 켜고 끄기" aria-pressed="false">🔊</button></div>
   </div>
   <div id="bossBar" class="panel" hidden><div class="bn"><span id="bossName"></span><small id="bossHp"></small></div><div class="bbar"><i id="bossFill"></i></div></div>
   <div id="inv"></div>
@@ -268,6 +270,8 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <p class="sub">진행 상황은 자동으로 저장됩니다.</p>
     <div class="stack" style="width:100%;margin:0">
       <button class="btn" id="menuResume">계속하기</button>
+      <button class="btn ghost" id="optSfx">효과음·환경음</button>
+      <button class="btn ghost" id="optMusic">음악</button>
       <button class="btn ghost" id="menuTitle">처음 화면으로</button>
     </div>
   </div>
@@ -285,6 +289,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>소리</b> 위쪽 스피커 버튼으로 끄고 켜요 (N). 일시정지 메뉴에서 음악만 따로 끌 수 있어요</li>
     <li><b>미니맵</b> 오른쪽의 작은 지도를 누르면 섬 전체 ↔ 내 주변으로 바뀌어요 (M)</li>
     <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~5, Q)</li>
     <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
@@ -794,7 +799,7 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQbB123456zZxXvVmM'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB123456zZxXvVmMnN'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
@@ -807,6 +812,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'q' || e.key === 'Q'){ if (!paused) { const bl = buildList(); buildMode ? selectBuild(bl[(bl.indexOf(buildSel) + 1) % bl.length]) : cycleEquip(); } }
   else if (e.key === 'b' || e.key === 'B'){ if (!paused) toggleBuild(); }
   else if (e.key === 'm' || e.key === 'M'){ if (!paused) miniToggle(); }
+  else if (e.key === 'n' || e.key === 'N') SND.setMuted(!SND.muted);
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -900,17 +906,17 @@ function tryBuild(i, j){
   const cost = WALLS[buildSel].cost;
   for (const k in cost) if (P.inv[k] < cost[k]) return buildMsg(josa(ITEMS[k].name, '이/가') + ' 부족해요 (' + P.inv[k] + '/' + cost[k] + ')');
   for (const k in cost) P.inv[k] -= cost[k];
-  addWall(i, j, buildSel); P.built.wall = true;
+  addWall(i, j, buildSel); P.built.wall = true; SND.play('build');
   if (buildSel === 'tower' && !towerTip){ towerTip = true; toast('탑은 가까운 적을 알아서 쏴요. 탑 앞에서 행동 버튼으로 탄약을 채우세요.'); }
 }
 function demolish(w){
   const cost = WALLS[w.kind].cost;
   for (const k in cost){ const n = Math.floor(cost[k] / 2); if (n){ P.inv[k] += n; floater(w.x, w.y, 18, '+' + n + ' ' + ITEMS[k].icon); } }
   if (w.ammo > 0){ P.inv.ammo += w.ammo; floater(w.x, w.y, 32, '+' + w.ammo + ' ' + ITEMS.ammo.icon); }
-  removeObj(w);
+  removeObj(w); SND.play('scrap');
 }
 function damageWall(w, n){
-  w.hp -= n; w.hit = .15; floater(w.x, w.y, 22, '-' + n, '#ffb199');
+  w.hp -= n; w.hit = .15; floater(w.x, w.y, 22, '-' + n, '#ffb199'); SND.play(w.hp <= 0 ? 'wallbreak' : 'wallhit', { x: w.x, y: w.y });
   if (w.hp <= 0){ removeObj(w); if (Math.hypot(w.x - P.x, w.y - P.y) < 420) toast(josa(WALLS[w.kind].name, '이/가') + ' 부서졌어요!'); }
 }
 function wallAhead(c, sx, sy){ // a wall pressing against the creature in its direction of travel
@@ -1050,54 +1056,54 @@ function act(){
   if (buildMode){ P.cd = .2; buildAtGhost(); return; }
   if (P.equip === 'gun' && (aimTarget() || !target || target.kind === 'creature')){ fireGun(); return; }
   const tg = target;
-  if (!tg){ P.cd = .3; P.swing = .26; return; }
+  if (!tg){ P.cd = .3; P.swing = .26; SND.play('swing'); return; }
   const o = tg.o, dx = o.x - P.x, dy = o.y - P.y, d = Math.hypot(dx, dy) || 1;
   P.fx = dx / d; P.fy = dy / d; if (Math.abs(P.fx - P.fy) > .2) P.flip = P.fx < P.fy ? -1 : 1;
   P.swing = .26;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { const eq = stat(P.equip), n = Math.min(o.amt, eq.wood); gain('wood', n); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { const eq = stat(P.equip), n = Math.min(o.amt, eq.stone); gain('stone', n); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, eq.wood); gain('wood', n); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, eq.stone); gain('stone', n); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
     case 'ore': {
       const d = ORE[o.kind], eq = stat(P.equip), lv = P.lv.pickaxe || 1;
-      if (!P.tools.pickaxe){ P.cd = .5; toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
-      if (!eq.ore){ P.cd = .5; toast('곡괭이를 들어야 캘 수 있어요'); break; }
-      if (lv < d.tier){ P.cd = .6; floater(o.x, o.y, 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
-      const n = Math.min(o.amt, eq.ore); gain(o.kind, n); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
+      if (!P.tools.pickaxe){ P.cd = .5; SND.play('deny'); toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
+      if (!eq.ore){ P.cd = .5; SND.play('deny'); toast('곡괭이를 들어야 캘 수 있어요'); break; }
+      if (lv < d.tier){ P.cd = .6; SND.play('deny'); floater(o.x, o.y, 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
+      SND.play('ore'); const n = Math.min(o.amt, eq.ore); gain(o.kind, n); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
       o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) o.regrow = d.regrow;
       break;
     }
-    case 'furnace': P.cd = .4; craftTab = 'smelt'; openCraft(); break;
-    case 'boat': P.cd = .5; openSail(); break;
-    case 'mine': P.cd = .6; transition(() => { enterZone('cave', 'exit'); const first = !P.visited.cave; P.visited.cave = true; if (first) setTimeout(() => toast('갱도예요! 박쥐와 골렘을 조심하세요. 모닥불을 놓으면 따뜻하고 밝아요.'), 800); }, '광산 갱도'); break;
-    case 'exit': P.cd = .6; transition(() => enterZone('mine', 'mine'), '광산섬'); break;
+    case 'furnace': P.cd = .4; SND.play('ui'); craftTab = 'smelt'; openCraft(); break;
+    case 'boat': P.cd = .5; SND.play('door'); openSail(); break;
+    case 'mine': P.cd = .6; SND.play('door'); transition(() => { enterZone('cave', 'exit'); const first = !P.visited.cave; P.visited.cave = true; if (first) setTimeout(() => toast('갱도예요! 박쥐와 골렘을 조심하세요. 모닥불을 놓으면 따뜻하고 밝아요.'), 800); }, '광산 갱도'); break;
+    case 'exit': P.cd = .6; SND.play('door'); transition(() => enterZone('mine', 'mine'), '광산섬'); break;
     case 'wall': {
       const ts = o.kind === 'tower' ? tw(o) : null;
       if (ts && P.inv.ammo > 0 && o.ammo < ts.max){                       // reload the tower
         const n = Math.min(P.inv.ammo, ts.max - o.ammo, 10); P.inv.ammo -= n; o.ammo += n; P.cd = .35;
-        floater(o.x, o.y, 36, '장전 +' + n, '#9be3a5'); break;
+        floater(o.x, o.y, 36, '장전 +' + n, '#9be3a5'); SND.play('reload'); break;
       }
       if (o.hp < o.max){                                                  // repair with the wall's own material
         const k = Object.keys(WALLS[o.kind].cost)[0]; P.cd = .35;
         if (P.inv[k] < 1){ toast(josa(ITEMS[k].name, '이/가') + ' 필요해요'); break; }
-        P.inv[k]--; o.hp = Math.min(o.max, o.hp + 30); floater(o.x, o.y, 24, '수리 +30', '#9be3a5'); break;
+        P.inv[k]--; o.hp = Math.min(o.max, o.hp + 30); floater(o.x, o.y, 24, '수리 +30', '#9be3a5'); SND.play('build'); break;
       }
       if (ts && canTowerUpgrade(o)){ upgradeTower(o); P.cd = .5; }
       break;
     }
-    case 'wreck': { o.amt--; gain('scrap', 1); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
-    case 'bush': { o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
-    case 'water': { P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
+    case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
+    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', 1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
+    case 'water': { SND.play('drink'); P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
     case 'fire':
       P.cd = .35;
-      if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y, 26, '구웠어요 🍖'); }
+      if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y, 26, '구웠어요 🍖'); SND.play('smelt'); }
       else if (o.fuel > 1e6) toast('꺼지지 않는 불이에요');
-      else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + 45); floater(P.x, P.y, 26, '장작 -1 🪵'); }
-      else toast('장작이 필요해요');
+      else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + 45); floater(P.x, P.y, 26, '장작 -1 🪵'); SND.play('build'); }
+      else { SND.play('deny'); toast('장작이 필요해요'); }
       break;
     case 'shelter':
       P.cd = .5;
-      if (dayT() >= .55) sleep(); else toast('밤에만 잘 수 있어요');
+      if (dayT() >= .55) sleep(); else { SND.play('deny'); toast('밤에만 잘 수 있어요'); }
       break;
   }
 }
@@ -1112,6 +1118,7 @@ function spawnBoss(def, day){
   c.boss = BOSSES.indexOf(def) + 1; c.name = def.name; c.skill = 3 + Math.random() * 2; c.cast = 0; c.cr = 13; c.bday = day; if (c.boss === 1) c.scale = 1.9;
   toast('⚠ 보스 ' + josa(def.name, '이/가') + ' 나타났어요!'); setTimeout(() => toast(def.desc), 1900);
   shakeT = .4; try { navigator.vibrate && navigator.vibrate([80, 60, 120]); } catch (_) {}
+  SND.play('bossRoar', { key: 1 });
   return c;
 }
 function bossLoot(c){
@@ -1123,7 +1130,7 @@ function bossLoot(c){
   toast('🏆 ' + def.name + ' 처치! 전리품 ' + got.join(' '));
 }
 function bossSlam(c, sp){
-  const R = 105; shakeT = .38; c.swing = .4;
+  const R = 105; shakeT = .38; c.swing = .4; SND.play('slam', { x: c.x, y: c.y, key: 1 });
   for (let i = 0; i < 20; i++){ const a = i / 20 * TAU; fx('dust', c.x + Math.cos(a) * R * .8, c.y + Math.sin(a) * R * .6, 2, 1); }
   fx('rock', c.x, c.y, 10, 10); fx('spark', c.x, c.y, 8, 6);
   const d = Math.hypot(P.x - c.x, P.y - c.y);
@@ -1197,7 +1204,7 @@ function updatePickups(dt){
     const d = Math.hypot(P.x - p.x, P.y - p.y);
     if (p.age > .5 && d < 110){ const k = Math.min(1, 230 * dt / (d || 1)); p.x += (P.x - p.x) * k; p.y += (P.y - p.y) * k; }   // magnet
     if (p.age > .35 && d < 30){
-      gain(p.k, p.n); fx('spark', p.x, p.y, 10, 5); pickups.splice(i, 1);
+      gain(p.k, p.n); fx('spark', p.x, p.y, 10, 5); pickups.splice(i, 1); SND.play('pickup');
       if (p.k === 'core') toast('정예의 핵을 얻었어요! 장비를 Lv.4로 강화할 수 있어요.');
     } else if (p.age > p.life) pickups.splice(i, 1);
   }
@@ -1205,7 +1212,7 @@ function updatePickups(dt){
 function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y, 34, '방어', '#8fc4ff'); dmg = red; }
-  c.hp -= dmg; c.hit = .18; c.sinceHit = 0;
+  c.hp -= dmg; c.hit = .18; c.sinceHit = 0; SND.hit(c, c.hp <= 0);
   const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1) * (c.boss ? .15 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y, 18, '-' + dmg, '#ffd166');
   fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : c.k === 'golem' ? '170,172,180' : '196,44,44');
@@ -1220,7 +1227,7 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
   }
 }
 function attack(c){
-  const eq = stat(P.equip); P.cd = eq.cdA;
+  const eq = stat(P.equip); P.cd = eq.cdA; SND.play('swing');
   hitCreature(c, Math.round(eq.dmg * (P.buffs.power > 0 ? 1.5 : 1)), c.x - P.x, c.y - P.y, true);
 }
 
@@ -1240,13 +1247,13 @@ function aimTarget(){           // what the rifle would shoot at: hostile animal
   return best;
 }
 function fireGun(){
-  if (P.inv.ammo <= 0){ P.cd = .45; toast('탄약이 없어요. 제작에서 탄약을 만드세요.'); return; }
+  if (P.inv.ammo <= 0){ P.cd = .45; SND.play('dry'); toast('탄약이 없어요. 제작에서 탄약을 만드세요.'); return; }
   const t = aimTarget(); let ax = P.fx, ay = P.fy;
   if (t){ const d = Math.hypot(t.x - P.x, t.y - P.y) || 1; ax = (t.x - P.x) / d; ay = (t.y - P.y) / d; }
   P.fx = ax; P.fy = ay; if (Math.abs(ax - ay) > .2) P.flip = ax < ay ? -1 : 1;
   const gs = stat('gun'); P.inv.ammo--; P.cd = gs.cd; P.flash = .1;
   bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1)), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
-  fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2);
+  fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2); SND.play('gun');
   try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
 }
 const towerUpCost = o => TOWER_UPG[(o.lv || 1) - 1];
@@ -1265,7 +1272,7 @@ function updateTowers(dt){
     if (!best) continue;
     const a = Math.atan2(best.y - w.y, best.x - w.x);
     bullets.push({ x: w.x, y: w.y, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, dmg: ts.dmg, life: ts.range / 480 + .2, own: 'tower', kind: 'arrow', hostileOnly: true });
-    w.ammo--; w.cd = ts.cd; w.fire = .12; w.aim = a;
+    w.ammo--; w.cd = ts.cd; w.fire = .12; w.aim = a; SND.play('arrow', { x: w.x, y: w.y });
     if (w.ammo === 0 && Math.hypot(w.x - P.x, w.y - P.y) < 600) toast('탑의 탄약이 떨어졌어요!');
   }
 }
@@ -1291,7 +1298,7 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
 }
 function hurt(n, raw){
   if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0])));
-  P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false);
+  P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
   floater(P.x, P.y, 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
   if (P.hp <= 0) endGame(false);
@@ -1304,14 +1311,14 @@ function useItem(k){
   if (P.inv[k] <= 0){ toast(josa(ITEMS[k].name, '이/가') + ' 없어요'); return; }
   if (k === 'heal'){
     if (P.hp >= 99){ toast('체력이 가득 차 있어요'); return; }
-    P.inv.heal--; P.hp = Math.min(100, P.hp + 50); floater(P.x, P.y, 30, '+50 체력', '#ff8aa0'); fx('glow', P.x, P.y, 20, 10, '255,120,150'); return;
+    SND.play('heal'); P.inv.heal--; P.hp = Math.min(100, P.hp + 50); floater(P.x, P.y, 30, '+50 체력', '#ff8aa0'); fx('glow', P.x, P.y, 20, 10, '255,120,150'); return;
   }
   if (k === 'swift' || k === 'power'){
-    P.inv[k]--; P.buffs[k] = BUFF_T; fx('glow', P.x, P.y, 20, 12, PICK_COL[k]);
+    SND.play('buff'); P.inv[k]--; P.buffs[k] = BUFF_T; fx('glow', P.x, P.y, 20, 12, PICK_COL[k]);
     toast(k === 'swift' ? '신속! ' + BUFF_T + '초 동안 이동이 빨라져요' : '괴력! ' + BUFF_T + '초 동안 공격력 1.5배'); return;
   }
   if (P.hunger >= 98 && k !== 'meat'){ toast('배가 부릅니다'); return; }
-  P.inv[k]--;
+  P.inv[k]--; SND.play('eat');
   if (k === 'berry'){ P.hunger = Math.min(100, P.hunger + 12); floater(P.x, P.y, 26, '+12 배고픔', '#f2b84b'); }
   else if (k === 'cooked'){ P.hunger = Math.min(100, P.hunger + 40); P.hp = Math.min(100, P.hp + 10); floater(P.x, P.y, 26, '+40 배고픔', '#f2b84b'); }
   else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6, true); }
@@ -1329,7 +1336,7 @@ function transition(fn, msg){        // fade out, change the map, fade back in
 function sleep(){
   if (creatures.some(c => c.boss)){ toast('보스가 노리고 있어서 잠들 수 없어요!'); return; }
   if (P.hunger < 20 || P.thirst < 20){ toast('너무 배고프거나 목말라서 잠들 수 없어요'); return; }
-  sleeping = true; $('fade').classList.add('on');
+  sleeping = true; $('fade').classList.add('on'); SND.play('sleep');
   setTimeout(() => {
     T = (Math.floor(T / DAY_LEN) + 1) * DAY_LEN + DAY_LEN * .01;
     P.hunger = Math.max(1, P.hunger - 15); P.thirst = Math.max(1, P.thirst - 20);
@@ -1388,7 +1395,7 @@ function craft(r){
   let spot = null;
   if (r.place){ spot = placeSpot(r); if (!spot){ toast('주변이 빽빽해서 놓을 수 없어요. 탁 트인 곳으로 가세요.'); return; } }
   if (r.boat){ spot = seaSpot(); if (!spot){ toast('바닷가에 배를 놓을 자리가 없어요. 다른 해안으로 가 보세요.'); return; } }
-  for (const k in r.cost) P.inv[k] -= r.cost[k];
+  for (const k in r.cost) P.inv[k] -= r.cost[k]; SND.play(r.tool || r.boat || r.lantern ? 'upgrade' : 'craft');
   if (r.tool){
     P.tools[r.tool] = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
     if (r.tool === 'gun') setTimeout(() => toast('탄약은 제작 메뉴에서 만들어요. 탑에도 같은 탄약을 써요.'), 3000);
@@ -1409,7 +1416,7 @@ function smelt(m, all){
   const f = nearFurnace(); if (!f){ toast('용광로 가까이에서 해야 해요'); return; }
   const bar = ORE[m].bar, n = all ? Math.min(P.inv[m], P.inv.wood) : (P.inv[m] > 0 && P.inv.wood > 0 ? 1 : 0);
   if (!n){ toast(P.inv[m] > 0 ? '나무가 필요해요' : josa(ITEMS[m].name, '이/가') + ' 없어요'); return; }
-  P.inv[m] -= n; P.inv.wood -= n; P.inv[bar] += n; P.seen[bar] = true; f.glow = 6;
+  P.inv[m] -= n; P.inv.wood -= n; P.inv[bar] += n; P.seen[bar] = true; f.glow = 6; SND.play('smelt');
   floater(f.x, f.y, 44, '+' + n + ' ' + ITEMS[bar].icon, '#ffd166'); fx('spark', f.x, f.y, 14, 6); fx('glow', f.x, f.y, 16, 4, ORE[m].rgb);
   renderCraft();
 }
@@ -1441,7 +1448,7 @@ function effectText(t, lv){
 function upgradeItem(t){
   const isA = t === 'armor', lv = isA ? P.armor : P.lv[t], cost = UPGRADES[t][isA ? lv : lv - 1];
   if (!cost || !Object.keys(cost).every(k => P.inv[k] >= cost[k])) return;
-  for (const k in cost) P.inv[k] -= cost[k];
+  for (const k in cost) P.inv[k] -= cost[k]; SND.play('upgrade');
   if (isA) P.armor++; else P.lv[t]++;
   const nl = isA ? P.armor : P.lv[t];
   toast(isA ? josa(ARMOR_NAME[nl], '을/를') + ' 입었어요! 받는 피해 -' + Math.round(ARMOR_RED[nl] * 100) + '%' : josa(UP_NAME[t], '이/가') + ' Lv.' + nl + (nl === 3 ? '이' : '가') + ' 됐어요!');
@@ -1742,7 +1749,7 @@ function updateCreatures(dt){
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
     spd *= c.spdMul || 1;
-    if (c.atk > atk0 + .05) c.swing = .4;                       // it just attacked: play the attack frames
+    if (c.atk > atk0 + .05){ c.swing = .4; SND.attack(c); }       // it just attacked: play the attack frames (and the sound)
     if (c.gone){ creatures.splice(i, 1); toast(josa(c.name, '이/가') + ' 물러갔어요…'); continue; }
     const sa = sx - sy; if (sa > .1) c.fx = 1; else if (sa < -.1) c.fx = -1;       // faces left or right on screen
     if (sx || sy) c.hd = Math.atan2(sy, sx);
@@ -1767,12 +1774,12 @@ function update(dt){
   if (ph !== lastPhase){
     lastPhase = ph;
     if (Z.cave){}
-    else if (ph === '해질녘'){ toast('해가 저물고 있어요. 모닥불을 준비하세요!'); if (isBossDay(day) && !P.bossKills[day]) setTimeout(() => toast('⚠ 오늘 밤 보스가 나타나요!'), 1900); }
-    else if (ph === '밤') toast('밤이 되었습니다. 늑대를 조심하세요.');
+    else if (ph === '해질녘'){ SND.play('dusk', { key: 1 }); toast('해가 저물고 있어요. 모닥불을 준비하세요!'); if (isBossDay(day) && !P.bossKills[day]) setTimeout(() => toast('⚠ 오늘 밤 보스가 나타나요!'), 1900); }
+    else if (ph === '밤'){ SND.play('night', { key: 1 }); toast('밤이 되었습니다. 늑대를 조심하세요.'); }
     else if (ph === '새벽') toast('동이 틉니다…');
   }
   if (day !== lastDay){
-    lastDay = day; toast(day + '일차 아침이 밝았습니다');
+    lastDay = day; SND.play('dawn', { key: 1 }); toast(day + '일차 아침이 밝았습니다');
     if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스가 나타나요. 미리 준비하세요!'), 1800);
     if (day === RAFT_DAY) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
   }
@@ -1913,7 +1920,7 @@ function endGame(win){
   $('endText').textContent = win ? '뗏목이 파도를 가르며 섬에서 멀어집니다. 살아서 돌아가는 거예요.' : (P.hp <= 0 && isNight() ? '어둠 속에서 힘이 다했습니다.' : '섬은 만만치 않았습니다.');
   const ek = (P.stats && P.stats.elites ? ' · 엘리트 ' + P.stats.elites + '마리 처치' : '') + (P.stats && P.stats.bosses ? ' · 보스 ' + P.stats.bosses + '마리 처치' : '');
   $('endStat').innerHTML = (win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`) + ek;
-  $('hud').hidden = true; $('end').hidden = false;
+  $('hud').hidden = true; $('end').hidden = false; SND.play(win ? 'win' : 'lose', { key: 1 });
 }
 function toTitle(){
   save(); running = false; paused = false;
@@ -3119,6 +3126,316 @@ function render(){
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
 }
 
+/* ================= sound: everything is synthesised with WebAudio, there are no audio files. Effects, a bed of ambience (wind, sea, rain, fire, cave) and a slow generative score ================= */
+const SND = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext, AKEY = 'muindo-audio';
+  const st = { muted: false, music: true };
+  try { Object.assign(st, JSON.parse(localStorage.getItem(AKEY) || '{}')); } catch (_) {}
+  let ac = null, master = null, sfxB = null, ambB = null, musB = null, sendB = null, live = 0, L = null, sentWet = 1, dangerLv = 0, tick0 = 0;
+  const last = {}, trace = [], bufs = new WeakMap(), rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
+  const LOUD = 1.15, NOTE = n => 440 * Math.pow(2, (n - 69) / 12);
+
+  /* ---------- building blocks: they take the context, so the same voices can be rendered offline for tests ---------- */
+  function noise(c, brown){
+    let m = bufs.get(c); if (!m) bufs.set(c, m = {});
+    const key = brown ? 'b' : 'w'; if (m[key]) return m[key];
+    const n = Math.floor(c.sampleRate * (brown ? 4 : 2)), k = 3000, g = new Float32Array(n + k);
+    if (brown){ let l = 0; for (let i = 0; i < g.length; i++){ l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; g[i] = l * 3.5; } }
+    else for (let i = 0; i < g.length; i++) g[i] = Math.random() * 2 - 1;
+    const b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = g[i];
+    for (let i = 0; i < k; i++) d[i] = g[i] * (i / k) + g[n + i] * (1 - i / k);                 // cross-fade the seam so it loops without a click
+    return m[key] = b;
+  }
+  const env = (p, t, a, d, v) => { p.setValueAtTime(.0001, t); p.linearRampToValueAtTime(v, t + a); p.exponentialRampToValueAtTime(.0001, t + Math.max(d, a + .01)); };
+  const path = (p, t, pts) => { p.setValueAtTime(pts[0][1], t + pts[0][0]); for (let i = 1; i < pts.length; i++) p.linearRampToValueAtTime(pts[i][1], t + pts[i][0]); };
+  function lfo(c, t, d, hz, depth, target){ const l = c.createOscillator(), g = c.createGain(); l.frequency.value = hz; g.gain.value = depth; l.connect(g); g.connect(target); l.start(t); l.stop(t + d + .05); }
+
+  function tone(c, o, t, p){                       // one oscillator with a pitch glide and a plucked envelope
+    const os = c.createOscillator(), g = c.createGain(), d = p.d || .2, f = p.f, f1 = p.f1 || f;
+    os.type = p.type || 'sine'; os.frequency.setValueAtTime(f, t); if (f1 !== f) os.frequency.exponentialRampToValueAtTime(f1, t + d);
+    env(g.gain, t, p.a || .004, d, p.v == null ? .3 : p.v);
+    let n = os; if (p.lp){ const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = p.lp; os.connect(fl); n = fl; }
+    n.connect(g); g.connect(o);
+    if (p.vib) lfo(c, t, d, p.vib, p.vd || f * .03, os.frequency);
+    os.start(t); os.stop(t + d + .05);
+  }
+  function burst(c, o, t, p){                      // filtered noise
+    const d = p.d || .1, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), buf = noise(c, p.brown);
+    s.buffer = buf; f.type = p.type || 'bandpass'; f.Q.value = p.q || 1; f.frequency.setValueAtTime(p.f || 1000, t); if (p.f1) f.frequency.exponentialRampToValueAtTime(p.f1, t + d);
+    env(g.gain, t, p.a || .003, d, p.v == null ? .5 : p.v);
+    s.connect(f); f.connect(g); g.connect(o); s.start(t, rnd(0, buf.duration - d - .2), d + .05);
+  }
+  function vocal(c, o, t, p){                      // a throat: a buzzing oscillator pushed through two vowel-like resonances (and an optional growl)
+    const os = c.createOscillator(), g = c.createGain(), d = p.d;
+    os.type = p.type || 'sawtooth'; if (p.path) path(os.frequency, t, p.path); else { os.frequency.setValueAtTime(p.f, t); os.frequency.linearRampToValueAtTime(p.f1 || p.f, t + d); }
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(p.v, t + (p.a || d * .25)); g.gain.linearRampToValueAtTime(.0001, t + d);
+    let src = os;
+    if (p.rough){ const rg = c.createGain(); rg.gain.value = .65; lfo(c, t, d, p.rough, .35, rg.gain); os.connect(rg); src = rg; }
+    for (const [a, b, gn] of [[p.F1 || 520, p.F1b || p.F1 || 520, 1], [p.F2 || 1100, p.F2b || p.F2 || 1100, .55]]){
+      const fl = c.createBiquadFilter(), m = c.createGain(); fl.type = 'bandpass'; fl.Q.value = p.q || 5; fl.frequency.setValueAtTime(a, t); fl.frequency.linearRampToValueAtTime(b, t + d); m.gain.value = gn;
+      src.connect(fl); fl.connect(m); m.connect(g);
+    }
+    g.connect(o);
+    if (p.vib) lfo(c, t, d, p.vib, p.vd || 6, os.frequency);
+    os.start(t); os.stop(t + d + .05);
+  }
+  const arp = (c, o, t, notes, step, p) => notes.forEach((f, i) => tone(c, o, t + i * step, Object.assign({ f, d: .5, v: .22 }, p)));
+
+  /* ---------- the voices: name -> { fn(c, out, t, pitchFactor), d: seconds it lasts, cd: min ms between two, wet: echo send, v: level } ---------- */
+  const V = {
+    chop:   { d: .2, cd: 40, fn: (c, o, t, r) => { burst(c, o, t, { f: 900 * r, f1: 350, q: 1.1, d: .09, v: .9 }); tone(c, o, t, { f: 170 * r, f1: 70, d: .14, v: .85 }); tone(c, o, t, { type: 'triangle', f: 430 * r, f1: 230, d: .05, v: .3 }); } },
+    rock:   { d: .2, cd: 40, fn: (c, o, t, r) => { burst(c, o, t, { type: 'highpass', f: 2200, d: .05, v: .45 }); tone(c, o, t, { f: 1000 * r, f1: 520, d: .07, v: .3 }); tone(c, o, t, { f: 150, f1: 80, d: .11, v: .55 }); } },
+    ore:    { d: .5, cd: 40, fn: (c, o, t, r) => { [1, 2.76, 5.4].forEach((m, i) => tone(c, o, t, { f: 1250 * r * m, d: .4 / (1 + i * .6), v: .2 / (1 + i * .5) })); burst(c, o, t, { type: 'highpass', f: 3500, d: .03, v: .4 }); tone(c, o, t, { f: 140, f1: 80, d: .1, v: .4 }); } },
+    deny:   { d: .2, cd: 150, fn: (c, o, t) => { tone(c, o, t, { type: 'square', f: 230, f1: 150, d: .13, v: .13, lp: 900 }); } },
+    scrap:  { d: .3, cd: 40, fn: (c, o, t, r) => { burst(c, o, t, { f: 1800 * r, q: 3, d: .08, v: .5 }); burst(c, o, t + .07, { f: 2600 * r, q: 4, d: .06, v: .4 }); tone(c, o, t, { type: 'triangle', f: 620 * r, d: .1, v: .2 }); } },
+    rustle: { d: .4, cd: 80, fn: (c, o, t, r) => { burst(c, o, t, { f: 3200 * r, q: .6, d: .2, a: .03, v: .28 }); burst(c, o, t + .09, { f: 4200, q: .6, d: .16, a: .02, v: .2 }); } },
+    swing:  { d: .25, cd: 60, v: .8, fn: (c, o, t, r) => { burst(c, o, t, { f: 350 * r, f1: 1500 * r, q: .8, d: .16, a: .05, v: .22 }); } },
+    hit:    { d: .3, cd: 30, fn: (c, o, t, r) => { burst(c, o, t, { type: 'lowpass', f: 1100, d: .09, v: .8 }); tone(c, o, t, { f: 130 * r, f1: 55, d: .17, v: .85 }); } },
+    hitZ:   { d: .35, cd: 30, fn: (c, o, t, r) => { burst(c, o, t, { f: 650 * r, f1: 250, q: 3, d: .12, v: .9 }); tone(c, o, t, { f: 100 * r, f1: 45, d: .2, v: .9 }); burst(c, o, t + .03, { type: 'lowpass', f: 500, d: .1, v: .4 }); } },
+    hitStone: { d: .4, cd: 30, fn: (c, o, t, r) => { burst(c, o, t, { type: 'highpass', f: 1800, d: .06, v: .5 }); tone(c, o, t, { f: 90 * r, f1: 50, d: .2, v: .9 }); tone(c, o, t, { f: 820 * r, d: .22, v: .12 }); } },
+    death:  { d: .6, cd: 100, fn: (c, o, t, r) => { tone(c, o, t, { f: 110 * r, f1: 35, d: .4, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 700, f1: 150, d: .3, v: .6 }); } },
+    deathZ: { d: 1.1, cd: 100, fn: (c, o, t, r) => { tone(c, o, t, { f: 95 * r, f1: 30, d: .45, v: 1 }); burst(c, o, t + .08, { type: 'lowpass', f: 500, f1: 120, d: .5, v: .55 }); vocal(c, o, t, { f: 120 * r, f1: 55 * r, d: .9, v: .3, F1: 600, F1b: 300, F2: 1000, F2b: 600, vib: 5 }); } },
+    crumble: { d: .9, cd: 100, fn: (c, o, t) => { for (let i = 0; i < 5; i++) burst(c, o, t + i * .07, { f: 900 + Math.random() * 1400, q: 2, d: .1, v: .45 }); tone(c, o, t, { f: 80, f1: 32, d: .6, v: 1 }); } },
+    groan:  { d: 1.5, cd: 120, wet: .15, fn: (c, o, t, r) => { const d = rnd(.9, 1.4); vocal(c, o, t, { path: [[0, 96 * r], [d * .3, 118 * r], [d, 62 * r]], d, v: .5, a: d * .2, F1: 480, F1b: 700, F2: 900, F2b: 1250, q: 6, vib: 5.5, vd: 4, rough: 38 }); burst(c, o, t, { type: 'lowpass', f: 420, d, a: d * .3, v: .12, brown: true }); } },
+    moan:   { d: 2.4, cd: 300, wet: .3, fn: (c, o, t, r) => { vocal(c, o, t, { path: [[0, 70 * r], [.7, 92 * r], [2.1, 48 * r]], d: 2.1, v: .7, a: .5, F1: 400, F1b: 620, F2: 800, F2b: 1100, q: 5, vib: 4.5, vd: 3, rough: 28 }); } },
+    growl:  { d: .9, cd: 160, wet: .1, fn: (c, o, t, r) => { vocal(c, o, t, { path: [[0, 130 * r], [.5, 105 * r]], d: .6, v: .5, a: .12, F1: 720, F1b: 520, F2: 1250, F2b: 900, q: 4, rough: 52 }); } },
+    howl:   { d: 4, cd: 4000, wet: .75, fn: (c, o, t, r) => { vocal(c, o, t, { type: 'triangle', path: [[0, 290 * r], [.6, 500 * r], [1.9, 560 * r], [3.3, 400 * r]], d: 3.4, v: .45, a: .5, F1: 680, F2: 1250, q: 4, vib: 5.5, vd: 9 }); } },
+    roar:   { d: 1.6, cd: 400, wet: .45, fn: (c, o, t, r) => { vocal(c, o, t, { path: [[0, 80 * r], [.35, 92 * r], [1.2, 55 * r]], d: 1.2, v: .8, a: .1, F1: 650, F1b: 380, F2: 1100, F2b: 700, q: 3, rough: 42 }); burst(c, o, t, { f: 320, q: .8, d: 1, v: .25 }); } },
+    roarS:  { d: .8, cd: 200, wet: .15, fn: (c, o, t, r) => { vocal(c, o, t, { path: [[0, 100 * r], [.5, 70 * r]], d: .55, v: .55, a: .06, F1: 650, F1b: 450, F2: 1100, q: 3, rough: 46 }); } },
+    yelp:   { d: .4, cd: 120, fn: (c, o, t, r) => { vocal(c, o, t, { type: 'triangle', path: [[0, 520 * r], [.08, 840 * r], [.3, 460 * r]], d: .3, v: .35, a: .02, F1: 900, F2: 2000, q: 4, vib: 14, vd: 12 }); } },
+    oink:   { d: .4, cd: 120, fn: (c, o, t, r) => { vocal(c, o, t, { path: [[0, 190 * r], [.1, 260 * r], [.3, 130 * r]], d: .3, v: .4, a: .02, F1: 700, F2: 1400, q: 5, rough: 30 }); burst(c, o, t, { f: 1500, q: 2, d: .1, v: .15 }); } },
+    squeal: { d: .3, cd: 120, fn: (c, o, t, r) => { tone(c, o, t, { f: 1900 * r, f1: 950, d: .16, v: .2, vib: 30, vd: 90 }); } },
+    screech:{ d: .3, cd: 90, fn: (c, o, t, r) => { tone(c, o, t, { type: 'square', f: 4300 * r, f1: 2600 * r, d: .13, v: .05, lp: 6500, vib: 38, vd: 260 }); tone(c, o, t + .1, { type: 'square', f: 3800 * r, f1: 2400, d: .1, v: .04, lp: 6500, vib: 30, vd: 200 }); } },
+    bite:   { d: .35, cd: 90, fn: (c, o, t, r) => { burst(c, o, t, { type: 'highpass', f: 2400, d: .05, v: .5 }); tone(c, o, t, { f: 180 * r, f1: 80, d: .12, v: .6 }); vocal(c, o, t, { f: 150 * r, f1: 110, d: .25, v: .3, F1: 750, F2: 1300, rough: 55 }); } },
+    claw:   { d: .4, cd: 90, fn: (c, o, t, r) => { burst(c, o, t, { f: 1200 * r, f1: 400, q: .8, d: .15, v: .4 }); tone(c, o, t + .05, { f: 120 * r, f1: 60, d: .15, v: .6 }); } },
+    stomp:  { d: .6, cd: 150, wet: .3, fn: (c, o, t) => { tone(c, o, t, { f: 85, f1: 34, d: .35, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 450, f1: 90, d: .35, v: .7 }); } },
+    slam:   { d: 1.2, cd: 200, wet: .5, fn: (c, o, t) => { tone(c, o, t, { f: 90, f1: 26, d: .7, v: 1.2 }); burst(c, o, t, { type: 'lowpass', f: 600, f1: 90, d: .7, v: 1 }); for (let i = 0; i < 4; i++) burst(c, o, t + .1 + i * .08, { f: 700 + i * 400, q: 2, d: .1, v: .3 }); } },
+    bossRoar: { d: 3.2, cd: 2000, wet: .6, fn: (c, o, t) => {
+      vocal(c, o, t, { path: [[0, 50], [.7, 78], [2.6, 36]], d: 2.8, v: 1, a: .5, F1: 500, F1b: 300, F2: 900, F2b: 500, q: 3, rough: 30 });
+      tone(c, o, t, { type: 'sawtooth', f: 55, f1: 40, d: 3, v: .35, a: .8, lp: 220 }); tone(c, o, t, { type: 'sawtooth', f: 58.5, f1: 42, d: 3, v: .3, a: .8, lp: 220 }); } },
+    gun:    { d: 1, cd: 60, wet: .4, fn: (c, o, t) => { burst(c, o, t, { type: 'lowpass', f: 7500, f1: 500, q: .5, d: .4, v: .65 }); burst(c, o, t, { type: 'highpass', f: 2500, d: .03, v: .55 }); tone(c, o, t, { f: 170, f1: 40, d: .25, v: .62 }); } },
+    arrow:  { d: .4, cd: 50, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 760, f1: 210, d: .15, v: .4 }); burst(c, o, t, { f: 2800, q: 1.5, d: .07, v: .3 }); } },
+    dry:    { d: .1, cd: 120, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 3000, d: .02, v: .5 }); tone(c, o, t, { type: 'square', f: 300, f1: 200, d: .03, v: .1, lp: 1800 }); } },
+    reload: { d: .35, cd: 80, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 2200, d: .025, v: .5 }); burst(c, o, t + .13, { type: 'highpass', f: 1600, d: .035, v: .6 }); tone(c, o, t + .13, { f: 260, f1: 140, d: .08, v: .35 }); } },
+    hurt:   { d: .5, cd: 120, fn: (c, o, t) => { tone(c, o, t, { f: 190, f1: 58, d: .26, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 800, f1: 200, d: .16, v: .7 }); vocal(c, o, t, { f: 210, f1: 120, d: .28, v: .3, type: 'triangle', F1: 620, F2: 1100, q: 3 }); } },
+    pickup: { d: .4, cd: 50, wet: .2, v: .8, fn: (c, o, t) => { tone(c, o, t, { f: 880, d: .13, v: .2 }); tone(c, o, t + .07, { f: 1320, d: .2, v: .2 }); } },
+    craft:  { d: .6, cd: 100, fn: (c, o, t) => { for (let i = 0; i < 3; i++){ tone(c, o, t + i * .11, { type: 'square', f: 520 + i * 40, f1: 300, d: .05, v: .18, lp: 2500 }); burst(c, o, t + i * .11, { f: 1500, q: 1.5, d: .04, v: .3 }); } } },
+    upgrade:{ d: 1.2, cd: 300, wet: .5, fn: (c, o, t) => { arp(c, o, t, [523, 659, 784, 1047], .08, { type: 'triangle', d: .7, v: .22 }); } },
+    smelt:  { d: .9, cd: 150, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 4000, d: .5, a: .05, v: .3 }); tone(c, o, t, { f: 1600, d: .35, v: .12 }); tone(c, o, t + .02, { f: 4400, d: .3, v: .06 }); tone(c, o, t, { f: 90, f1: 60, d: .2, v: .4 }); } },
+    eat:    { d: .5, cd: 150, fn: (c, o, t) => { for (let i = 0; i < 4; i++) burst(c, o, t + i * .09, { f: 1800 + Math.random() * 400, q: 2, d: .05, v: .5 }); tone(c, o, t + .36, { f: 160, f1: 100, d: .1, v: .3 }); } },
+    drink:  { d: .8, cd: 200, fn: (c, o, t) => { for (let i = 0; i < 3; i++) tone(c, o, t + i * .16, { f: 260, f1: 700, d: .1, v: .28, lp: 1400 }); burst(c, o, t, { type: 'lowpass', f: 900, d: .2, v: .15 }); } },
+    heal:   { d: 1.2, cd: 200, wet: .5, fn: (c, o, t) => { arp(c, o, t, [659, 784, 988, 1319], .07, { d: .8, v: .16 }); } },
+    buff:   { d: 1, cd: 200, wet: .4, fn: (c, o, t) => { tone(c, o, t, { type: 'sawtooth', f: 180, f1: 760, d: .5, v: .15, lp: 1800 }); tone(c, o, t + .3, { f: 1175, d: .5, v: .15 }); } },
+    ui:     { d: .08, cd: 30, v: .55, fn: (c, o, t) => { tone(c, o, t, { type: 'square', f: 1300, f1: 1100, d: .03, v: .07, lp: 3200 }); } },
+    door:   { d: .8, cd: 300, fn: (c, o, t) => { burst(c, o, t, { f: 300, f1: 120, q: 2, d: .5, a: .1, v: .3 }); tone(c, o, t, { type: 'sawtooth', f: 90, f1: 60, d: .4, v: .12, lp: 300 }); } },
+    build:  { d: .4, cd: 60, fn: (c, o, t) => { tone(c, o, t, { f: 120, f1: 60, d: .13, v: .8 }); burst(c, o, t, { f: 600, d: .07, v: .5 }); tone(c, o, t + .07, { type: 'triangle', f: 360, f1: 240, d: .05, v: .22 }); } },
+    wallhit:{ d: .3, cd: 40, fn: (c, o, t, r) => { burst(c, o, t, { f: 420 * r, d: .1, v: .7 }); tone(c, o, t, { f: 95 * r, f1: 50, d: .15, v: .7 }); burst(c, o, t, { type: 'highpass', f: 2500, d: .02, v: .3 }); } },
+    wallbreak: { d: .9, cd: 100, fn: (c, o, t) => { burst(c, o, t, { type: 'lowpass', f: 1400, f1: 250, d: .6, v: .9 }); tone(c, o, t, { f: 72, f1: 28, d: .45, v: .9 }); for (let i = 0; i < 4; i++) burst(c, o, t + .08 + i * .09, { f: 1500 + Math.random() * 1200, q: 3, d: .05, v: .3 }); } },
+    sleep:  { d: 3.5, cd: 1000, wet: .6, fn: (c, o, t) => { [220, 277, 330].forEach((f, i) => tone(c, o, t + i * .25, { f, d: 3, v: .12, a: .5 })); } },
+    dusk:   { d: 3.5, cd: 1000, wet: .7, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 392, d: 2.2, v: .2, a: .1 }); tone(c, o, t + .8, { type: 'triangle', f: 294, d: 2.8, v: .2, a: .1 }); } },
+    night:  { d: 4.5, cd: 1000, wet: .8, fn: (c, o, t) => { tone(c, o, t, { f: 98, f1: 92, d: 4, v: .35, a: 1.2 }); tone(c, o, t, { type: 'triangle', f: 147, f1: 139, d: 4, v: .15, a: 1.5 }); } },
+    dawn:   { d: 3.5, cd: 1000, wet: .7, fn: (c, o, t) => { [523, 659, 784].forEach((f, i) => tone(c, o, t + i * .35, { f, d: 2.2, v: .15, a: .06 })); } },
+    win:    { d: 4, cd: 1000, wet: .6, fn: (c, o, t) => { arp(c, o, t, [392, 494, 587, 784, 988], .16, { type: 'triangle', d: 1.4, v: .25 }); tone(c, o, t + .8, { type: 'triangle', f: 196, d: 3, v: .3, a: .2 }); } },
+    lose:   { d: 4, cd: 1000, wet: .7, fn: (c, o, t) => { arp(c, o, t, [330, 294, 262, 220], .38, { type: 'triangle', d: 1.8, v: .22 }); tone(c, o, t, { f: 55, f1: 45, d: 3.5, v: .4, a: .3 }); } },
+    crackle:{ d: .1, cd: 20, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 2500 + Math.random() * 3000, d: .012 + Math.random() * .03, v: .15 + Math.random() * .3 }); if (Math.random() < .2) tone(c, o, t, { f: 320, f1: 150, d: .035, v: .12 }); } },
+    drip:   { d: .6, cd: 100, wet: 1.2, fn: (c, o, t) => { const f = rnd(900, 1700); tone(c, o, t, { f: f * 1.5, f1: f * .7, d: .11, v: .22 }); } },
+    bird:   { d: .6, cd: 400, fn: (c, o, t) => { const n = 2 + Math.floor(Math.random() * 3), f = rnd(2200, 3200); for (let i = 0; i < n; i++) tone(c, o, t + i * .11, { f: f * rnd(.9, 1.1), f1: f * rnd(1.15, 1.5), d: .09, v: .1, a: .01 }); } },
+    cricket:{ d: .5, cd: 250, fn: (c, o, t) => { const f = rnd(4300, 5000); for (let i = 0; i < 4; i++) tone(c, o, t + i * .04, { f, d: .03, v: .05, a: .004 }); } },
+    heart:  { d: .5, cd: 300, v: .8, fn: (c, o, t) => { tone(c, o, t, { f: 62, f1: 38, d: .17, v: 1 }); tone(c, o, t + .19, { f: 58, f1: 36, d: .15, v: .7 }); } },
+    kick:   { d: .5, cd: 100, wet: .35, fn: (c, o, t) => { tone(c, o, t, { f: 120, f1: 36, d: .35, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 900, d: .05, v: .5 }); } },
+    stepGrass: { d: .15, cd: 90, v: .4, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { type: 'lowpass', f: 700 * r, d: .07, v: .5 }); burst(c, o, t, { f: 3500, q: .5, d: .05, v: .1 }); } },
+    stepSand:  { d: .15, cd: 90, v: .4, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { f: 1100 * r, q: .6, d: .1, a: .01, v: .4 }); } },
+    stepRock:  { d: .15, cd: 90, v: .4, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { f: 1700 * r, q: 1.2, d: .035, v: .5 }); tone(c, o, t, { f: 210 * r, f1: 120, d: .05, v: .2 }); } },
+    stepSnow:  { d: .2, cd: 90, v: .45, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { type: 'highpass', f: 1400 * r, d: .09, a: .01, v: .5 }); burst(c, o, t + .03, { type: 'bandpass', f: 4500, q: 1, d: .05, v: .2 }); } },
+    stepCave:  { d: .5, cd: 90, v: .4, j: .3, wet: .8, fn: (c, o, t, r) => { burst(c, o, t, { f: 1500 * r, q: 1.2, d: .035, v: .5 }); tone(c, o, t, { f: 180 * r, f1: 100, d: .05, v: .22 }); } }
+  };
+  const HIT_V = { zombie: 'hitZ', brute: 'hitZ', zombielord: 'hitZ', golem: 'hitStone', mountainking: 'hitStone' };
+  const PAIN_V = { wolf: 'yelp', wolfking: 'yelp', boar: 'oink', bear: 'roarS', rabbit: 'squeal', bat: 'screech', zombie: 'groan', brute: 'groan' };
+  const ATK_V = { wolf: 'bite', wolfking: 'bite', zombie: 'claw', brute: 'claw', zombielord: 'claw', boar: 'claw', bear: 'claw', mountainking: 'claw', bat: 'screech', golem: 'stomp' };
+  const VOICE_V = { zombie: ['groan', 3, 7, 520], brute: ['groan', 3.5, 7, 520, .6], zombielord: ['moan', 4, 8, 640], wolf: ['growl', 4, 9, 260], wolfking: ['roar', 5, 9, 640], bear: ['roarS', 3, 6, 300], boar: ['oink', 3, 6, 260], bat: ['screech', 1.4, 3, 300], mountainking: ['roar', 5, 8, 700], golem: ['stomp', 2.6, 4, 320] };
+
+  /* ---------- the output graph ---------- */
+  function start(){
+    if (ac || !AC) return;
+    try { ac = new AC(); } catch (_) { ac = null; return; }
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -12; comp.knee.value = 14; comp.ratio.value = 5; comp.attack.value = .004; comp.release.value = .2;
+    master = ac.createGain(); master.gain.value = st.muted ? 0 : LOUD;
+    const mix = ac.createGain(); mix.connect(comp); comp.connect(master); master.connect(ac.destination);
+    sfxB = ac.createGain(); sfxB.gain.value = 1; ambB = ac.createGain(); ambB.gain.value = .6; musB = ac.createGain(); musB.gain.value = 0;
+    sfxB.connect(mix); ambB.connect(mix); musB.connect(mix);
+    sendB = ac.createGain(); sendB.gain.value = 1;                         // a cheap echo: used for guns, howls, chimes and for everything in the cave
+    const dl = ac.createDelay(1), fb = ac.createGain(), fl = ac.createBiquadFilter(), ret = ac.createGain(); dl.delayTime.value = .27; fb.gain.value = .4; fl.type = 'lowpass'; fl.frequency.value = 2100; ret.gain.value = .5;
+    sendB.connect(dl); dl.connect(fl); fl.connect(fb); fb.connect(dl); fl.connect(ret); ret.connect(mix);
+    const mk = (buf, type, f, q) => { const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = buf; s.loop = true; fl.type = type; fl.frequency.value = f; fl.Q.value = q || .7; g.gain.value = 0; s.connect(fl); fl.connect(g); g.connect(ambB); s.start(0, Math.random() * 2); return { fl, g }; };
+    const dr = (fs, v) => { const g = ac.createGain(); g.gain.value = 0; const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 240; lp.connect(g); g.connect(ambB); for (const [f, ty] of fs){ const os = ac.createOscillator(); os.type = ty; os.frequency.value = f; os.connect(lp); os.start(); } return { g }; };
+    L = { wind: mk(noise(ac, true), 'bandpass', 420, .5), sea: mk(noise(ac, true), 'lowpass', 420), rain: mk(noise(ac, false), 'bandpass', 4200, .35), fire: mk(noise(ac, true), 'lowpass', 230), cave: dr([[55, 'sine'], [55.9, 'sine'], [82.4, 'triangle']]), tense: dr([[55, 'sawtooth'], [58.3, 'sawtooth'], [110.6, 'sawtooth']]) };
+    L.tense.g.disconnect(); L.tense.g.connect(musB);                          // the tension drone belongs to the score
+    ac.addEventListener && ac.addEventListener('statechange', () => { if (ac.state === 'running') offUnlock(); });
+  }
+  const unlockEvs = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+  function unlock(){
+    if (!AC) return; start(); if (!ac) return;
+    if (ac.state === 'suspended' && !st.muted) { try { const p = ac.resume(); p && p.catch && p.catch(() => {}); } catch (_) {} }
+    try { const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0); } catch (_) {}      // the silent blip iOS wants inside a gesture
+    if (ac.state === 'running') offUnlock();
+  }
+  function offUnlock(){ for (const e of unlockEvs) removeEventListener(e, unlock, true); }
+  for (const e of unlockEvs) addEventListener(e, unlock, true);
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) { try { ac.suspend(); } catch (_) {} } else if (!st.muted) { try { ac.resume(); } catch (_) {} } });
+
+  /* ---------- playing a voice (optionally placed in the world: quieter and panned by where it is on screen) ---------- */
+  function chain(dest, pan, vol, wet){
+    const g = ac.createGain(); g.gain.value = vol; let n = g;
+    if (pan && ac.createStereoPanner){ const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p); n = p; }
+    n.connect(dest);
+    if (wet){ const w = ac.createGain(); w.gain.value = wet * sentWet; n.connect(w); w.connect(sendB); }
+    return g;
+  }
+  function play(name, o){
+    if (!ac || st.muted || ac.state !== 'running') return;
+    const v = V[name]; if (!v) return; o = o || {};
+    const now = performance.now(); if (now - (last[name] || 0) < (v.cd || 0)) return;
+    if (live > 34 && !o.key) return;
+    let vol = (o.v == null ? 1 : o.v) * (v.v || 1), pan = o.pan || 0;
+    if (o.x != null){
+      const d = Math.hypot(o.x - P.x, o.y - P.y); vol *= Math.pow(clamp(1 - d / 860, 0, 1), 1.7); if (vol < .015) return;
+      pan = clamp((ux(o.x, o.y) - ux(P.x, P.y)) / 460, -1, 1) * .85;
+    }
+    last[name] = now; live++; setTimeout(() => live--, (v.d || .5) * 1000 + 150); if (trace.push(name) > 60) trace.shift();
+    v.fn(ac, chain(sfxB, pan, vol, v.wet), ac.currentTime + .004 + (o.delay || 0), (o.r || 1) * (1 + (Math.random() - .5) * (v.j == null ? .12 : v.j)));
+  }
+  function render(name, r, secs){               // offline: used by tests to check a voice is audible, finite and not clipping
+    const sr = 44100, oc = new OfflineAudioContext(1, sr * (secs || 4), sr), g = oc.createGain(); g.connect(oc.destination);
+    V[name].fn(oc, g, 0, r || 1);
+    return oc.startRendering().then(b => {
+      const d = b.getChannelData(0); let pk = 0, e = 0, bad = 0, end = 0, zc = 0;
+      for (let i = 0; i < d.length; i++){ const a = Math.abs(d[i]); if (a !== a) bad++; if (a > pk) pk = a; e += d[i] * d[i]; if (a > .004) end = i; if (i && (d[i] > 0) !== (d[i - 1] > 0)) zc++; }
+      return { peak: pk, rms: Math.sqrt(e / d.length), len: end / sr, bad, hz: zc / 2 / Math.max(.01, end / sr) };
+    });
+  }
+
+  /* ---------- the world's mood: ambience levels, scattered one-shots, the score ---------- */
+  const edgeDist = (x, y) => { const c = WORLD / 2, h = (WORLD - 2 * ISL_M) / 2, rr = Math.max(8, ISL_R), q = h - rr, dx = Math.abs(x - c) - q, dy = Math.abs(y - c) - q; return rr - (Math.hypot(Math.max(dx, 0), Math.max(dy, 0)) + Math.min(Math.max(dx, dy), 0)); };
+  const tm = { bird: 3, cricket: 1, howl: 18, drip: 2, heart: 0, kick: 0, crack: 0 };
+  let stepI = 0, mus = { next: 0, i: 0, pk: 2, rest: 0 };
+  const PROG = { day: [[45, 57, 60, 64], [41, 57, 60, 64], [38, 57, 62, 65], [40, 56, 59, 64]], night: [[45, 57, 60, 64], [46, 58, 62, 65], [45, 57, 60, 64], [43, 55, 58, 62]] };
+  const SCALE = { day: [57, 60, 62, 64, 67, 69, 72, 74, 76], night: [45, 48, 52, 53, 57, 60, 64, 65] };
+  function pad(t, midi, len, v, brightness){
+    const f = NOTE(midi), g = ac.createGain(), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = brightness; lp.Q.value = .4;
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + len * .38); g.gain.linearRampToValueAtTime(v * .75, t + len * .75); g.gain.linearRampToValueAtTime(.0001, t + len + 3);
+    for (const [ty, det] of [['triangle', 0], ['sine', 7]]){ const os = ac.createOscillator(); os.type = ty; os.frequency.value = f; os.detune.value = det; os.connect(lp); os.start(t); os.stop(t + len + 3.1); }
+    lp.connect(g); g.connect(musB);
+  }
+  function pluck(t, midi, v, len){
+    const f = NOTE(midi), g = ac.createGain(), lp = ac.createBiquadFilter(), os = ac.createOscillator(), os2 = ac.createOscillator();
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(2600, t); lp.frequency.exponentialRampToValueAtTime(380, t + len); os.type = 'triangle'; os2.type = 'sine'; os.frequency.value = f; os2.frequency.value = f * 2;
+    env(g.gain, t, .008, len, v); os.connect(lp); os2.connect(lp); lp.connect(g); g.connect(musB); const w = ac.createGain(); w.gain.value = .75 * sentWet; g.connect(w); w.connect(sendB);
+    os.start(t); os2.start(t); os.stop(t + len + .05); os2.stop(t + len + .05);
+  }
+  function score(dt, night, boss){
+    if (st.music) {
+      const now = ac.currentTime, set = night ? 'night' : 'day';
+      if (now >= mus.next - .4){                                                // the next chord (they overlap a little; every so often a bar of silence)
+        const len = night ? 13 : 10; mus.next = Math.max(now, mus.next) + len;
+        if (mus.rest > 0) mus.rest--; else {
+          const ch = PROG[set][mus.i++ % 4], t = Math.max(now, mus.next - len) + .05;
+          ch.forEach((m, i) => pad(t + i * .12, m, len, (i ? .05 : .075) * (night ? .9 : 1), night ? 560 : 900));
+          if (Math.random() < .3) mus.rest = 1;
+        }
+      }
+      mus.pk -= dt;
+      if (mus.pk <= 0 && dangerLv < .5){
+        mus.pk = night ? rnd(2.6, 6.5) : rnd(1.6, 4.6);
+        if (Math.random() < (night ? .55 : .75)) pluck(now + .02, pick(SCALE[set]), night ? .06 : .075, night ? 3.2 : 2.2);
+      }
+    }
+    if (boss){ tm.kick -= dt; if (tm.kick <= 0){ tm.kick = .62; play('kick', { key: 1, v: .9 }); } }
+  }
+
+  const S = { fire: 0, dmin: 1e9, edge: 999, scan: 0 };
+  function tick(dt){
+    if (!ac) return; const now = ac.currentTime;
+    const live_ = running, night = live_ && isNight() && !Z.cave, bossUp = live_ && creatures.some(c => c.boss);
+    const duck = paused || !live_ ? .5 : 1;
+    sentWet = live_ && Z.cave ? 2.2 : 1;
+    if (st.muted || ac.state !== 'running') return;
+    tick0 += dt; const T0 = tick0;
+    // --- a few times a second: look around, then move the ambience levels
+    S.scan -= dt;
+    if (S.scan <= 0){
+      S.scan = .1;
+      let fd = 1e9, dm = 1e9;
+      if (live_){
+        for (const s of structs) if (s.t === 'fire' && s.fuel > 0){ const d = Math.hypot(s.x - P.x, s.y - P.y); if (d < fd) fd = d; }
+        for (const o of objs) if (o.t === 'furnace' && o.glow > 0){ const d = Math.hypot(o.x - P.x, o.y - P.y); if (d < fd) fd = d; }
+        for (const c of creatures) if (isHostile(c)){ const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < dm) dm = d; }
+        S.edge = edgeDist(P.x, P.y);
+      }
+      S.fire = fd < 420 ? Math.pow(1 - fd / 420, 2) * .5 : 0; S.dmin = dm;
+      let wind = .12, sea = .18, rain = 0, cave = 0;
+      const gust = .5 + .5 * Math.sin(T0 * .7 + Math.sin(T0 * .23) * 2.4), swell = .62 + .38 * Math.sin(T0 * .83), snow = live_ && Z.ground === 'snow';
+      if (live_){
+        const dk = darkness(dayT());
+        if (Z.cave){ cave = .55; wind = 0; sea = 0; }
+        else { const rw = rainAmt(); rain = rw * .3; wind = (snow ? .5 : .13 + .08 * dk) * (.55 + .45 * gust) + rw * .08; sea = (.05 + .34 * clamp(1 - S.edge / 560, 0, 1)) * swell * (snow ? .6 : 1); }
+      }
+      const lv = (l, v, k, f) => { l.g.gain.setTargetAtTime(v * duck, now, k); if (f) l.fl.frequency.setTargetAtTime(f, now, .35); };
+      lv(L.wind, wind, .5, 260 + 380 * gust + (snow ? 200 : 0)); lv(L.sea, sea, .3, 300 + 260 * swell); lv(L.rain, rain, .5); lv(L.fire, S.fire * .55, .4); lv(L.cave, cave * .5, .8);
+      const dTarget = bossUp ? 1 : clamp((430 - dm) / 300, 0, 1); dangerLv += (dTarget - dangerLv) * .08;
+      musB.gain.setTargetAtTime(st.music ? (live_ ? 1 : 1.2) * duck * (1 - .55 * dangerLv) : 0, now, .6);
+      L.tense.g.gain.setTargetAtTime(st.music && live_ ? dangerLv * .1 * (.75 + .25 * Math.sin(T0 * 7)) : 0, now, .25);
+    }
+    if (st.music || bossUp) score(dt, night, bossUp && live_);
+    if (!live_) return;
+    if (S.fire > .02){ tm.crack -= dt; if (tm.crack <= 0){ tm.crack = rnd(.05, .4) / (.4 + S.fire * 2.5); play('crackle', { v: Math.min(1, S.fire * 2.2), pan: rnd(-.3, .3) }); } }
+    // --- scattered one-shots
+    const rw = Z.cave ? 0 : rainAmt(), snow = Z.ground === 'snow', dk = darkness(dayT());
+    if (!Z.cave && !snow && dk < .15 && rw < .2){ tm.bird -= dt; if (tm.bird <= 0){ tm.bird = rnd(3, 10); play('bird', { pan: rnd(-.8, .8) }); } }
+    if (!Z.cave && !snow && dk > .6 && rw < .4){ tm.cricket -= dt; if (tm.cricket <= 0){ tm.cricket = rnd(.35, 1.4); play('cricket', { pan: rnd(-.9, .9), v: rnd(.6, 1) }); } }
+    if (!Z.cave && (dk > .7 || Z.dayWolves)){ tm.howl -= dt; if (tm.howl <= 0){ tm.howl = rnd(22, 48); play('howl', { pan: rnd(-.9, .9), v: .55, r: rnd(.9, 1.15) }); } }
+    if (Z.cave){ tm.drip -= dt; if (tm.drip <= 0){ tm.drip = rnd(1.4, 5); play('drip', { pan: rnd(-.7, .7) }); } }
+    if (P.hp < 30 && P.hp > 0){ tm.heart -= dt; if (tm.heart <= 0){ tm.heart = .95 + P.hp / 60; play('heart', { key: 1 }); } }
+    // --- footsteps
+    const si = Math.floor(P.step / Math.PI);
+    if (si !== stepI){ stepI = si; if (P.moving && !sleeping) play(Z.cave ? 'stepCave' : Z.ground === 'snow' ? 'stepSnow' : Z.ground === 'rock' ? 'stepRock' : S.edge < 46 ? 'stepSand' : 'stepGrass'); }
+    // --- what the animals say
+    for (const c of creatures){
+      const vv = VOICE_V[c.k]; if (!vv) continue;
+      if ((c.k === 'bear' || c.k === 'boar') && c.state !== 'angry' || c.k === 'golem' && c.state !== 'awake') continue;
+      const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > vv[3]) continue;
+      c.vt = (c.vt == null ? rnd(0, vv[2]) : c.vt) - dt;
+      if (c.vt <= 0){ c.vt = rnd(vv[1], vv[2]); play(vv[0], { x: c.x, y: c.y, r: c.k === 'brute' ? .7 : c.elite ? .85 : 1, v: vv[4] || 1 }); }
+    }
+  }
+
+  /* ---------- the game-facing API ---------- */
+  const api = {
+    play, tick, render, unlock,
+    hit(c, dead){ play(HIT_V[c.k] || 'hit', { x: c.x, y: c.y }); if (dead) play(c.k === 'zombie' || c.k === 'brute' || c.k === 'zombielord' ? 'deathZ' : c.k === 'golem' ? 'crumble' : 'death', { x: c.x, y: c.y, r: c.k === 'brute' || c.boss ? .75 : 1 }); if (PAIN_V[c.k] && (dead || Math.random() < .5)) play(PAIN_V[c.k], { x: c.x, y: c.y, r: dead ? .85 : 1 }); },
+    attack(c){ play(ATK_V[c.k] || 'claw', { x: c.x, y: c.y }); },
+    get muted(){ return st.muted; }, get music(){ return st.music; },
+    setMuted(v){
+      st.muted = !!v; try { localStorage.setItem(AKEY, JSON.stringify(st)); } catch (_) {}
+      if (ac){ master.gain.setTargetAtTime(st.muted ? 0 : LOUD, ac.currentTime, .05); if (st.muted) setTimeout(() => { if (st.muted && ac) try { ac.suspend(); } catch (_) {} }, 350); else try { ac.resume(); } catch (_) {} }
+      sync();
+    },
+    setMusic(v){ st.music = !!v; try { localStorage.setItem(AKEY, JSON.stringify(st)); } catch (_) {} sync(); },
+    names: () => Object.keys(V), trace,
+    debug: () => ({ state: ac ? ac.state : 'none', muted: st.muted, music: st.music, live, danger: dangerLv, master: master ? master.gain.value : -1, layers: L ? Object.fromEntries(Object.keys(L).map(k => [k, L[k].g.gain.value])) : null })
+  };
+  function sync(){
+    const b = $('sndBtn'); if (b){ b.textContent = st.muted ? '🔇' : '🔊'; b.setAttribute('aria-pressed', st.muted ? 'true' : 'false'); b.title = st.muted ? '소리 켜기 (N)' : '소리 끄기 (N)'; }
+    const a = $('optSfx'), m = $('optMusic'); if (a) a.textContent = '효과음·환경음  ' + (st.muted ? '꺼짐' : '켜짐'); if (m) m.textContent = '음악  ' + (st.music ? '켜짐' : '꺼짐');
+  }
+  $('sndBtn').addEventListener('click', () => api.setMuted(!st.muted));
+  $('optSfx').addEventListener('click', () => api.setMuted(!st.muted));
+  $('optMusic').addEventListener('click', () => api.setMusic(!st.music));
+  document.addEventListener('pointerdown', e => { const b = e.target && e.target.closest && e.target.closest('button'); if (b && b.id !== 'btnAct' && b.id !== 'sndBtn') play('ui'); }, true);
+  sync();
+  return api;
+})();
+
 /* ================= main loop ================= */
 let last = 0;
 function frame(ts){
@@ -3129,6 +3446,7 @@ function frame(ts){
     if (++frameN > 150 && frameEma > 34){ lowFx = true; dprCap = 1.5; document.body.classList.add('lowfx'); resize(); }
   }
   if (running && !paused && !sleeping) update(dt);
+  try { SND.tick(dt); } catch (_) {}
   render();
 }
 
@@ -3144,7 +3462,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

@@ -81,6 +81,8 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .chip{height:34px;padding:0 9px;border-radius:999px;display:flex;align-items:center;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
 .chip.swift{border-color:#6ac8ff;color:#aee3ff}
 .chip.power{border-color:#ff9a5a;color:#ffc6a0}
+.chip.warm{border-color:#ff8a3d;color:#ffd0a8}
+.chip.full{border-color:#8fd16a;color:#cdeeb5}
 @media (max-width:520px){#inv2{flex-wrap:wrap;max-width:252px}#inv2 .slot{flex:0 0 42px}.chip{flex:none}}
 #goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
 #goal b{color:var(--amber);font-weight:700}
@@ -123,6 +125,28 @@ body.building #equip{display:none}
 .btns{display:flex;flex-direction:column;gap:6px}
 #mini{position:absolute;right:max(10px,env(safe-area-inset-right));top:clamp(150px,30vh,300px);width:104px;height:104px;border:1px solid var(--line);border-radius:10px;background:rgba(8,16,14,.7);image-rendering:pixelated;pointer-events:none;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 @media (max-height:520px){#mini{top:66px;width:88px;height:88px}}
+#ctx{position:fixed;z-index:6;right:max(184px,calc(env(safe-area-inset-right) + 172px));bottom:max(52px,calc(env(safe-area-inset-bottom) + 40px));display:flex;flex-direction:row-reverse;gap:8px;pointer-events:none}
+#ctx button{width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:14px;color:var(--bone);pointer-events:auto;padding:0}
+#ctx button[hidden]{display:none}
+#btnFish{border-color:#6ac8ff!important}
+#btnFish.on{background:#2a6f94!important;border-color:#9bdcff!important}
+#btnCook{border-color:#ffb066!important}
+body.building #ctx{display:none}
+#fishUI{position:fixed;z-index:6;left:max(12px,env(safe-area-inset-left));bottom:max(156px,calc(env(safe-area-inset-bottom) + 144px));width:min(62vw,260px);padding:10px 12px 9px;border-radius:14px;background:rgba(8,16,14,.86);border:1px solid rgba(106,200,255,.5);text-align:center;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#fishUI[hidden]{display:none}
+#fishMsg{min-height:20px;font-size:14px;font-weight:700;color:#cfeaff}
+#fishUI[data-st=bite] #fishMsg{color:#ffd34a;font-size:17px;animation:fishpulse .28s steps(2) infinite}
+@keyframes fishpulse{50%{transform:scale(1.08)}}
+#fishBar{position:relative;height:30px;margin:6px 0 4px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;border:1px solid var(--line)}
+#fishBar[hidden],#fishPips[hidden]{display:none}
+#fishZone{position:absolute;top:0;bottom:0;background:linear-gradient(#58d27a,#2e9d57);opacity:.92;border-radius:6px}
+#fishCur{position:absolute;top:-1px;bottom:-1px;width:5px;margin-left:-2px;background:#fff;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 8px rgba(255,255,255,.8)}
+#fishPips{display:flex;justify-content:center;gap:7px;margin:2px 0}
+#fishPips b{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid var(--line)}
+#fishPips b.on{background:#58d27a;border-color:#58d27a}
+#fishPips b.bad{background:#e0533f;border-color:#e0533f}
+#fishUI small{display:block;font-size:10.5px;color:var(--dim);margin-top:3px}
+@media (max-height:520px){#fishUI{bottom:max(18px,env(safe-area-inset-bottom));width:min(44vw,260px)}}
 #eliteArrow{position:fixed;left:0;top:0;width:64px;margin:-20px 0 0 -32px;z-index:6;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:1px}
 #eliteArrow i{display:block;width:0;height:0;border-left:15px solid #ff5a4a;border-top:9px solid transparent;border-bottom:9px solid transparent;filter:drop-shadow(0 0 4px rgba(255,90,74,.9))}
 #eliteArrow b{font-size:10.5px;font-weight:700;color:#ffb3a8;text-shadow:0 1px 3px #000;white-space:nowrap}
@@ -243,6 +267,8 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <div id="build" hidden></div>
   <div id="equip" hidden></div>
   <button id="btnCraft">제작</button>
+  <div id="ctx"><button id="btnFish" hidden>낚시</button><button id="btnCook" hidden>요리</button></div>
+  <div id="fishUI" hidden><div id="fishMsg"></div><div id="fishBar" hidden><i id="fishZone"></i><i id="fishCur"></i></div><div id="fishPips" hidden><b></b><b></b><b></b></div><small>화면이나 행동 버튼을 눌러요 · 움직이면 줄을 감아요</small></div>
   <button id="btnAct"><span id="actLabel">행동</span></button>
 </div>
 <div id="toasts"></div>
@@ -253,6 +279,14 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button><button class="tab" id="tabSmelt">제련</button></div>
     <p class="sub" id="craftSub">재료를 모아 도구와 시설을 만드세요.</p>
     <div id="craftList"></div>
+  </div>
+</div>
+
+<div id="cook" class="modal" hidden>
+  <div class="sheet">
+    <div class="head"><h2>요리</h2><button class="xbtn" id="cookClose" aria-label="닫기">✕</button></div>
+    <p class="sub" id="cookSub"></p>
+    <div id="cookList"></div>
   </div>
 </div>
 
@@ -289,6 +323,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>낚시·요리</b> 낚싯대(나무 5 · 고철 1)를 만들면 물가에 <b>낚시</b> 버튼이 나타나요 (F). 입질이 오면 바로 누르고, 움직이는 막대가 초록 칸에 올 때 세 번 눌러 끌어올려요. 모닥불 곁의 <b>요리</b> 버튼 (K)으로 구이·스튜·수프를 만들어요</li>
     <li><b>소리</b> 위쪽 스피커 버튼으로 끄고 켜요 (N). 일시정지 메뉴에서 음악만 따로 끌 수 있어요</li>
     <li><b>미니맵</b> 오른쪽의 작은 지도를 누르면 섬 전체 ↔ 내 주변으로 바뀌어요 (M)</li>
     <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~5, Q)</li>
@@ -388,7 +423,12 @@ const ITEMS = {
   gold:   { name: '금광석',   icon: '🟡', ore: 1, info: '금광석: 용광로에서 금 주괴로 녹여요 (캐려면 곡괭이 Lv.3)' },
   cuBar:  { name: '구리 주괴', icon: '🟧', bar: 1, info: '구리 주괴: 랜턴과 곡괭이 Lv.3 강화에 써요' },
   feBar:  { name: '철 주괴',   icon: '🟦', bar: 1, info: '철 주괴: 철벽, 범선, Lv.5 강화에 써요' },
-  auBar:  { name: '금 주괴',   icon: '🟨', bar: 1, info: '금 주괴: Lv.5 강화에 써요' }
+  auBar:  { name: '금 주괴',   icon: '🟨', bar: 1, info: '금 주괴: Lv.5 강화에 써요' },
+  fish:    { name: '생선',       icon: '🐟', food: 1, mini: 1 },         // fishing; grill it (or put it in a stew)
+  grilled: { name: '구운생선',   icon: '🍢', food: 1, mini: 1 },
+  stew:    { name: '열매스튜',   icon: '🍲', food: 1, mini: 1 },         // warms you for a while
+  soup:    { name: '생선수프',   icon: '🥣', food: 1, mini: 1 },         // hunger drains slowly for a while
+  feast:   { name: '모험가정식', icon: '🍱', food: 1, mini: 1 }          // both
 };
 const ORE = {     // minable nodes: pickaxe level needed, units per node, seconds to regrow, colors
   copper: { tier: 1, amt: 6, regrow: 200, col: '#d9803f', hi: '#ffc58a', rgb: '255,150,80', bar: 'cuBar' },
@@ -396,7 +436,7 @@ const ORE = {     // minable nodes: pickaxe level needed, units per node, second
   gold:   { tier: 3, amt: 4, regrow: 360, col: '#f2c84b', hi: '#fff2a8', rgb: '255,215,90', bar: 'auBar' }
 };
 const mkOre = kind => (x, y) => ({ t: 'ore', kind, x, y, r: 15, amt: ORE[kind].amt, v: Math.random(), shake: 0, regrow: 0 });
-const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1 };   // bag slots that stay hidden until you first get one
+const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1, fish: 1, grilled: 1, stew: 1, soup: 1, feast: 1 };   // bag slots that stay hidden until you first get one
 const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1 };                           // these live in the second bag row
 const BUFF_T = 30;
 const SPECS = {
@@ -483,6 +523,8 @@ const RECIPES = [
   { id: 'boat', name: '작은 배', desc: '바닷가에서 만들면 다른 섬으로 항해할 수 있어요. 배 앞에서 행동 버튼을 누르세요.', cost: { wood: 25, scrap: 4, hide: 3 }, boat: true },
   { id: 'furnace', name: '용광로', desc: '광석을 주괴로 녹이는 시설이에요. 가까이에서 "제련" 탭을 쓰세요.', cost: { stone: 20, wood: 6 }, place: 'furnace' },
   { id: 'lantern', name: '광부 랜턴', desc: '밤과 갱도에서 보이는 범위가 넓어져요. 한 번만 만들면 계속 써요.', cost: { cuBar: 2, scrap: 2 }, lantern: true },
+  { id: 'rod',     name: '낚싯대', desc: '물가(호수나 바닷가)에서 낚시 버튼이 나타나요. 바늘은 고철로 만들어요. 한 번만 만들면 계속 써요.', cost: { wood: 5, scrap: 1 }, rod: true },
+  { id: 'pot',     name: '냄비', desc: '모닥불 곁에서 열매 스튜, 생선 수프, 모험가 정식을 끓일 수 있어요. 한 번만 만들면 돼요.', cost: { scrap: 3, stone: 2 }, pot: true },
   { id: 'raft',    name: '탈출 뗏목', desc: RAFT_DAY + '일차부터 해안에서 만들 수 있습니다. 완성하면 탈출!', cost: { wood: 30, stone: 10, cooked: 3 }, raft: true }
 ];
 
@@ -612,7 +654,8 @@ function catchUp(el){            // a zone you come back to has moved on: ore an
     else if (o.t === 'fire' && o.fuel > 0 && o.fuel < 1e6) o.fuel = Math.max(0, o.fuel - el);
   }
 }
-function enterZone(id, via){     // switch the active map; the one you leave is packed away and comes back as you left it
+function enterZone(id, via){
+  fishStop();     // switch the active map; the one you leave is packed away and comes back as you left it
   if (!ZONES[id] || Z.id === id) return false;
   zoneSave[Z.id] = packObjs(); zoneLeft[Z.id] = T;
   setZone(id); clearWorld();
@@ -748,7 +791,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0 }, buffs: { swift: 0, power: 0 }, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, visited: { home: true },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0 }, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, visited: { home: true },
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -799,7 +842,7 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQbB123456zZxXvVmMnN'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB123456zZxXvVmMnNfFkK'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
@@ -813,6 +856,8 @@ addEventListener('keydown', e => {
   else if (e.key === 'b' || e.key === 'B'){ if (!paused) toggleBuild(); }
   else if (e.key === 'm' || e.key === 'M'){ if (!paused) miniToggle(); }
   else if (e.key === 'n' || e.key === 'N') SND.setMuted(!SND.muted);
+  else if (e.key === 'f' || e.key === 'F'){ if (!paused){ if (fish.on) fishStop('낚싯줄을 감았어요'); else fishStart(); } }
+  else if (e.key === 'k' || e.key === 'K'){ if (!paused) openCook(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -846,7 +891,7 @@ cv.addEventListener('pointermove', e => {
   $('joyKnob').style.transform = `translate(${dx}px,${dy}px)`;
 });
 const endPtr = e => {
-  if (e.type === 'pointerup' && running && !paused && performance.now() - tapT < 300 && Math.hypot(e.clientX - tapX, e.clientY - tapY) < 10) miniTap(e);
+  if (e.type === 'pointerup' && running && !paused && performance.now() - tapT < 300 && Math.hypot(e.clientX - tapX, e.clientY - tapY) < 10 && !miniTap(e) && fish.on){ fish.armed = true; fishTap(); }
   if (paint && e.pointerId === paint.id){ paint = null; if (e.pointerType !== 'mouse') cursor = null; }
   if (joy.active && e.pointerId === joy.id) resetJoy();
 };
@@ -1045,7 +1090,7 @@ function labelFor(tg){
     case 'wall': return o.kind === 'tower' && P.inv.ammo > 0 && o.ammo < tw(o).max ? '장전' : o.hp < o.max ? '수리' : '강화';
     case 'wreck': return '뒤지기';
     case 'water': return '마시기';
-    case 'fire': return o.fuel > 0 && P.inv.meat > 0 ? '굽기' : o.fuel > 1e6 ? '불' : '장작';
+    case 'fire': return o.fuel > 0 && (P.inv.meat > 0 || P.inv.fish > 0) ? '굽기' : o.fuel > 1e6 ? '불' : '장작';
     case 'shelter': return isNight() ? '잠자기' : '움막';
   }
   return '행동';
@@ -1053,6 +1098,7 @@ function labelFor(tg){
 
 function act(){
   if (P.cd > 0 || sleeping) return;
+  if (fish.on){ fishTap(); P.cd = .12; return; }
   if (buildMode){ P.cd = .2; buildAtGhost(); return; }
   if (P.equip === 'gun' && (aimTarget() || !target || target.kind === 'creature')){ fireGun(); return; }
   const tg = target;
@@ -1097,6 +1143,7 @@ function act(){
     case 'fire':
       P.cd = .35;
       if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y, 26, '구웠어요 🍖'); SND.play('smelt'); }
+      else if (o.fuel > 0 && P.inv.fish > 0){ P.inv.fish--; P.inv.grilled++; P.seen.grilled = true; floater(P.x, P.y, 26, '구웠어요 🍢'); SND.play('smelt'); }
       else if (o.fuel > 1e6) toast('꺼지지 않는 불이에요');
       else if (P.inv.wood > 0){ P.inv.wood--; o.fuel = Math.min(FIRE_MAX, o.fuel + 45); floater(P.x, P.y, 26, '장작 -1 🪵'); SND.play('build'); }
       else { SND.play('deny'); toast('장작이 필요해요'); }
@@ -1298,6 +1345,7 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
 }
 function hurt(n, raw){
   if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0])));
+  if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
   floater(P.x, P.y, 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
@@ -1321,10 +1369,24 @@ function useItem(k){
   P.inv[k]--; SND.play('eat');
   if (k === 'berry'){ P.hunger = Math.min(100, P.hunger + 12); floater(P.x, P.y, 26, '+12 배고픔', '#f2b84b'); }
   else if (k === 'cooked'){ P.hunger = Math.min(100, P.hunger + 40); P.hp = Math.min(100, P.hp + 10); floater(P.x, P.y, 26, '+40 배고픔', '#f2b84b'); }
+  else if (FOOD[k]) eatFood(k);
   else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6, true); }
 }
+const FOOD = {       // what the fish dishes do (raw: damage taken from eating it uncooked; warm / full: seconds of the buff)
+  fish:    { hunger: 12, raw: 4, say: '날생선은 비려요' },
+  grilled: { hunger: 35, hp: 8 },
+  stew:    { hunger: 22, warm: 120, say: '몸이 따뜻해져요! 한동안 추위를 덜 타요' },
+  soup:    { hunger: 45, thirst: 25, full: 150, say: '속이 든든해요! 배고픔이 천천히 줄어요' },
+  feast:   { hunger: 60, hp: 30, warm: 120, full: 120, say: '푸짐한 한 끼! 몸이 따뜻하고 든든해요' }
+};
+function eatFood(k){
+  const f = FOOD[k]; P.hunger = Math.min(100, P.hunger + f.hunger); floater(P.x, P.y, 26, '+' + f.hunger + ' 배고픔', '#f2b84b');
+  if (f.hp) P.hp = Math.min(100, P.hp + f.hp); if (f.thirst) P.thirst = Math.min(100, P.thirst + f.thirst);
+  if (f.warm) P.buffs.warm = Math.max(P.buffs.warm, f.warm); if (f.full) P.buffs.full = Math.max(P.buffs.full, f.full);
+  if (f.say) toast(f.say); if (f.raw) hurt(f.raw, true);
+}
 function eatBest(){
-  for (const k of ['cooked', 'berry', 'meat']) if (P.inv[k] > 0){ useItem(k); return; }
+  for (const k of ['cooked', 'grilled', 'berry', 'fish', 'meat']) if (P.inv[k] > 0){ useItem(k); return; }
   toast('먹을 것이 없어요');
 }
 
@@ -1358,6 +1420,8 @@ function craftBlock(r){
   for (const k in r.cost) if (P.inv[k] < r.cost[k]) return '재료가 부족해요';
   if (r.tool && P.tools[r.tool]) return '이미 가지고 있어요';
   if (r.lantern && P.lantern) return '이미 가지고 있어요';
+  if (r.rod && P.rod) return '이미 가지고 있어요';
+  if (r.pot && P.pot) return '이미 가지고 있어요';
   if (r.boat){
     if (P.boat) return '이미 만들었어요';
     if (!seaSpot()) return '바다와 가까운 해안에서 만들 수 있어요';
@@ -1395,7 +1459,7 @@ function craft(r){
   let spot = null;
   if (r.place){ spot = placeSpot(r); if (!spot){ toast('주변이 빽빽해서 놓을 수 없어요. 탁 트인 곳으로 가세요.'); return; } }
   if (r.boat){ spot = seaSpot(); if (!spot){ toast('바닷가에 배를 놓을 자리가 없어요. 다른 해안으로 가 보세요.'); return; } }
-  for (const k in r.cost) P.inv[k] -= r.cost[k]; SND.play(r.tool || r.boat || r.lantern ? 'upgrade' : 'craft');
+  for (const k in r.cost) P.inv[k] -= r.cost[k]; SND.play(r.tool || r.boat || r.lantern || r.rod || r.pot ? 'upgrade' : 'craft');
   if (r.tool){
     P.tools[r.tool] = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
     if (r.tool === 'gun') setTimeout(() => toast('탄약은 제작 메뉴에서 만들어요. 탑에도 같은 탄약을 써요.'), 3000);
@@ -1404,6 +1468,8 @@ function craft(r){
   else if (r.place === 'fire'){ addObj({ t: 'fire', x: spot.x, y: spot.y, r: 9, fuel: 140 }); P.built.fire = true; toast('모닥불을 피웠어요. 가까이에서 몸을 녹이세요.'); }
   else if (r.place === 'shelter'){ addObj({ t: 'shelter', x: spot.x, y: spot.y, r: 26 }); P.built.shelter = true; toast('움막을 지었어요. 밤에 잘 수 있어요.'); }
   else if (r.place === 'furnace'){ addObj({ t: 'furnace', x: spot.x, y: spot.y, r: 20, v: Math.random(), glow: 0 }); P.built.furnace = true; toast('용광로를 지었어요. 가까이에서 행동 버튼으로 제련하세요.'); }
+  else if (r.rod){ P.rod = true; toast('낚싯대를 만들었어요! 호숫가나 바닷가에서 낚시 버튼을 눌러 보세요.'); }
+  else if (r.pot){ P.pot = true; toast('냄비를 만들었어요! 모닥불 곁의 요리 버튼으로 스튜와 수프를 끓여요.'); }
   else if (r.lantern){ P.lantern = true; toast('광부 랜턴을 만들었어요! 어두운 곳에서도 멀리 보여요.'); }
   else if (r.boat){ P.boat = true; P.boatLv = 1; addObj({ t: 'boat', x: spot.x, y: spot.y, r: 22, v: Math.random() }); toast('작은 배를 만들었어요! 배 앞에서 행동 버튼으로 항해해요.'); }
   else if (r.give){ for (const k in r.give) P.inv[k] += r.give[k]; toast(r.name + ' 완성! 보유 ' + ITEMS.ammo.icon + P.inv.ammo); }
@@ -1435,7 +1501,7 @@ function renderSmelt(){
     box.appendChild(b1); box.appendChild(b2); div.appendChild(box); list.appendChild(div);
   }
 }
-const recipeOwned = r => (r.tool && P.tools[r.tool]) || (r.lantern && P.lantern) || (r.boat && P.boat);
+const recipeOwned = r => (r.tool && P.tools[r.tool]) || (r.lantern && P.lantern) || (r.boat && P.boat) || (r.rod && P.rod) || (r.pot && P.pot);
 const costChips = cost => Object.keys(cost).map(k => `<span class="${P.inv[k] >= cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${cost[k]}</span>`).join('');
 function effectText(t, lv){
   if (t === 'armor') return ARMOR_NAME[lv] + ' · 받는 피해 -' + Math.round(ARMOR_RED[lv] * 100) + '%';
@@ -1550,10 +1616,10 @@ function toast(msg){
 const invEl = $('inv'), inv2El = $('inv2'), inv3El = $('inv3');
 for (const k in ITEMS){
   const b = document.createElement('button'); b.className = 'slot' + (ITEMS[k].food ? ' food' : '') + (ITEMS[k].use ? ' use' : '') + (k === 'core' ? ' core' : '') + (ITEMS[k].ore ? ' ore' : '') + (ITEMS[k].bar ? ' bar' : ''); b.dataset.k = k;
-  b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`; if (ITEMS[k].ore || ITEMS[k].bar){ b.classList.add('mini'); b.title = ITEMS[k].name; b.setAttribute('aria-label', ITEMS[k].name); }
-  (ITEMS[k].ore || ITEMS[k].bar ? inv3El : SPECIAL[k] ? inv2El : invEl).appendChild(b);
+  b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`; if (ITEMS[k].ore || ITEMS[k].bar || ITEMS[k].mini){ b.classList.add('mini'); b.title = ITEMS[k].name; b.setAttribute('aria-label', ITEMS[k].name); }
+  (ITEMS[k].ore || ITEMS[k].bar || ITEMS[k].mini ? inv3El : SPECIAL[k] ? inv2El : invEl).appendChild(b);
 }
-for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
+for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥'], ['chipWarm', 'warm', '🔥'], ['chipFull', 'full', '🍲']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
 function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
 /* ================= minimap: the island turned 45 degrees (so "up" on the map is "up" on the screen), tap it to switch between the whole island and your surroundings ================= */
 const miniCv = $('mini'), mx = miniCv.getContext('2d');
@@ -1563,8 +1629,8 @@ const MINI_GROUND = { grass: '#4f6a3b', rock: '#6d675a', snow: '#c9d4db', cave: 
 const MINI_ORE = { copper: '#ff9a52', iron: '#dfeaf7', gold: '#ffd84a' };
 const MINI_SEE = 650, MINI_CAVE_SEE = 420;           // how far hostile animals (and, in the cave, ore) show up on the map
 function miniTap(e){
-  const r = miniCv.getBoundingClientRect(); if (!r.width || e.clientX < r.left - 6 || e.clientX > r.right + 6 || e.clientY < r.top - 6 || e.clientY > r.bottom + 6) return;
-  miniToggle();
+  const r = miniCv.getBoundingClientRect(); if (!r.width || e.clientX < r.left - 6 || e.clientX > r.right + 6 || e.clientY < r.top - 6 || e.clientY > r.bottom + 6) return false;
+  miniToggle(); return true;
 }
 function miniToggle(){ miniMode = miniMode === 'island' ? 'near' : 'island'; miniLast = -1; try { localStorage.setItem('muindo-minimap', miniMode); } catch (_) {} }
 function drawMini(force){
@@ -1651,17 +1717,17 @@ function updateHUD(){
     s.classList.toggle('dim', n === 0);
     const hide = !!(RARE[k] && n === 0 && !P.seen[k] && !(k === 'ammo' && P.tools.gun)); if (s.hidden !== hide) s.hidden = hide;
   });
-  for (const [id, k] of [['chipSwift', 'swift'], ['chipPower', 'power']]){
+  for (const [id, k] of [['chipSwift', 'swift'], ['chipPower', 'power'], ['chipWarm', 'warm'], ['chipFull', 'full']]){
     const el = $(id), on = P.buffs[k] > 0; if (el.hidden === on) el.hidden = !on; if (on) setText(el, el.dataset.ic + ' ' + Math.ceil(P.buffs[k]));
   }
-  const row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || P.buffs.swift > 0 || P.buffs.power > 0;
+  const anyBuff = P.buffs.swift > 0 || P.buffs.power > 0 || P.buffs.warm > 0 || P.buffs.full > 0, row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || anyBuff;
   const row3 = [...inv3El.querySelectorAll('.slot')].some(s => !s.hidden); if (inv3El.hidden === row3) inv3El.hidden = !row3;
-  if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', P.buffs.swift > 0 || P.buffs.power > 0);
+  if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', anyBuff);
   const boss = creatures.find(c => c.boss), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
   if (boss){ setText($('bossName'), '👑 ' + boss.name); setText($('bossHp'), Math.ceil(boss.hp) + ' / ' + boss.max); const w = (Math.max(0, boss.hp / boss.max) * 100).toFixed(1) + '%'; if ($('bossFill')._w !== w){ $('bossFill')._w = w; $('bossFill').style.width = w; } }
   updateEliteArrow(); layoutHud();
   setText($('armorBadge'), P.armor ? '🛡' + P.armor : '');
-  if (buildMode) syncBuildBar();
+  if (buildMode) syncBuildBar(); updateCtx();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
 function objective(){
@@ -1790,7 +1856,7 @@ function update(dt){
   const m = Math.hypot(ix, iy);
   P.cd = Math.max(0, P.cd - dt); P.swing = Math.max(0, P.swing - dt); P.flash = Math.max(0, (P.flash || 0) - dt);
   P.moving = m > .1;
-  P.buffs.swift = Math.max(0, P.buffs.swift - dt); P.buffs.power = Math.max(0, P.buffs.power - dt);
+  P.buffs.swift = Math.max(0, P.buffs.swift - dt); P.buffs.power = Math.max(0, P.buffs.power - dt); P.buffs.warm = Math.max(0, P.buffs.warm - dt); P.buffs.full = Math.max(0, P.buffs.full - dt);
   if ((P.buffs.swift > 0 || P.buffs.power > 0) && Math.random() < dt * 8) fx('glow', P.x, P.y, 6, 1, P.buffs.swift > 0 ? '110,200,255' : '255,150,70');
   if (P.moving){
     const wd = scr2world(ix, iy); P.fx = wd.x; P.fy = wd.y; if (Math.abs(ix / m) > .2) P.flip = ix < 0 ? -1 : 1;
@@ -1802,7 +1868,7 @@ function update(dt){
 
   // survival stats
   const dark = darkness(t);
-  P.hunger = Math.max(0, P.hunger - .18 * dt);
+  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1));
   P.thirst = Math.max(0, P.thirst - .28 * dt);
   let warm = false;
   for (const s of structs){
@@ -1811,7 +1877,7 @@ function update(dt){
   }
   const chill = Z.chill || 0;                                   // caves and the snow island keep draining warmth
   if (warm) P.warmth += 8 * dt;
-  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt;
+  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1);
   else P.warmth += 1.6 * dt;
   if (chill && !warm && P.warmth < 30 && T - lastChillT > 40){ lastChillT = T; toast('몸이 얼어붙어요! 모닥불이나 움막 곁에서 몸을 녹이세요.'); }
   P.warmth = clamp(P.warmth, 0, 100);
@@ -1832,7 +1898,7 @@ function update(dt){
   if (P.auto){ const b = hasTool('gun') && P.inv.ammo > 0 && nearestHostile(AUTO_GUN_RANGE) ? 'gun' : bestFor(target); if (b) setEquip(b); }
   aim = P.equip === 'gun' ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
   for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
   for (let i = corpses.length - 1; i >= 0; i--){ const o = corpses[i]; o.t += dt; if (o.t < .5){ o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy *= .9; } if (o.t > 9) corpses.splice(i, 1); }
   const da = scrAng(P.fx, P.fy) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
@@ -1879,7 +1945,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, visited: P.visited, bossKills: P.bossKills },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, rod: P.rod, pot: P.pot, visited: P.visited, bossKills: P.bossKills },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -1894,7 +1960,7 @@ function loadGame(s){
   P = Object.assign(newPlayer(), s.p); T = s.T;
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
-  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0 }, P.buffs); P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {};
+  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0 }, P.buffs); P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {};
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
   spawnFauna();
@@ -1902,7 +1968,7 @@ function loadGame(s){
 
 /* ================= game flow ================= */
 function startRun(){
-  running = true; paused = false; sleeping = false; actHeld = false; resetJoy();
+  running = true; paused = false; sleeping = false; actHeld = false; resetJoy(); fishStop();
   lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; lastGoal = ''; bossTimer = 4; target = null; lastLabel = '';
   cam.x = P.x; cam.y = P.y;
   $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
@@ -2539,6 +2605,7 @@ function fx(kind, x, y, z, n, col){
       case 'splat': addPart('chip', x, y, z, ca * rand(20, 70), sa * rand(8, 30), rand(30, 80), .5, rand(1.8, 3), col); break;
       case 'ember': addPart('ember', x + rand(-5, 5), y + rand(-3, 3), z, rand(-10, 10), rand(-6, 6), rand(28, 55), rand(.9, 1.5), rand(1.2, 2.2), PICK(['255,170,70', '255,120,40', '255,210,110'])); break;
       case 'smoke': addPart('smoke', x + rand(-3, 3), y, z, rand(-5, 5) + 6, rand(-3, 3), rand(10, 22), rand(1, 1.6), rand(4, 7), '190,195,200'); break;
+      case 'splash': addPart('chip', x + rand(-6, 6), y + rand(-3, 3), z, ca * rand(8, 30), sa * rand(4, 15), rand(45, 95), .5, rand(1.4, 2.2), PICK(['190,225,245', '150,200,230', '225,240,250'])); break;
       case 'glow':  addPart('ember', x + rand(-6, 6), y + rand(-3, 3), z, rand(-8, 8), rand(-4, 4), rand(18, 42), rand(.7, 1.2), rand(1.4, 2.4), col || '255,214,90'); break;
     }
   }
@@ -3091,6 +3158,7 @@ function render(){
     ctx.restore();
   }
   if (buildMode && running) drawGhost();
+  drawFishing();
 
   uprightT();
   drawParts(); drawBullets();
@@ -3124,6 +3192,176 @@ function render(){
   uprightT(); drawPickups(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   updateAtmosphere(t, dk); drawMini();
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
+}
+
+/* ================= fishing: cast, wait for a nibble, hook it when the bobber dives, then time three taps on the moving bar ================= */
+const FISH_KIND = {
+  small: { name: '작은 물고기', n: 1, zw: .36, sp: .85, bite: 1.25 },
+  big:   { name: '큰 물고기',   n: 2, zw: .27, sp: 1.1,  bite: 1.05 },
+  rare:  { name: '희귀한 물고기', n: 3, zw: .2,  sp: 1.35, bite: .9 },
+  chest: { name: '표류 상자',   n: 0, zw: .34, sp: .9,  bite: 1.2 }
+};
+const FISH_ODDS = { lake: [[70, 'small'], [20, 'big'], [4, 'rare'], [6, 'chest']], sea: [[48, 'small'], [30, 'big'], [16, 'rare'], [6, 'chest']] };
+const CHEST_LOOT = [[{ ammo: 8 }, '탄약'], [{ scrap: 3 }, '고철'], [{ hide: 2 }, '가죽'], [{ heal: 1 }, '치유약'], [{ swift: 1 }, '신속약'], [{ berry: 6 }, '열매']];
+const fish = { on: false, st: 'wait', t: 0, bx: 0, by: 0, water: 'lake', cur: 0, dir: 1, sp: 1, zc: .5, zw: .3, prog: 0, miss: 0, kind: 'small', armed: true, spot: null, bobT: 0, nib: 0, dip: 0, scan: 0, caught: 0, msg: '', msgT: 0 };
+let waterList = [], waterAt = -9;
+function fishSpotNow(){
+  if (Z.cave || !P.rod) return null;
+  if (anim - waterAt > 1.5){ waterAt = anim; waterList = objs.filter(o => o.t === 'water'); }
+  let best = null, bd = 1e9;
+  for (const o of waterList){ const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r; if (d < 48 && d < bd && o.r >= 26){ bd = d; best = o; } }
+  if (best){
+    const dx = best.x - P.x, dy = best.y - P.y, l = Math.hypot(dx, dy) || 1, vx = dx / l, vy = dy / l, dist = Math.max(0, l - best.r) + Math.min(34, best.r * .6);
+    return { bx: P.x + vx * dist, by: P.y + vy * dist, water: 'lake', fx: vx, fy: vy };
+  }
+  const ins = inside(P.x, P.y);
+  if (ins < 62){
+    const e = 3, gx = inside(P.x + e, P.y) - inside(P.x - e, P.y), gy = inside(P.x, P.y + e) - inside(P.x, P.y - e), gl = Math.hypot(gx, gy);
+    let vx, vy; if (gl > .05){ vx = -gx / gl; vy = -gy / gl; } else { vx = P.x - WORLD / 2; vy = P.y - WORLD / 2; const l = Math.hypot(vx, vy) || 1; vx /= l; vy /= l; }
+    const dist = Math.max(0, ins) + 52;
+    return { bx: P.x + vx * dist, by: P.y + vy * dist, water: 'sea', fx: vx, fy: vy };
+  }
+  return null;
+}
+const fishWait = () => rand(2.6, 6.8) * (isNight() ? .75 : 1) * (rainAmt() > .5 ? .8 : 1);
+function fishMsg(m, hold){ fish.msgT = hold || 0; if (fish.msg !== m){ fish.msg = m; $('fishMsg').textContent = m; } }
+function fishUI(){
+  const ui = $('fishUI'); if (ui.hidden === fish.on) ui.hidden = !fish.on; if (!fish.on) return;
+  const reel = fish.st === 'reel';
+  ui.dataset.st = fish.st; $('fishBar').hidden = !reel; $('fishPips').hidden = !reel;
+  if (fish.st === 'wait'){ if (fish.msgT <= 0) fishMsg('찌를 지켜보세요…'); } else if (fish.st === 'bite') fishMsg('입질이다! 지금 눌러요!');
+  if (reel){
+    $('fishZone').style.left = ((fish.zc - fish.zw / 2) * 100).toFixed(1) + '%'; $('fishZone').style.width = (fish.zw * 100).toFixed(1) + '%';
+    $('fishCur').style.left = (fish.cur * 100).toFixed(1) + '%';
+    [...$('fishPips').children].forEach((b, i) => { b.className = i < fish.prog ? 'on' : i >= 3 - fish.miss ? 'bad' : ''; });
+  }
+  $('btnFish').classList.toggle('on', fish.on);
+}
+function fishStart(){
+  if (!P.rod || sleeping || buildMode) return;
+  const s = fishSpotNow(); if (!s){ toast('물가(호수나 바닷가)에서만 낚시할 수 있어요'); return; }
+  Object.assign(fish, { on: true, st: 'wait', bx: s.bx, by: s.by, water: s.water, armed: false, miss: 0, prog: 0, dip: 0, bobT: 0, msg: '' });
+  P.fx = s.fx; P.fy = s.fy; if (Math.abs(s.fx - s.fy) > .2) P.flip = s.fx < s.fy ? -1 : 1;
+  fish.t = fishWait(); fish.nib = rand(1.1, 2.2); SND.play('cast'); fx('splash', fish.bx, fish.by, 2, 5);
+  fishUI();
+}
+function fishStop(why){
+  if (!fish.on) return; fish.on = false; fishUI(); if (why) toast(why);
+}
+function fishPick(){
+  const odds = FISH_ODDS[fish.water]; let r = Math.random() * odds.reduce((a, b) => a + b[0], 0);
+  for (const [w, k] of odds){ r -= w; if (r <= 0) return k; } return 'small';
+}
+function fishZone(){ const old = fish.zc; let z = 0; for (let i = 0; i < 8; i++){ z = fish.zw / 2 + .04 + Math.random() * (1 - fish.zw - .08); if (Math.abs(z - old) > .22) break; } return z; }
+function fishEnd(ok, msg){
+  if (ok){
+    fish.caught++; const k = FISH_KIND[fish.kind];
+    if (fish.kind === 'chest'){ const [loot, nm] = PICK(CHEST_LOOT); for (const it in loot) gain(it, loot[it]); toast('📦 표류 상자! ' + nm + ' ' + Object.values(loot)[0] + '개를 얻었어요'); }
+    else { gain('fish', k.n); toast('🐟 ' + josa(k.name, '을/를') + ' 낚았어요! +' + k.n); }
+    fx('splash', fish.bx, fish.by, 4, 10); SND.play('catch', { key: 1 }); try { navigator.vibrate && navigator.vibrate(20); } catch (_) {}
+    fishMsg('잡았다!');
+  } else { SND.play('escape'); fishMsg(msg || '놓쳤어요…'); fx('splash', fish.bx, fish.by, 2, 4); }
+  fish.st = 'done'; fish.t = 1.3; fish.dip = 0; fishUI();
+}
+function fishTap(){
+  if (!fish.on || !fish.armed) return; fish.armed = false;
+  if (fish.st === 'wait'){ fish.t += 1.6; fish.nib += 1; SND.play('reelMiss'); fishMsg('너무 일렀어요! 물고기가 놀랐어요', 1.6); }
+  else if (fish.st === 'bite'){
+    const k = FISH_KIND[fish.kind]; fish.st = 'reel'; fish.prog = 0; fish.miss = 0; fish.cur = rand(0, .15); fish.dir = 1; fish.sp = k.sp; fish.zw = k.zw; fish.zc = fishZone(); fish.t = 14;
+    SND.play('hook'); fx('splash', fish.bx, fish.by, 4, 6); fishMsg('');
+  } else if (fish.st === 'reel'){
+    if (Math.abs(fish.cur - fish.zc) <= fish.zw / 2){
+      fish.prog++; SND.play('reelHit', { r: .9 + fish.prog * .16 }); fx('splash', fish.bx, fish.by, 3, 4);
+      if (fish.prog >= 3) fishEnd(true); else { fish.zc = fishZone(); fish.sp *= 1.1; }
+    } else {
+      fish.miss++; SND.play('reelMiss'); if (fish.miss >= 2) fishEnd(false, '줄이 끊어졌어요!');
+    }
+  }
+  fishUI();
+}
+function updateFish(dt){
+  fish.scan -= dt; if (fish.scan <= 0){ fish.scan = .2; fish.spot = P.rod && !buildMode && !sleeping ? fishSpotNow() : null; }
+  if (!actHeld && !keys.act) fish.armed = true;
+  if (!fish.on){ return; }
+  if (P.moving || !fish.spot || buildMode){ fishStop(fish.st === 'reel' ? '줄을 놓쳤어요' : '낚싯줄을 감았어요'); return; }
+  fish.bobT += dt; fish.dip = Math.max(0, fish.dip - dt * 1.4); fish.msgT = Math.max(0, fish.msgT - dt);
+  if (fish.st === 'wait'){
+    fish.t -= dt; fish.nib -= dt;
+    if (fish.nib <= 0){ fish.nib = rand(1.2, 3); fish.dip = .45; SND.play('plip', { x: fish.bx, y: fish.by }); fx('splash', fish.bx, fish.by, 1, 1); }
+    if (fish.t <= 0){ fish.kind = fishPick(); fish.st = 'bite'; fish.t = FISH_KIND[fish.kind].bite; fish.dip = 1; SND.play('bite', { key: 1 }); fx('splash', fish.bx, fish.by, 3, 5); try { navigator.vibrate && navigator.vibrate(40); } catch (_) {} }
+  } else if (fish.st === 'bite'){
+    fish.dip = Math.max(fish.dip, .9); fish.t -= dt; if (fish.t <= 0) fishEnd(false, '놓쳤어요… 물고기가 도망갔어요');
+  } else if (fish.st === 'reel'){
+    fish.cur += fish.dir * fish.sp * dt; if (fish.cur >= 1){ fish.cur = 1; fish.dir = -1; } else if (fish.cur <= 0){ fish.cur = 0; fish.dir = 1; }
+    fish.dip = .55; fish.t -= dt; if (fish.t <= 0) fishEnd(false, '줄이 풀렸어요');
+  } else if (fish.st === 'done'){
+    fish.t -= dt; if (fish.t <= 0){ fish.st = 'wait'; fish.t = fishWait(); fish.nib = rand(1.1, 2.2); fishMsg(''); SND.play('cast'); }
+  }
+  fishUI();
+}
+function drawFishing(){
+  if (!fish.on) return;
+  const bx = fish.bx, by = fish.by, t = fish.bobT;
+  ctx.save(); worldT();
+  const a = (t * .9) % 1;
+  ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(225,242,250,' + ((1 - a) * .5).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(bx, by, 3 + a * 15, 0, TAU); ctx.stroke();
+  if (fish.dip > .1 || fish.st === 'reel'){ const b = (t * 2.4) % 1; ctx.strokeStyle = 'rgba(225,242,250,' + ((1 - b) * .7).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(bx, by, 2 + b * 11, 0, TAU); ctx.stroke(); }
+  ctx.restore();
+  ctx.save(); uprightT();
+  const sx = ux(P.x, P.y), sy = uy(P.x, P.y), fx2 = ux(P.x + P.fx * 10, P.y + P.fy * 10) - sx, fy2 = uy(P.x + P.fx * 10, P.y + P.fy * 10) - sy, fl = Math.hypot(fx2, fy2) || 1;
+  const hx = sx + fx2 / fl * 5, hy = sy - 13, tx = hx + fx2 / fl * 14, ty = hy - 15;
+  const px = ux(bx, by), py = uy(bx, by) + fish.dip * 3.5 + Math.sin(t * 3.1) * .7;
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#2b1c10'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(tx, ty); ctx.stroke();
+  ctx.strokeStyle = '#8a6a3c'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(tx, ty); ctx.stroke();
+  ctx.strokeStyle = 'rgba(235,235,225,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo((tx + px) / 2, Math.max(ty, py) - 4 + (fish.st === 'reel' ? -6 : 0), px, py - 2); ctx.stroke();
+  ctx.fillStyle = '#f4f1e6'; ctx.beginPath(); ctx.arc(px, py, 3.2, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#d8372b'; ctx.beginPath(); ctx.arc(px, py - .6, 3.2, Math.PI, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 3.2, 0, TAU); ctx.stroke();
+  if (fish.st === 'bite'){ ctx.font = '700 22px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText('!', px, py - 22 - Math.sin(anim * 22) * 2); ctx.fillStyle = '#ffd34a'; ctx.fillText('!', px, py - 22 - Math.sin(anim * 22) * 2); }
+  ctx.restore();
+}
+$('btnFish').addEventListener('click', () => { if (fish.on) fishStop('낚싯줄을 감았어요'); else fishStart(); });
+$('fishUI').addEventListener('pointerdown', e => { e.preventDefault(); fish.armed = true; fishTap(); });
+
+/* ================= cooking: at a lit campfire, with the ingredients you carry (a pot opens the stews) ================= */
+const COOK = [
+  { id: 'grillMeat', name: '구운 고기',   from: { meat: 1 },                 to: 'cooked',  desc: '배고픔 +40, 체력 +10' },
+  { id: 'grillFish', name: '구운 생선',   from: { fish: 1 },                 to: 'grilled', desc: '배고픔 +35, 체력 +8' },
+  { id: 'stew',      name: '열매 스튜',   from: { berry: 5 },                to: 'stew',    pot: 1, desc: '배고픔 +22 · 2분 동안 추위를 덜 타요' },
+  { id: 'soup',      name: '생선 수프',   from: { fish: 2, berry: 2 },       to: 'soup',    pot: 1, desc: '배고픔 +45, 갈증 +25 · 2분 30초 동안 배고픔이 천천히 줄어요' },
+  { id: 'feast',     name: '모험가 정식', from: { meat: 1, fish: 1, berry: 3 }, to: 'feast',  pot: 1, desc: '배고픔 +60, 체력 +30 · 두 효과를 2분 동안' }
+];
+function nearFire(){ let f = null, bd = 1e9; for (const s of structs) if (s.t === 'fire' && s.fuel > 0){ const d = Math.hypot(s.x - P.x, s.y - P.y); if (d < 110 && d < bd){ bd = d; f = s; } } return f; }
+function canCook(r){ return !(r.pot && !P.pot) && Object.keys(r.from).every(k => P.inv[k] >= r.from[k]); }
+function cookIt(r){
+  const f = nearFire(); if (!f){ toast('모닥불 가까이에서 요리해요'); return; }
+  if (r.pot && !P.pot){ toast('냄비가 필요해요 (제작 메뉴)'); return; }
+  if (!canCook(r)){ toast('재료가 부족해요'); return; }
+  for (const k in r.from) P.inv[k] -= r.from[k];
+  P.inv[r.to]++; P.seen[r.to] = true; SND.play(r.pot ? 'simmer' : 'smelt'); fx('smoke', f.x, f.y, 30, 3); fx('ember', f.x, f.y, 18, 4);
+  floater(f.x, f.y, 44, '+1 ' + ITEMS[r.to].icon, '#ffd166'); renderCook();
+}
+function renderCook(){
+  const list = $('cookList'); list.innerHTML = '';
+  const f = nearFire(); $('cookSub').textContent = f ? (P.pot ? '모닥불에서 재료를 익혀요.' : '모닥불에서 굽기만 할 수 있어요. 스튜와 수프는 냄비가 필요해요 (제작 메뉴: 고철 3 + 돌 2).') : '불이 꺼졌거나 너무 멀어요.';
+  COOK.forEach(r => {
+    const cost = Object.keys(r.from).map(k => `<span class="${P.inv[k] >= r.from[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${r.from[k]}</span>`).join('');
+    const div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>${ITEMS[r.to].icon} ${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${r.pot && !P.pot ? '<span class="note">냄비가 필요해요</span>' : ''}</div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = '요리'; b.disabled = !f || !canCook(r);
+    b.addEventListener('click', () => cookIt(r)); div.appendChild(b); list.appendChild(div);
+  });
+}
+function openCook(){ if (sleeping || !nearFire()) return; paused = true; actHeld = false; resetJoy(); renderCook(); $('cook').hidden = false; }
+function closeCook(){ $('cook').hidden = true; paused = false; }
+$('btnCook').addEventListener('click', () => { if (running && !paused) openCook(); });
+$('cookClose').addEventListener('click', closeCook);
+$('cook').addEventListener('click', e => { if (e.target === $('cook')) closeCook(); });
+function updateCtx(){           // the two round buttons beside "건축" that only appear where they make sense
+  const f = running && !paused && !buildMode, fishOk = f && P.rod && (fish.on || !!fish.spot), cookOk = f && !fish.on && !!nearFire() && COOK.some(r => Object.keys(r.from).some(k => P.inv[k] > 0));
+  if ($('btnFish').hidden === fishOk) $('btnFish').hidden = !fishOk;
+  if ($('btnCook').hidden === cookOk) $('btnCook').hidden = !cookOk;
+  setText($('btnFish'), fish.on ? '접기' : '낚시');
 }
 
 /* ================= sound: everything is synthesised with WebAudio, there are no audio files. Effects, a bed of ambience (wind, sea, rain, fire, cave) and a slow generative score ================= */
@@ -3244,6 +3482,15 @@ const SND = (() => {
     cricket:{ d: .5, cd: 250, fn: (c, o, t) => { const f = rnd(4300, 5000); for (let i = 0; i < 4; i++) tone(c, o, t + i * .04, { f, d: .03, v: .05, a: .004 }); } },
     heart:  { d: .5, cd: 300, v: .8, fn: (c, o, t) => { tone(c, o, t, { f: 62, f1: 38, d: .17, v: 1 }); tone(c, o, t + .19, { f: 58, f1: 36, d: .15, v: .7 }); } },
     kick:   { d: .5, cd: 100, wet: .35, fn: (c, o, t) => { tone(c, o, t, { f: 120, f1: 36, d: .35, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 900, d: .05, v: .5 }); } },
+    cast:   { d: .7, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 500, f1: 1800, q: .8, d: .18, a: .05, v: .25 }); burst(c, o, t + .2, { f: 700, f1: 300, q: 1.2, d: .22, v: .55 }); tone(c, o, t + .2, { f: 420, f1: 160, d: .13, v: .35 }); } },
+    plip:   { d: .3, cd: 120, v: .7, fn: (c, o, t) => { tone(c, o, t, { f: 950, f1: 520, d: .09, v: .2 }); burst(c, o, t, { f: 1600, q: 1.5, d: .04, v: .12 }); } },
+    bite:   { d: .7, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 800, f1: 300, q: 1, d: .3, v: .6 }); tone(c, o, t + .04, { f: 1200, d: .18, v: .22 }); tone(c, o, t + .12, { f: 1600, d: .25, v: .2 }); } },
+    hook:   { d: .35, cd: 100, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 700, f1: 1150, d: .1, v: .3 }); burst(c, o, t, { type: 'highpass', f: 3000, d: .03, v: .4 }); burst(c, o, t + .08, { f: 700, f1: 300, q: 1.2, d: .2, v: .35 }); } },
+    reelHit:{ d: .35, cd: 60, fn: (c, o, t, r) => { for (let i = 0; i < 3; i++) tone(c, o, t + i * .035, { type: 'square', f: 900 * r, d: .02, v: .09, lp: 4000 }); tone(c, o, t, { f: 600 * r, f1: 920 * r, d: .14, v: .22 }); } },
+    reelMiss:{ d: .3, cd: 60, fn: (c, o, t) => { tone(c, o, t, { type: 'sawtooth', f: 300, f1: 170, d: .16, v: .13, lp: 700 }); } },
+    catch:  { d: 1.1, cd: 200, wet: .3, fn: (c, o, t) => { burst(c, o, t, { f: 900, f1: 350, q: 1, d: .3, v: .5 }); arp(c, o, t + .05, [659, 880, 1175], .08, { type: 'triangle', d: .5, v: .2 }); } },
+    escape: { d: .5, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 600, f1: 250, q: 1, d: .3, v: .5 }); tone(c, o, t, { f: 320, f1: 120, d: .2, v: .3 }); } },
+    simmer: { d: 1.3, cd: 150, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 3500, d: .9, a: .1, v: .22 }); for (let i = 0; i < 5; i++) tone(c, o, t + .1 + i * .13, { f: 300 + Math.random() * 300, f1: 600 + Math.random() * 300, d: .06, v: .12 }); tone(c, o, t + .75, { f: 1100, d: .3, v: .12 }); } },
     stepGrass: { d: .15, cd: 90, v: .4, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { type: 'lowpass', f: 700 * r, d: .07, v: .5 }); burst(c, o, t, { f: 3500, q: .5, d: .05, v: .1 }); } },
     stepSand:  { d: .15, cd: 90, v: .4, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { f: 1100 * r, q: .6, d: .1, a: .01, v: .4 }); } },
     stepRock:  { d: .15, cd: 90, v: .4, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { f: 1700 * r, q: 1.2, d: .035, v: .5 }); tone(c, o, t, { f: 210 * r, f1: 120, d: .05, v: .2 }); } },
@@ -3462,7 +3709,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

@@ -65,21 +65,17 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .bbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#e0533f,#ffb44a);border-radius:5px;transition:width .15s linear}
 #eliteArrow.boss i{border-left-color:#ffd34a;filter:drop-shadow(0 0 5px rgba(255,205,70,.95))}
 #eliteArrow.boss b{color:#ffe08a}
-#inv,#inv2{display:flex;gap:5px;margin-top:8px}
-#inv3{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-width:256px}
-#inv2{align-items:center}
-.slot{position:relative;flex:1;min-width:0;max-width:52px;height:54px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
-.slot .ic{font-size:21px;line-height:1}
-.slot .nm{font-size:9px;color:var(--dim);line-height:1.1;white-space:nowrap;max-width:100%;overflow:hidden}
-.slot .n{position:absolute;right:4px;top:2px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+#bag{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:8px;max-width:min(268px,calc(100vw - 132px))}
+#inv,#inv2,#inv3{display:contents}
+@media (min-width:521px){#bag{max-width:min(440px,calc(100vw - 260px))}}
+.slot{position:relative;flex:0 0 auto;height:28px;border-radius:999px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:row;align-items:center;justify-content:center;gap:3px;padding:0 8px}
+.slot .ic{font-size:15px;line-height:1}
+.slot .nm{display:none}
+.slot .n{position:static;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
 .slot.dim{opacity:.4}
 .slot.food:not(.dim){border-color:rgba(143,209,106,.55)}
 .slot.use:not(.dim){border-color:rgba(127,208,255,.6)}
 .slot.core:not(.dim){border-color:rgba(194,124,255,.75)}
-.slot.mini{flex:0 0 auto;max-width:none;height:30px;flex-direction:row;gap:3px;padding:0 7px;border-radius:999px}
-.slot.mini .ic{font-size:15px}
-.slot.mini .nm{display:none}
-.slot.mini .n{position:static;font-size:12.5px}
 .slot.ore:not(.dim){border-color:rgba(255,170,90,.55)}
 .slot.bar:not(.dim){border-color:rgba(255,222,130,.7)}
 #perk{z-index:21}
@@ -100,12 +96,12 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .perkown span{font-size:22px;line-height:1.1}
 .perkown b{font-size:13.5px}
 .perkown p{margin:2px 0 0;font-size:12px;color:var(--dim);line-height:1.4}
-.chip{height:34px;padding:0 9px;border-radius:999px;display:flex;align-items:center;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
+.chip{height:28px;padding:0 8px;border-radius:999px;display:flex;align-items:center;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);white-space:nowrap}
 .chip.swift{border-color:#6ac8ff;color:#aee3ff}
 .chip.power{border-color:#ff9a5a;color:#ffc6a0}
 .chip.warm{border-color:#ff8a3d;color:#ffd0a8}
 .chip.full{border-color:#8fd16a;color:#cdeeb5}
-@media (max-width:520px){#inv2{flex-wrap:wrap;max-width:min(252px,calc(100vw - 132px))}#inv2 .slot{flex:0 0 42px}.chip{flex:none}#inv3{max-width:min(256px,calc(100vw - 132px))}}
+@media (max-width:520px){.chip{flex:none}}
 #goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
 #goal b{color:var(--amber);font-weight:700}
 #toasts{position:fixed;left:0;right:0;top:var(--tt,calc(max(10px,env(safe-area-inset-top)) + 158px));display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:7}
@@ -176,7 +172,12 @@ body.building #ctx{display:none}
 #eliteArrow b{font-size:10.5px;font-weight:700;color:#ffb3a8;text-shadow:0 1px 3px #000;white-space:nowrap}
 #equip{position:fixed;z-index:6;right:max(36px,calc(env(safe-area-inset-right) + 18px));bottom:max(210px,calc(env(safe-area-inset-bottom) + 198px));display:flex;flex-direction:column-reverse;align-items:center;gap:5px;pointer-events:none}
 #equip button{pointer-events:auto}
-.eq{position:relative;width:48px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#equip.min .eq:not(.on),#equip.min .auto{display:none}
+#equip.min .eq{width:42px;height:42px;border-radius:50%}
+#equip.min .eq svg{width:22px;height:22px}
+#equip.min .eq span{display:none}
+#equip.min.isauto .eq.on::after{content:'A';position:absolute;left:-3px;top:-3px;width:14px;height:14px;border-radius:50%;background:var(--ember);color:#2a1305;font-size:9px;font-weight:700;line-height:14px;text-align:center}
+.eq{position:relative;width:44px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .eq svg{width:24px;height:24px;display:block}
 .eq span{font-size:9.5px;line-height:1.1;color:var(--dim)}
 .eq.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
@@ -185,7 +186,6 @@ body.building #ctx{display:none}
 @keyframes pop{40%{transform:scale(1.14)}}
 .auto{width:48px;height:26px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:11.5px;font-weight:700;color:var(--dim);padding:0}
 .auto.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
-@media (max-height:860px) and (min-height:521px){.eq{height:42px}#equip{gap:3px}}
 @media (max-height:520px){#equip{flex-direction:row-reverse;right:calc(max(30px,calc(env(safe-area-inset-right) + 12px)) + 72px);bottom:max(144px,calc(env(safe-area-inset-bottom) + 132px))}}
 #joy{position:fixed;left:0;top:0;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:2px solid rgba(239,230,210,.38);background:rgba(239,230,210,.07);pointer-events:none;z-index:6;opacity:0;transition:opacity .12s}
 #joy.on{opacity:1}
@@ -213,9 +213,11 @@ body.building #ctx{display:none}
 .btn.small{padding:9px 14px;font-size:13.5px}
 .row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
 
-.screen{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;
+.screen{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;text-align:center;
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
   background:radial-gradient(ellipse at 50% 40%,rgba(8,16,14,.45),rgba(5,9,8,.86) 75%);touch-action:pan-y;overflow:auto}
+.screen>:first-child{margin-top:auto}
+.screen>:last-child{margin-bottom:auto}
 .screen h1{margin:0;font-family:var(--font-display);font-weight:400;font-size:clamp(40px,12vw,64px);line-height:1.05;letter-spacing:.01em;text-wrap:balance}
 .screen h1 em{font-style:normal;color:var(--ember)}
 .screen .lead{margin:0;max-width:30ch;font-size:15px;line-height:1.55;color:var(--bone);opacity:.92;text-wrap:balance}
@@ -282,16 +284,14 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <div class="sys"><button id="menuBtn" aria-label="메뉴">☰</button><button id="sndBtn" aria-label="소리 켜고 끄기" aria-pressed="false">🔊</button></div>
   </div>
   <div id="bossBar" class="panel" hidden><div class="bn"><span id="bossName"></span><small id="bossHp"></small></div><div class="bbar"><i id="bossFill"></i></div></div>
-  <div id="inv"></div>
-  <div id="inv2" hidden></div>
-  <div id="inv3" hidden></div>
+  <div id="bag"><div id="inv"></div><div id="inv2" hidden></div><div id="inv3" hidden></div></div>
   <div id="goal" class="panel"></div>
   <div id="eliteArrow" hidden><i></i><b></b></div>
   <canvas id="mini" width="104" height="104" aria-label="미니맵"></canvas>
   <div class="spacer"></div>
   <button id="btnBuild">건축</button>
   <div id="build" hidden></div>
-  <div id="equip" hidden></div>
+  <div id="equip" class="min" hidden></div>
   <button id="btnCraft">제작</button>
   <div id="ctx"><button id="btnPerk" hidden>기술</button><button id="btnFish" hidden>낚시</button><button id="btnCook" hidden>요리</button></div>
   <div id="fishUI" hidden><div id="fishMsg"></div><div id="fishBar" hidden><i id="fishZone"></i><i id="fishCur"></i></div><div id="fishPips" hidden><b></b><b></b><b></b></div><small>화면이나 행동 버튼을 눌러요 · 움직이면 줄을 감아요</small></div>
@@ -356,13 +356,13 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <ul class="how">
     <li><b>이동</b> 화면을 누른 채 드래그 (키보드 WASD)</li>
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
-    <li><b>먹기</b> 위쪽 가방의 음식을 터치 (E)</li>
+    <li><b>먹기</b> 위쪽 가방의 음식 알약을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
     <li><b>기술</b> 베고, 캐고, 싸우고, 만들고, 하루를 버티면 경험치가 쌓여요 (왼쪽 위의 보라 막대). 레벨이 오르면 <b>기술</b> 버튼이 깜빡이고, 둘 중 하나를 골라요</li>
     <li><b>낚시·요리</b> 낚싯대(나무 5 · 고철 1)를 만들면 물가에 <b>낚시</b> 버튼이 나타나요 (F). 입질이 오면 바로 누르고, 움직이는 막대가 초록 칸에 올 때 세 번 눌러 끌어올려요. 모닥불 곁의 <b>요리</b> 버튼 (K)으로 구이·스튜·수프를 만들어요</li>
     <li><b>소리</b> 위쪽 스피커 버튼으로 끄고 켜요 (N). 일시정지 메뉴에서 음악만 따로 끌 수 있어요</li>
     <li><b>미니맵</b> 오른쪽의 작은 지도를 누르면 섬 전체 ↔ 내 주변으로 바뀌어요 (M)</li>
-    <li><b>장비</b> 오른쪽 장비 슬롯 터치. 기본은 자동 전환 (키보드 1~5, Q)</li>
+    <li><b>장비</b> 오른쪽의 동그란 버튼을 누르면 목록이 펼쳐져요. 기본은 자동 전환 (키보드 1~5, Q)</li>
     <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
     <li><b>소총·탑</b> 소총은 장착하면 자동 조준, 탑은 건축에서 설치해요. 둘 다 탄약이 필요해요</li>
     <li>밤에는 <b>늑대</b>와 <b>좀비</b>가 옵니다. 낮에도 <b>곰</b>을 조심하세요.</li>
@@ -472,6 +472,7 @@ const ORE = {     // minable nodes: pickaxe level needed, units per node, second
   gold:   { tier: 3, amt: 4, regrow: 360, col: '#f2c84b', hi: '#fff2a8', rgb: '255,215,90', bar: 'auBar' }
 };
 const mkOre = kind => (x, y) => ({ t: 'ore', kind, x, y, r: 15, amt: ORE[kind].amt, v: Math.random(), shake: 0, regrow: 0 });
+const ALWAYS_SHOWN = { wood: 1, stone: 1 };           // every other bag slot appears when you hold some and disappears when you run out
 const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1, fish: 1, grilled: 1, stew: 1, soup: 1, feast: 1 };   // bag slots that stay hidden until you first get one
 const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1 };                           // these live in the second bag row
 const BUFF_T = 30;
@@ -941,7 +942,9 @@ $('btnCraft').addEventListener('click', toggleCraft);
 $('menuBtn').addEventListener('click', openMenu);
 $('equip').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !running || paused) return;
-  if (b.id === 'autoBtn') toggleAuto(); else manualEquip(b.dataset.t);
+  if ($('equip').classList.contains('min')){ setEquipOpen(true); return; }
+  if (b.id === 'autoBtn'){ toggleAuto(); setEquipOpen(true); }
+  else { if (b.dataset.t !== P.equip) manualEquip(b.dataset.t); setEquipOpen(false); }
 });
 for (const id of ['inv', 'inv2', 'inv3']) $(id).addEventListener('click', e => { const s = e.target.closest('.slot'); if (s && running && !paused) useItem(s.dataset.k); });
 
@@ -1069,7 +1072,10 @@ function buildEquip(){
   const a = document.createElement('button'); a.className = 'auto'; a.id = 'autoBtn'; box.appendChild(a);
   syncEquip();
 }
+let equipTimer = 0;
+function setEquipOpen(v){ const b = $('equip'); b.classList.toggle('min', !v); clearTimeout(equipTimer); if (v) equipTimer = setTimeout(() => b.classList.add('min'), 4500); }       // the list folds itself away again
 function syncEquip(){
+  $('equip').classList.toggle('isauto', !!P.auto);
   $('equip').querySelectorAll('.eq').forEach(b => {
     b.classList.toggle('on', b.dataset.t === P.equip);
     const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 5 ? ' l5' : lv >= 4 ? ' l4' : lv >= 3 ? ' l3' : ''); }
@@ -1753,7 +1759,7 @@ function updateHUD(){
   document.querySelectorAll('#inv .slot, #inv2 .slot, #inv3 .slot').forEach(s => {
     const k = s.dataset.k, n = P.inv[k] || 0; setText(s.querySelector('.n'), String(n));
     s.classList.toggle('dim', n === 0);
-    const hide = !!(RARE[k] && n === 0 && !P.seen[k] && !(k === 'ammo' && P.tools.gun)); if (s.hidden !== hide) s.hidden = hide;
+    const hide = n === 0 && !ALWAYS_SHOWN[k] && !(k === 'ammo' && P.tools.gun); if (s.hidden !== hide) s.hidden = hide;
   });
   for (const [id, k] of [['chipSwift', 'swift'], ['chipPower', 'power'], ['chipWarm', 'warm'], ['chipFull', 'full']]){
     const el = $(id), on = P.buffs[k] > 0; if (el.hidden === on) el.hidden = !on; if (on) setText(el, el.dataset.ic + ' ' + Math.ceil(P.buffs[k]));

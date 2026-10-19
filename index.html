@@ -388,7 +388,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 
 <div id="title" class="screen">
   <h1>무인도<br><em>생존기</em></h1>
-  <p class="lead" id="leadTxt">폭풍에 휩쓸려 혼자 남은 섬. 10일을 버텨 뗏목을 만들고 탈출하세요.</p>
+  <p class="lead" id="leadTxt">폭풍에 휩쓸려 혼자 남은 섬. 30일을 버텨 뗏목을 만들고 탈출하세요.</p>
   <div class="stack">
     <button class="btn" id="btnContinue" hidden>이어하기</button>
     <button class="btn" id="btnNew">새 게임</button>
@@ -400,7 +400,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>먹기</b> 위쪽 가방의 음식 알약을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
     <li><b>사건</b> 하루에도 무슨 일이 생겨요. 낮에는 표류 화물 · 운석 · 약초 · 사냥감 · 폭풍 · 한파 · 버려진 야영지, 밤에는 늑대 무리 · 좀비 떼 · 안개 · 보름달. 날씨 사건은 시계 아래에 표시돼요</li>
-    <li><b>보스</b> 3일 · 6일 · 9일 밤마다 와요. 판마다 두 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕, 좀비 군주 / 역병 거인, 산군 / 서리 거상)</li>
+    <li><b>보스</b> 3일마다(3 · 6 · 9 … 27일) 밤에 와요. 판마다 두 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕, 좀비 군주 / 역병 거인, 산군 / 서리 거상). 12일차부터는 더 강해진 보스가 다시 와요</li>
     <li><b>함정</b> 건축 메뉴의 가시 함정 · 올가미 덫 · 화염 함정은 적이 밟으면 터져요. 가시 울타리는 공격한 적을 다치게 해요</li>
     <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요. 냄비로 달인 피로회복제를 마시면 기운이 나요</li>
     <li><b>기술</b> 베고, 캐고, 싸우고, 만들고, 하루를 버티면 경험치가 쌓여요 (왼쪽 위의 보라 막대). 레벨이 오르면 <b>기술</b> 버튼이 깜빡이고, 둘 중 하나를 골라요</li>
@@ -449,7 +449,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 
 /* ================= constants ================= */
 let WORLD = 2400, ISL_M = 24, ISL_R = 230;      // the active zone's island = rounded square (setZone changes these)
-const DAY_LEN = 240, RAFT_DAY = 10;     // survive this many days, then build the raft
+const DAY_LEN = 240, RAFT_DAY = 30;     // survive this many days, then build the raft
 const PLAYER_R = 11, SPEED = 125;
 const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
 const CELL = 128; let GN = Math.ceil(WORLD / CELL);
@@ -576,10 +576,13 @@ const BOSSES = [
     loot: { core: [3, 3], iron: [5, 7], gold: [2, 3], feBar: [2, 3], heal: [3, 3], swift: [1, 1], power: [1, 1] } }
 ];
 function bossOf(day){            // each boss night has two candidates; which one comes is fixed per run (the run's seed), so a reload gives the same boss
-  const tier = Math.max(1, Math.min(3, Math.round(day / BOSS_EVERY))), pool = BOSSES.filter(b => b.tier === tier);
+  const tier = (Math.max(1, Math.round(day / BOSS_EVERY)) - 1) % 3 + 1, pool = BOSSES.filter(b => b.tier === tier);
   return pool[Math.floor(hash01(day * 97 + ((P && P.seed) || 0)) * pool.length) % pool.length];
 }
-const isBossDay = day => day % BOSS_EVERY === 0 && day <= RAFT_DAY;
+const isBossDay = day => day % BOSS_EVERY === 0 && day < RAFT_DAY;
+const BOSS_HP = [1, 1.6, 2.3], BOSS_DMG = [1, 1.3, 1.6], BOSS_PRE = ['', '강해진 ', '최강의 '];            // round 1 (days 3-9), 2 (12-18), 3 (21-27)
+const bossCycle = day => Math.max(0, Math.min(2, Math.floor((Math.round(day / BOSS_EVERY) - 1) / 3)));
+const bossTitle = day => BOSS_PRE[bossCycle(day)] + bossOf(day).name;
 const NIGHT_KINDS = { wolf: 1, zombie: 1, brute: 1 };
 /* ---- elites: stronger variants of wolves, zombies and bears, each with one affix ---- */
 const KIND_NAME = { rabbit: '토끼', boar: '멧돼지', wolf: '늑대', zombie: '좀비', brute: '거대 좀비', bear: '곰', bat: '박쥐', golem: '골렘', wolfking: '늑대왕', zombielord: '좀비 군주', mountainking: '산군', batqueen: '흡혈 박쥐 여왕', plaguegiant: '역병 거인', frostgiant: '서리 거상' };
@@ -913,20 +916,23 @@ function newPlayer(){
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
+const THREAT = { wolf: 1, zombie: 1, brute: 1, bat: 1, golem: 1, bear: 1, boar: 1 }, THREAT_HIT = { bat: 1, golem: 1, bear: 1, boar: 1 };
+const threatHp = () => 1 + .04 * Math.max(0, (P ? dayOf() : 1) - 3);            // x1.2 on day 8, x1.6 on day 18, x2.08 on day 30
+const threatHit = () => 1 + .03 * Math.max(0, (P ? dayOf() : 1) - 3);
 function newCreature(kind, x, y){
-  const sp = SPECS[kind];
-  return { k: kind, x, y, hp: sp.hp, max: sp.hp, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6), sinceHit: 9 };
+  const sp = SPECS[kind], hp = Math.round(sp.hp * (THREAT[kind] ? threatHp() : 1));
+  return { k: kind, x, y, hp, max: hp, dmgMul: THREAT_HIT[kind] ? threatHit() : undefined, r: sp.r, fx: 1, dx: 0, dy: 0, kvx: 0, kvy: 0, timer: rand(0, 2), state: 'idle', hit: 0, atk: 0, angry: 0, hop: rand(0, 6), sinceHit: 9 };
 }
 function spawnAt(kind, x, y){ const c = newCreature(kind, x, y); creatures.push(c); return c; }
 function eliteCount(){ let n = 0; for (const c of creatures) if (c.elite) n++; return n; }
 function rollElite(kind){            // elites get likelier as the days go by, but only a few can be alive at once
   const day = dayOf(); if (eliteCount() >= 1 + Math.floor(day / 3)) return false;
-  return Math.random() < Math.min(.35, (kind === 'bear' ? .06 + .04 * (day - 1) : .05 + .05 * (day - 1)) + (Z.eliteBonus || 0));
+  return Math.random() < Math.min(.5, (kind === 'bear' ? .06 + .04 * (day - 1) : .05 + .05 * (day - 1)) + (Z.eliteBonus || 0));
 }
 function makeElite(c, affix){
   const sp = SPECS[c.k], a = affix || PICK(Object.keys(AFFIX).filter(k => AFFIX[k].ok.includes(c.k)));
   c.elite = true; c.affix = a; c.scale = 1.28; c.r = Math.round(sp.r * 1.25);
-  c.hp = c.max = Math.round(sp.hp * ELITE_OK[c.k]); c.dmgMul = 1.5; c.spdMul = a === 'frenzy' ? 1.4 : 1.1; c.dr = a === 'armor' ? .4 : 0;
+  c.hp = c.max = Math.round(sp.hp * ELITE_OK[c.k] * (THREAT[c.k] ? threatHp() : 1)); c.dmgMul = 1.5 * (c.dmgMul || 1); c.spdMul = a === 'frenzy' ? 1.4 : 1.1; c.dr = a === 'armor' ? .4 : 0;
   c.name = AFFIX[a].name + ' ' + KIND_NAME[c.k];
   return c;
 }
@@ -1296,7 +1302,8 @@ function dropPickup(k, n, x, y){          // loot lies on the ground as a glowin
 function spawnBoss(def, day){
   const c = spawnCreature(def.k, offD(), offD() + 140, false); if (!c) return null;
   c.boss = BOSSES.indexOf(def) + 1; c.name = def.name; c.skill = 3 + Math.random() * 2; c.cast = 0; c.cr = 13; c.bday = day; if (c.boss === 1) c.scale = 1.9;
-  toast('⚠ 보스 ' + josa(def.name, '이/가') + ' 나타났어요!'); setTimeout(() => toast(def.desc), 1900);
+  const cy = bossCycle(day); c.cycle = cy; if (cy){ c.hp = c.max = Math.round(c.max * BOSS_HP[cy]); c.bmul = BOSS_DMG[cy]; c.name = BOSS_PRE[cy] + def.name; }
+  toast('⚠ 보스 ' + josa(c.name, '이/가') + ' 나타났어요!'); setTimeout(() => toast(def.desc), 1900);
   shakeT = .4; try { navigator.vibrate && navigator.vibrate([80, 60, 120]); } catch (_) {}
   SND.play('bossRoar', { key: 1 });
   return c;
@@ -1305,9 +1312,9 @@ function bossLoot(c){
   const def = BOSSES[c.boss - 1]; P.stats.bosses = (P.stats.bosses || 0) + 1; P.bossKills[c.bday] = true;
   floater(c.x, c.y, 74, '보스 처치!', '#ffd166'); fx('glow', c.x, c.y, 26, 30, def.col); fx('spark', c.x, c.y, 24, 20); shakeT = .45;
   const got = [];
-  for (const k in def.loot){ const n = rollDrop(def.loot[k]); if (n > 0){ dropPickup(k, n, c.x, c.y); got.push(ITEMS[k].icon + (n > 1 ? n : '')); } }
+  for (const k in def.loot){ const n = Math.round(rollDrop(def.loot[k]) * (1 + .5 * (c.cycle || 0))); if (n > 0){ dropPickup(k, n, c.x, c.y); got.push(ITEMS[k].icon + (n > 1 ? n : '')); } }
   for (let i = creatures.length - 1; i >= 0; i--){ const z = creatures[i]; if (z.owner){ fx('splat', z.x, z.y, 12, 6, '170,120,255'); creatures.splice(i, 1); } }       // the lord's minions crumble with him
-  toast('🏆 ' + def.name + ' 처치! 전리품 ' + got.join(' '));
+  toast('🏆 ' + c.name + ' 처치! 전리품 ' + got.join(' '));
 }
 function bossSlam(c, sp){
   const R = 105; shakeT = .38; c.swing = .4; SND.play('slam', { x: c.x, y: c.y, key: 1 });
@@ -1407,7 +1414,7 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   bloodAt(c.x, c.y, c.k, c.hp <= 0);
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
-    if (byPlayer) addXp((KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1));
+    if (byPlayer) addXp((KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1) * (1 + .5 * (c.cycle || 0)));
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0) + (isJob('hunter') && (k === 'meat' || k === 'hide') ? 1 : 0); if (n > 0) gain(k, n); }
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     if (c.boss && (byPlayer || byTower)) bossLoot(c);
@@ -1494,6 +1501,7 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
   }
 }
 function hurt(n, raw){
+  if (!raw && hitSrc && hitSrc.bmul) n *= hitSrc.bmul;                          // a boss's later rounds hit harder
   if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1)));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1) * (perk('immune') && (k === 'infect' || k === 'poison') ? .5 : 1)) afflict(k); }
@@ -1904,7 +1912,7 @@ function updateHUD(){
 function objective(){
   const day = dayOf(), boss = creatures.find(c => c.boss);
   if (boss) return '<b>목표</b> 보스 <b>' + boss.name + '</b>' + josa(boss.name, '을/를').slice(boss.name.length) + ' 쓰러뜨리세요!';
-  if (isBossDay(day) && !P.bossKills[day] && dayT() > .3 && !Z.cave) return '<b>목표</b> 오늘 밤 나타나는 <b>' + bossOf(day).name + '</b> 대비 (벽 · 탑 · 함정 · 탄약)';
+  if (isBossDay(day) && !P.bossKills[day] && dayT() > .3 && !Z.cave) return '<b>목표</b> 오늘 밤 나타나는 <b>' + bossTitle(day) + '</b> 대비 (벽 · 탑 · 함정 · 탄약)';
   if (isJob('owner')) return '<b>목표</b> ' + OWNER_DAY + '일차 아침까지 섬을 지키기 (<b>섬의 주인</b> 엔딩)';
   if (!P.tools.axe && !isJob('fist')) return '<b>목표</b> 나무 3 · 돌 2를 모아 <b>돌도끼</b> 만들기';
   if (!P.tools.spear && !isJob('fist')) return '<b>목표</b> 나무 4 · 돌 2로 <b>나무 창</b> 만들기';
@@ -1977,7 +1985,7 @@ function updateCreatures(dt){
       if (c.hp <= 0){ creatures.splice(i, 1); continue; }
       if (d < offD() + 260 && !isJob('lich')){
         sx = dx / d; sy = dy / d; spd = sp.speed;
-        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (1 + (day - 1) * .1) * (c.dmgMul || 1))); c.atk = 1.2; c.swing = .4; } }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * Math.min(3.2, 1 + (day - 1) * .1) * (c.dmgMul || 1))); c.atk = 1.2; c.swing = .4; } }
         else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round((big ? 22 : 7) * (c.dmgMul || 1))); c.atk = 1.2; c.swing = .4; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .5; }
       c.hop += dt * (spd ? 5 : 0);
@@ -1986,8 +1994,8 @@ function updateCreatures(dt){
       else if (!night && !Z.dayWolves){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > offD() + 120){ creatures.splice(i, 1); continue; } }
       else if (d < offD() + 260){
         sx = dx / d; sy = dy / d; spd = sp.speed;
-        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(Math.min(14, 6 + day) * (c.dmgMul || 1))); c.atk = 1; } }
-        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(Math.min(12, 5 + day) * (c.dmgMul || 1))); c.atk = 1; } }
+        if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(Math.min(24, 6 + day) * (c.dmgMul || 1))); c.atk = 1; } }
+        else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(Math.min(22, 5 + day) * (c.dmgMul || 1))); c.atk = 1; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
     spd *= (c.spdMul || 1) * creatureStatus(c, dt) * (c.k === 'wolf' && evOn('moon') ? 1.25 : 1);
@@ -2024,8 +2032,8 @@ function update(dt){
   }
   if (day !== lastDay){
     lastDay = day; if (day > 1) addXp(15 + day * 5); SND.play('dawn', { key: 1 }); toast(day + '일차 아침이 밝았습니다');
-    if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스 ' + josa(bossOf(day).name, '이/가') + ' 나타나요. 미리 준비하세요!'), 1800);
-    if (day === RAFT_DAY && !(canWake() && !P.hx.wall) && !isJob('owner')) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
+    if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스 ' + josa(bossTitle(day), '이/가') + ' 나타나요. 미리 준비하세요!'), 1800);
+    if (day === RAFT_DAY && !isJob('owner')) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
     hiddenDay(day);
   }
 
@@ -2095,7 +2103,10 @@ function update(dt){
     wolfTimer -= dt;
     if (wolfTimer <= 0){
       const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have && !c.ally) have[c.k]++;
-      const want = { wolf: Math.min(9, 1 + day), zombie: day >= 2 ? Math.min(12, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(5, Math.floor((day - 2) / 2)) : 0 };
+      const want = {                       // the first week as before, then slower but steady growth until day 30
+        wolf: day <= 8 ? 1 + day : Math.min(18, 9 + Math.floor((day - 8) / 2)),
+        zombie: day < 2 ? 0 : day <= 7 ? (day - 1) * 2 : Math.min(26, 12 + Math.floor((day - 7) * .7)),
+        brute: day < 4 ? 0 : Math.min(10, Math.floor((day - 2) / 2)) };
       if (evOn('fog')) want.zombie = Math.ceil(want.zombie * 1.5) + 1; if (evOn('moon')) want.wolf += 2;
       if (isBossDay(day)) for (const k in want) want[k] = Math.ceil(want[k] * .65);       // on a boss night the boss is the main event
       for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){
@@ -3463,13 +3474,13 @@ function startEvent(k){
   return true;
 }
 function spawnWave(kind, day){       // a pack from one side, so walls and traps on that side matter
-  const a = rand(0, TAU), n = kind === 'wolf' ? Math.min(10, 3 + day) : Math.min(14, 5 + day), R = offD() + 80;
+  const a = rand(0, TAU), n = kind === 'wolf' ? Math.min(18, 3 + day) : Math.min(24, 5 + day), R = offD() + 80;
   for (let i = 0; i < n; i++){
     const s = (i - n / 2) * .09, x = P.x + Math.cos(a + s) * (R + rand(0, 90)), y = P.y + Math.sin(a + s) * (R + rand(0, 90));
     const c = spawnAt(kind, clamp(x, ISL_M + 40, WORLD - ISL_M - 40), clamp(y, ISL_M + 40, WORLD - ISL_M - 40)); clampIsland(c, c.r + 30);
     if (i === 0 && ELITE_OK[kind]) makeElite(c);
   }
-  if (kind === 'zombie' && day >= 5){ const c = spawnAt('brute', P.x + Math.cos(a) * (R + 120), P.y + Math.sin(a) * (R + 120)); clampIsland(c, c.r + 30); }
+  if (kind === 'zombie' && day >= 5) for (let i = 0; i < (day >= 25 ? 3 : day >= 15 ? 2 : 1); i++){ const c = spawnAt('brute', P.x + Math.cos(a + i * .25) * (R + 120), P.y + Math.sin(a + i * .25) * (R + 120)); clampIsland(c, c.r + 30); }
   toast(kind === 'wolf' ? '🐺 늑대 무리가 몰려와요!' : '🧟 좀비 떼가 몰려와요!'); shakeT = .2;
 }
 function openCrate(o){
@@ -4079,6 +4090,7 @@ $('jobGo').addEventListener('click', () => { try { localStorage.setItem('island.
 $('jobBack').addEventListener('click', () => { $('jobs').hidden = true; $('title').hidden = false; refreshTitle(); });
 /* ================= hidden jobs: only someone who started as a plain survivor can awaken into one, mid-run, by pulling off something very hard.
    They are meant to be overpowered; they last for the rest of that run only ================= */
+const OWNER_WAKE = 10, OWNER_DAY = RAFT_DAY;      // the owner awakens on the tenth morning and wins when the raft would
 Object.assign(JOBS, {
   fist:    { name: '권왕', icon: '👊', tag: '맨주먹의 왕', hidden: true, ramp: ['#6e6a62', '#9c978b', '#cfcabd', '#f2eee4'], ui: '#f2eee4', glow: '255,240,210',
     kit: '각성', traits: ['맨손 공격 35 · 빠른 연타', '맨손으로 나무·돌 6개, 광석 3개 (곡괭이 레벨 상관없이)', '받는 피해 -30%'], weak: '도구와 소총을 쓸 수 없어요',
@@ -4093,11 +4105,10 @@ Object.assign(JOBS, {
     kit: '각성', traits: ['추위와 빙결에 걸리지 않아요 (체온이 늘 가득)', '내 공격에 맞은 적은 2초 동안 느려져요', '받는 피해 -25%'], weak: '불타는 모닥불 곁에서는 체력이 초당 1씩 녹아내려요',
     skill: { id: 'zero', name: '절대영도', icon: '🧊', cd: 35, desc: '반경 200 안의 적을 4초 동안 꽁꽁 얼려요 (보스는 1.5초). 언 적은 피해를 2배로 받아요' }, related: [] },
   owner:   { name: '섬의 주인', icon: '🌲', tag: '섬이 인정한 자', hidden: true, ramp: ['#2a3a14', '#46601e', '#6f8f2c', '#b8d060'], ui: '#b8d060', glow: '190,230,120',
-    kit: '각성', traits: ['늑대·곰·멧돼지·박쥐·골렘이 먼저 공격하지 않아요 (좀비와 보스는 공격해요)', '채집 3배', '체력이 3배 빨리 차올라요'], weak: '뗏목을 만들 수 없어요. 대신 15일차 아침을 맞으면 "섬의 주인" 엔딩',
+    kit: '각성', traits: ['늑대·곰·멧돼지·박쥐·골렘이 먼저 공격하지 않아요 (좀비와 보스는 공격해요)', '채집 3배', '체력이 3배 빨리 차올라요'], weak: '뗏목을 만들 수 없어요. 대신 ' + OWNER_DAY + '일차 아침을 맞으면 "섬의 주인" 엔딩',
     skill: { id: 'wrath', name: '섬의 분노', icon: '⚡', cd: 30, desc: '주변(450) 적 8마리에게 번개를 내리꽂아요 (각 80)' }, related: [] }
 });
 const HIDDEN_ORDER = ['fist', 'phoenix', 'lich', 'frost', 'owner'];
-const OWNER_DAY = 15;
 const TAME = { wolf: 1, bear: 1, boar: 1, bat: 1, golem: 1 };          // what leaves the island's owner alone
 const gatherMul = () => (isJob('owner') ? 3 : 1);
 const tamed = c => isJob('owner') && TAME[c.k];
@@ -4134,7 +4145,7 @@ function hiddenPhase(ph, day){     // the frost: a whole night on the snow islan
   else if (ph === '새벽' && P.hx.frost === day && Z.id === 'snow'){ P.hx.frost = 0; awaken('frost'); }
 }
 function hiddenDay(day){           // the owner: the tenth morning without ever having built a wall, a tower or a trap
-  if (canWake() && day === RAFT_DAY && !P.hx.wall) awaken('owner');
+  if (canWake() && day === OWNER_WAKE && !P.hx.wall) awaken('owner');
   if (isJob('owner') && day >= OWNER_DAY) setTimeout(() => endGame(true, 'owner'), 1200);
 }
 function phoenixRise(){            // once a day the phoenix gets up from the ashes

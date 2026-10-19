@@ -135,6 +135,16 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .bp.on{border-color:var(--ember);box-shadow:0 0 0 2px rgba(255,138,61,.35);background:rgba(58,33,16,.88)}
 .bp.no{opacity:.5}
 body.building #equip{display:none}
+#planBar{position:fixed;z-index:7;left:max(10px,env(safe-area-inset-left));right:max(100px,calc(env(safe-area-inset-right) + 88px));bottom:max(204px,calc(env(safe-area-inset-bottom) + 192px));display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:14px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);pointer-events:auto}
+#planBar[hidden]{display:none}
+@media (max-height:520px){#planBar{right:auto;max-width:min(350px,42vw)}}
+#planTxt{flex:1;min-width:0;font-size:12.5px;line-height:1.35;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
+#planTxt b{font-weight:600}
+#planTxt .pc{display:flex;gap:6px;font-variant-numeric:tabular-nums}
+#planTxt .no{color:#ff8a7a}
+#planBar button{flex:none;height:38px;padding:0 14px;border-radius:10px;font-weight:700;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--bone)}
+#planGo{background:#7bd88f!important;border-color:#7bd88f!important;color:#10240f!important}
+#planGo.short{background:#ffd166!important;border-color:#ffd166!important;color:#3a2a05!important}
 @media (max-height:520px){body.building #inv3{visibility:hidden}}
 .lv{position:absolute;top:2px;right:4px;font-size:8.5px;font-style:normal;font-weight:700;color:#7fd0ff}
 .lv.l3{color:#ffd166}
@@ -330,6 +340,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <div class="spacer"></div>
   <button id="btnBuild">건축</button>
   <div id="build" hidden></div>
+  <div id="planBar" hidden><div id="planTxt"></div><button id="planNo">취소</button><button id="planGo">확인</button></div>
   <div id="equip" class="min" hidden></div>
   <button id="btnCraft">제작</button>
   <div id="ctx"><button id="btnPerk" hidden>기술</button><button id="btnFish" hidden>낚시</button><button id="btnCook" hidden>요리</button></div>
@@ -408,7 +419,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>소리</b> 위쪽 스피커 버튼으로 끄고 켜요 (N). 일시정지 메뉴에서 음악만 따로 끌 수 있어요</li>
     <li><b>미니맵</b> 오른쪽의 작은 지도를 누르면 섬 전체 ↔ 내 주변으로 바뀌어요 (M)</li>
     <li><b>장비</b> 오른쪽의 동그란 버튼을 누르면 목록이 펼쳐져요. 기본은 자동 전환 (키보드 1~5, Q)</li>
-    <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그해서 울타리 설치 (B)</li>
+    <li><b>건축</b> 건축 버튼 → 원 안을 터치·드래그하면 지을 자리가 반투명하게 표시돼요. 위쪽 막대의 <b>확인</b>을 눌러야 지어져요 (B, Enter)</li>
     <li><b>소총·탑</b> 소총은 장착하면 자동 조준, 탑은 건축에서 설치해요. 둘 다 탄약이 필요해요</li>
     <li>밤에는 <b>늑대</b>와 <b>좀비</b>가 옵니다. 낮에도 <b>곰</b>을 조심하세요.</li>
     <li>가끔 나타나는 <b>엘리트</b>를 잡으면 아이템이 떨어져요 (치유약 Z · 신속약 X · 괴력약 V)</li>
@@ -1020,6 +1031,8 @@ addEventListener('keydown', e => {
   else if (e.key === 'f' || e.key === 'F'){ if (!paused){ if (fish.on) fishStop('낚싯줄을 감았어요'); else fishStart(); } }
   else if (e.key === 'k' || e.key === 'K'){ if (!paused) openCook(); }
   else if (e.key === 'r' || e.key === 'R'){ if (!paused) useSkill(); }
+  else if (e.key === 'Enter'){ if (!paused && buildMode) confirmPlan(); }
+  else if (e.key === 'Backspace'){ if (!paused && buildMode) cancelPlan(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -1036,7 +1049,7 @@ cv.addEventListener('pointerdown', e => {
   if (!running || paused) return;
   if (buildMode){            // inside the ring you paint walls, outside it you steer
     const w = toWorld(e);
-    if (inBuildRange(w)){ paint = { id: e.pointerId, last: '' }; try { cv.setPointerCapture(e.pointerId); } catch (_) {} paintAt(w); return; }
+    if (inBuildRange(w)){ paint = { id: e.pointerId, last: '', mode: null }; try { cv.setPointerCapture(e.pointerId); } catch (_) {} paintAt(w); return; }
   }
   if (joy.active) return;
   joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
@@ -1143,12 +1156,72 @@ function wallAhead(c, sx, sy){ // a wall pressing against the creature in its di
   });
   return best;
 }
-function buildAtGhost(){ const g = ghostCell(); tryBuild(g.i, g.j); }
+function buildAtGhost(){ const g = ghostCell(); planAt(g.i, g.j); }
+/* building is planned first: taps and drags lay see-through pieces, one per cell, and nothing is built until 확인 */
+const plan = new Map();            // "i,j" -> { i, j, kind } (kind 'erase' = take down what stands there)
+function planAt(i, j, mode){        // mode 'add' / 'remove', or none to toggle; returns the mode it used (a drag keeps it)
+  const key = i + ',' + j, has = plan.has(key);
+  if (mode == null) mode = has ? 'remove' : 'add';
+  if (mode === 'remove'){ if (has){ plan.delete(key); SND.play('ui'); renderPlanBar(); } return mode; }
+  if (has) return mode;
+  if (buildSel === 'erase'){
+    const w = wallMap.get(key) || trapMap.get(key); if (!w) return mode;
+    if (Math.hypot(w.x - P.x, w.y - P.y) > BUILD_RANGE + GRID){ buildMsg('너무 멀어요'); return mode; }
+  } else { const why = canBuild(i, j); if (why === 'exists') return mode; if (why){ buildMsg(why); return mode; } }
+  if (plan.size >= 40){ buildMsg('한 번에 40칸까지 표시할 수 있어요'); return mode; }
+  plan.set(key, { i, j, kind: buildSel }); SND.play('ui'); renderPlanBar(); return mode;
+}
+function planCost(){                // what the whole plan takes (free snares first, job discounts included)
+  const cost = {}, n = {}, free = Object.assign({}, P.free || {});
+  for (const q of plan.values()){
+    n[q.kind] = (n[q.kind] || 0) + 1; if (q.kind === 'erase') continue;
+    if (free[q.kind] > 0){ free[q.kind]--; continue; }
+    const c = buildCost(q.kind); for (const k in c) cost[k] = (cost[k] || 0) + c[k];
+  }
+  return { cost, n };
+}
+function renderPlanBar(){
+  const bar = $('planBar'), on = buildMode && plan.size > 0; if (bar.hidden === on) bar.hidden = !on; if (!on) return;
+  const { cost, n } = planCost(), short = Object.keys(cost).some(k => P.inv[k] < cost[k]);
+  const html = '<b>' + Object.keys(n).map(k => (k === 'erase' ? '철거' : WALLS[k].name) + ' ' + n[k]).join(' · ') + '</b>'
+    + (Object.keys(cost).length ? '<span class="pc">' + Object.keys(cost).map(k => `<span class="${P.inv[k] >= cost[k] ? '' : 'no'}">${ITEMS[k].icon}${cost[k]}</span>`).join('') + '</span>' : '');
+  if (bar._h !== html){ bar._h = html; $('planTxt').innerHTML = html; }
+  $('planGo').classList.toggle('short', short);
+}
+function confirmPlan(){              // build (or take down) everything planned, in the order it was laid
+  if (!plan.size) return;
+  const sel = buildSel; let done = 0, missed = 0;
+  for (const q of [...plan.values()]){
+    buildSel = q.kind; const before = wallMap.size + trapMap.size;
+    tryBuild(q.i, q.j);
+    const after = wallMap.size + trapMap.size; if (q.kind === 'erase' ? after < before : after > before) done++; else missed++;
+  }
+  buildSel = sel; plan.clear(); renderPlanBar(); syncBuildBar(); lastLabel = '';
+  if (missed) toast(done ? done + '개를 지었어요. ' + missed + '개는 재료가 모자라거나 자리가 막혀서 못 지었어요' : '재료가 모자라거나 자리가 막혀서 짓지 못했어요');
+}
+function cancelPlan(){ if (!plan.size) return; plan.clear(); renderPlanBar(); SND.play('ui'); }
+$('planGo').addEventListener('click', confirmPlan);
+$('planNo').addEventListener('click', cancelPlan);
+function drawPlan(){                 // the planned pieces, see-through, outlined green (fine), yellow (short of materials) or red (blocked now)
+  if (!plan.size) return;
+  const free = Object.assign({}, P.free || {}), left = Object.assign({}, P.inv);
+  for (const q of plan.values()){
+    const x = q.i * GRID + GRID / 2, y = q.j * GRID + GRID / 2; let col = '#7bd88f';
+    if (q.kind === 'erase') col = '#ff6b5e';
+    else if (canBuild(q.i, q.j)) col = '#ff6b5e';
+    else if (free[q.kind] > 0) free[q.kind]--;
+    else { const c = buildCost(q.kind); if (Object.keys(c).every(k => left[k] >= c[k])) for (const k in c) left[k] -= c[k]; else col = '#ffd166'; }
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(x - GRID / 2 + 1, y - GRID / 2 + 1, GRID - 2, GRID - 2);
+    if (q.kind === 'erase'){ ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 8, y - 8); ctx.lineTo(x + 8, y + 8); ctx.moveTo(x + 8, y - 8); ctx.lineTo(x - 8, y + 8); ctx.stroke(); }
+    else if (WALLS[q.kind].trap) drawTrap({ kind: q.kind, x, y, amt: 0 }, .5);
+    else { ctx.save(); standT(x, y); drawWall({ kind: q.kind, x, y, i: q.i, j: q.j, hp: 1, max: 1, hit: 0 }, .5); ctx.restore(); }
+  }
+}
 function cursorAt(w){ cursor = inBuildRange(w) ? { i: Math.floor(w.x / GRID), j: Math.floor(w.y / GRID) } : null; }
 function paintAt(w){
   cursorAt(w); if (!cursor) return;
   const key = cursor.i + ',' + cursor.j; if (key === paint.last) return;
-  paint.last = key; tryBuild(cursor.i, cursor.j);
+  paint.last = key; paint.mode = planAt(cursor.i, cursor.j, paint.mode);
 }
 function renderBuildBar(){
   const box = $('build'); box.innerHTML = '';
@@ -1169,6 +1242,8 @@ function syncBuildBar(){
 function selectBuild(k){ if (!k) return; buildSel = k; cursor = null; syncBuildBar(); lastLabel = ''; }
 function setBuild(on){
   buildMode = on; paint = null; cursor = null; lastLabel = '';
+  if (!on && plan.size){ plan.clear(); toast('표시해 둔 칸은 짓지 않고 지웠어요'); }
+  renderPlanBar();
   document.body.classList.toggle('building', on);
   $('btnBuild').classList.toggle('on', on); $('btnBuild').textContent = on ? '완료' : '건축';
   $('build').hidden = !on;
@@ -1178,7 +1253,7 @@ function toggleBuild(){
   if (!running || sleeping) return;
   setBuild(!buildMode);
   if (buildMode && !buildTip){
-    buildTip = true; toast('원 안을 터치하거나 드래그해서 울타리를 쳐요. 원 밖을 드래그하면 이동해요.');
+    buildTip = true; toast('원 안을 터치하거나 드래그하면 지을 자리가 반투명하게 표시돼요. 위의 확인을 누르면 지어져요. 원 밖을 드래그하면 이동해요.');
     setTimeout(() => toast('문은 나만 지나갈 수 있어요. 철거하면 재료의 절반을 돌려받아요.'), 3200);
   }
 }
@@ -1956,8 +2031,8 @@ function updateHUD(){
   if (boss){ setText($('bossName'), '👑 ' + boss.name); setText($('bossHp'), Math.ceil(boss.hp) + ' / ' + boss.max); const w = (Math.max(0, boss.hp / boss.max) * 100).toFixed(1) + '%'; if ($('bossFill')._w !== w){ $('bossFill')._w = w; $('bossFill').style.width = w; } }
   updateEliteArrow(); layoutHud();
   setText($('armorBadge'), P.armor ? '🛡' + P.armor : ''); updatePerkHUD(); updateSkillHUD();
-  if (buildMode) syncBuildBar(); updateCtx();
-  const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (RANGED[P.equip] && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
+  if (buildMode){ syncBuildBar(); renderPlanBar(); } updateCtx();
+  const lab = buildMode ? '표시' : (RANGED[P.equip] && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
 function objective(){
   const day = dayOf(), boss = creatures.find(c => c.boss);
@@ -3427,7 +3502,7 @@ function render(){
     else switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'ore': drawOre(d.o); break; case 'furnace': drawFurnace(d.o); break; case 'boat': drawBoat(d.o); break; case 'mine': drawMineDoor(d.o); break; case 'exit': drawCaveExit(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; case 'crate': drawCrate(d.o); break; }
     ctx.restore();
   }
-  if (buildMode && running) drawGhost();
+  if (buildMode && running){ drawPlan(); drawGhost(); }
   drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawWeaponFx();
 
   uprightT();
@@ -4918,7 +4993,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
 })();
 </script>
 </body>

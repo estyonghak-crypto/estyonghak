@@ -124,9 +124,10 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
   border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:15px;pointer-events:auto;z-index:6}
 #btnBuild{position:fixed;right:max(124px,calc(env(safe-area-inset-right) + 112px));bottom:max(52px,calc(env(safe-area-inset-bottom) + 40px));width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--panel);font-family:var(--font-display);font-size:14px;pointer-events:auto;z-index:6}
 #btnBuild.on{background:var(--ember);border-color:var(--ember);color:#2a1305}
-#build{position:fixed;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(100px,calc(env(safe-area-inset-right) + 88px));bottom:max(128px,calc(env(safe-area-inset-bottom) + 116px));display:flex;gap:5px;pointer-events:none}
+#build{position:fixed;z-index:6;left:max(10px,env(safe-area-inset-left));right:max(100px,calc(env(safe-area-inset-right) + 88px));bottom:max(128px,calc(env(safe-area-inset-bottom) + 116px));display:flex;gap:5px;pointer-events:auto;overflow-x:auto;overscroll-behavior:contain;touch-action:pan-x;scrollbar-width:none}
+#build::-webkit-scrollbar{display:none}
 #build button{pointer-events:auto}
-.bp{flex:1;min-width:0;max-width:66px;height:68px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0 2px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.bp{flex:0 0 58px;min-width:0;height:68px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0 2px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .bp svg{width:26px;height:22px;display:block}
 .bp b{font-size:10.5px;font-weight:500;line-height:1.1}
 .bp small{font-size:9.5px;color:var(--dim);line-height:1.15;text-align:center}
@@ -364,6 +365,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식 알약을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>함정</b> 건축 메뉴의 가시 함정 · 올가미 덫 · 화염 함정은 적이 밟으면 터져요. 가시 울타리는 공격한 적을 다치게 해요</li>
     <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요</li>
     <li><b>기술</b> 베고, 캐고, 싸우고, 만들고, 하루를 버티면 경험치가 쌓여요 (왼쪽 위의 보라 막대). 레벨이 오르면 <b>기술</b> 버튼이 깜빡이고, 둘 중 하나를 골라요</li>
     <li><b>낚시·요리</b> 낚싯대(나무 5 · 고철 1)를 만들면 물가에 <b>낚시</b> 버튼이 나타나요 (F). 입질이 오면 바로 누르고, 움직이는 막대가 초록 칸에 올 때 세 번 눌러 끌어올려요. 모닥불 곁의 <b>요리</b> 버튼 (K)으로 구이·스튜·수프를 만들어요</li>
@@ -432,10 +434,14 @@ const WALLS = {
   stone: { name: '돌담',   hp: 140, cost: { stone: 4 } },
   iron:  { name: '철벽',   hp: 360, cost: { feBar: 2 }, need: 'feBar' },   // shows up in the palette once you own an iron ingot
   gate:  { name: '문',     hp: 50,  cost: { wood: 3, stone: 1 } },   // you walk through, animals do not
+  thorn: { name: '가시 울타리', hp: 70, cost: { wood: 5, stone: 1 }, thorns: 6 },   // whatever attacks it gets hurt and bleeds
   tower: { name: '탑',     hp: 90,  cost: { wood: 10, stone: 6 } },   // shoots hostile animals by itself, needs ammo
+  spike: { name: '가시 함정', hp: 0, cost: { wood: 3, stone: 2 }, trap: true, uses: 6 },   // 10 damage, bleeding, slowed
+  snare: { name: '올가미 덫', hp: 0, cost: { wood: 2, hide: 1 }, trap: true, uses: 3 },    // holds it in place for 4 s
+  flame: { name: '화염 함정', hp: 0, cost: { wood: 4, scrap: 2 }, trap: true, uses: 2 },   // 4 s of flames around it
   erase: { name: '철거',   hp: 0,   cost: {} }
 };
-const BUILD_ORDER = ['wood', 'stone', 'iron', 'gate', 'tower', 'erase'];
+const BUILD_ORDER = ['wood', 'stone', 'iron', 'gate', 'thorn', 'tower', 'spike', 'snare', 'flame', 'erase'];
 const buildList = () => BUILD_ORDER.filter(k => !WALLS[k].need || (P && P.seen[WALLS[k].need]));
 const WALL_SVG = {
   wood: '<svg viewBox="0 0 26 22"><path d="M2 8H24M2 14H24" stroke="#b58a52" stroke-width="2.2"/><rect x="3" y="3" width="4" height="16" rx="1" fill="#8b6035"/><rect x="11" y="3" width="4" height="16" rx="1" fill="#8b6035"/><rect x="19" y="3" width="4" height="16" rx="1" fill="#8b6035"/></svg>',
@@ -443,9 +449,15 @@ const WALL_SVG = {
   iron: '<svg viewBox="0 0 26 22"><rect x="2" y="3" width="22" height="16" rx="2" fill="#6b7782"/><rect x="2" y="3" width="22" height="6" rx="2" fill="#97a5b2"/><path d="M2 12.5H24M13 9V12.5" stroke="#3d464e" stroke-width="1.4"/><circle cx="5" cy="6" r="1" fill="#d9e2ea"/><circle cx="21" cy="6" r="1" fill="#d9e2ea"/></svg>',
   gate: '<svg viewBox="0 0 26 22"><rect x="3" y="3" width="20" height="16" rx="2" fill="#a9783e" stroke="#6a4824" stroke-width="1.5"/><path d="M3 3L23 19M23 3L3 19" stroke="#6a4824" stroke-width="1.5"/><circle cx="19" cy="11" r="1.5" fill="#f2d9a0"/></svg>',
   tower: '<svg viewBox="0 0 26 22"><path d="M6 20L8 11M20 20L18 11" stroke="#7a5230" stroke-width="2.4"/><rect x="5" y="9" width="16" height="3" fill="#a87a40"/><rect x="8" y="3.5" width="10" height="6" fill="#8a5f33"/><path d="M6 4L13 0.5L20 4Z" fill="#6b3f2a"/><rect x="10.5" y="5.5" width="5" height="2" fill="#2b2118"/></svg>',
+  thorn: '<svg viewBox="0 0 26 22"><path d="M2 9H24M2 15H24" stroke="#b58a52" stroke-width="2.2"/><rect x="4" y="5" width="4" height="15" rx="1" fill="#8b6035"/><rect x="11" y="5" width="4" height="15" rx="1" fill="#8b6035"/><rect x="18" y="5" width="4" height="15" rx="1" fill="#8b6035"/><path d="M6 5L3 1M13 5L13 1M20 5L23 1M2 12L0 9M24 12L26 9" stroke="#e9e2cf" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  spike: '<svg viewBox="0 0 26 22"><rect x="3" y="6" width="20" height="13" rx="2" fill="#6b4a2a"/><path d="M6 15L8 6L10 15M12 15L14 5L16 15M18 15L20 6L22 15" fill="#c9ced2" stroke="#2b2e31" stroke-width=".8"/></svg>',
+  snare: '<svg viewBox="0 0 26 22"><ellipse cx="13" cy="12" rx="9" ry="7" fill="none" stroke="#c9a36a" stroke-width="2.4"/><path d="M6 9L9 12L6 15M20 9L17 12L20 15" stroke="#9aa3ab" stroke-width="1.6" fill="none"/><rect x="21" y="11" width="4" height="3" fill="#6b4a2a"/></svg>',
+  flame: '<svg viewBox="0 0 26 22"><rect x="4" y="12" width="18" height="8" rx="1.5" fill="#3d4246"/><path d="M13 2C17 7 19 9 17 13H9C7 9 10 7 13 2Z" fill="#ff8a3d"/><path d="M13 7C15 10 15 11 14.5 13H11.5C11 11 11 10 13 7Z" fill="#ffd166"/></svg>',
   erase: '<svg viewBox="0 0 26 22"><path d="M6 4L20 18M20 4L6 18" stroke="#ec5a4d" stroke-width="3.2" stroke-linecap="round"/></svg>'
 };
 const wallMap = new Map();              // "i,j" cell -> wall object
+const trapMap = new Map();              // "i,j" cell -> trap object (traps do not block)
+const FLYING = { bat: 1, batqueen: 1 };  // over walls, traps and water
 let buildMode = false, buildSel = 'wood', cursor = null, paint = null, buildTip = false, lastBuildMsg = '', lastBuildMsgT = 0;
 
 const ITEMS = {
@@ -636,8 +648,8 @@ function gridQuery(x0, y0, x1, y1, fn){
     if (a) for (let i = 0; i < a.length; i++) fn(a[i]);
   }
 }
-function addObj(o){ objs.push(o); gridAdd(o); if (o.t === 'fire' || o.t === 'shelter') structs.push(o); if (o.t === 'wall') wallMap.set(o.i + ',' + o.j, o); return o; }
-function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); if (o.t === 'wall') wallMap.delete(o.i + ',' + o.j); }
+function addObj(o){ objs.push(o); gridAdd(o); if (o.t === 'fire' || o.t === 'shelter') structs.push(o); if (o.t === 'wall') wallMap.set(o.i + ',' + o.j, o); if (o.t === 'trap') trapMap.set(o.i + ',' + o.j, o); return o; }
+function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); if (o.t === 'wall') wallMap.delete(o.i + ',' + o.j); if (o.t === 'trap' && trapMap.get(o.i + ',' + o.j) === o) trapMap.delete(o.i + ',' + o.j); }
 
 // distance to the coast, measured inward (positive = on the island)
 function inside(x, y){
@@ -667,7 +679,7 @@ function collide(e, r){
 }
 
 function setZone(id){ Z = ZONES[id]; WORLD = Z.world; ISL_M = Z.margin; ISL_R = Z.rad; GN = Math.ceil(WORLD / CELL); }
-function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; corpses.length = 0; }
+function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); trapMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; corpses.length = 0; }
 function spawnFauna(){          // the animals a zone starts with (they are not saved; a zone repopulates when you arrive)
   for (const k in Z.fauna) for (let i = 0; i < Z.fauna[k]; i++) spawnCreature(k, 300, undefined, false);
 }
@@ -684,6 +696,7 @@ function unpackObjs(list){
     if (o.t === 'fire') o.fuel = a[6];
     if (o.t === 'ore'){ o.kind = a[8]; o.amt = a[4]; o.regrow = a[7]; o.shake = 0; }
     if (o.t === 'furnace') o.glow = 0;
+    if (o.t === 'trap'){ o.kind = a[8]; o.amt = a[4]; o.cd = 0; o.fire = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
     if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.ammo = a[10] || 0; o.lv = a[11] || 1; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
     addObj(o);
   }
@@ -967,7 +980,7 @@ function gain(k, n){ P.inv[k] += n; P.seen[k] = true; floater(P.x, P.y, 26, '+' 
 function buildMsg(m){ const t = performance.now(); if (m !== lastBuildMsg || t - lastBuildMsgT > 1600){ lastBuildMsg = m; lastBuildMsgT = t; toast(m); } }
 function canBuild(i, j){       // '' = ok, otherwise the reason (or 'exists' for an occupied cell)
   const x = i * GRID + GRID / 2, y = j * GRID + GRID / 2;
-  if (wallMap.has(i + ',' + j)) return 'exists';
+  if (wallMap.has(i + ',' + j) || trapMap.has(i + ',' + j)) return 'exists';
   if (inside(x, y) < 40) return '해안에는 지을 수 없어요';
   const d = Math.hypot(x - P.x, y - P.y);
   if (d > BUILD_RANGE + GRID * .7) return '너무 멀어요';
@@ -993,7 +1006,7 @@ function addWall(i, j, kind, hp){
 }
 function tryBuild(i, j){
   if (buildSel === 'erase'){
-    const w = wallMap.get(i + ',' + j); if (!w) return;
+    const w = wallMap.get(i + ',' + j) || trapMap.get(i + ',' + j); if (!w) return;
     if (Math.hypot(w.x - P.x, w.y - P.y) > BUILD_RANGE + GRID) return buildMsg('너무 멀어요');
     return demolish(w);
   }
@@ -1001,7 +1014,9 @@ function tryBuild(i, j){
   const cost = WALLS[buildSel].cost;
   for (const k in cost) if (P.inv[k] < cost[k]) return buildMsg(josa(ITEMS[k].name, '이/가') + ' 부족해요 (' + P.inv[k] + '/' + cost[k] + ')');
   for (const k in cost) P.inv[k] -= cost[k];
-  addWall(i, j, buildSel); P.built.wall = true; SND.play('build');
+  if (WALLS[buildSel].trap){ addTrap(i, j, buildSel); if (!trapTip){ trapTip = true; toast('함정은 적이 밟으면 터져요. 나는 밟아도 괜찮아요. 쓸 수 있는 횟수가 아래 점으로 보여요.'); } }
+  else { addWall(i, j, buildSel); P.built.wall = true; if (buildSel === 'thorn' && !thornTip){ thornTip = true; toast('가시 울타리를 공격한 적은 다치고 피를 흘려요.'); } }
+  SND.play('build');
   if (buildSel === 'tower' && !towerTip){ towerTip = true; toast('탑은 가까운 적을 알아서 쏴요. 탑 앞에서 행동 버튼으로 탄약을 채우세요.'); }
 }
 function demolish(w){
@@ -1011,6 +1026,7 @@ function demolish(w){
   removeObj(w); SND.play('scrap');
 }
 function damageWall(w, n){
+  const th = WALLS[w.kind].thorns; if (th && hitSrc && creatures.includes(hitSrc)){ hitCreature(hitSrc, th, hitSrc.x - w.x, hitSrc.y - w.y, true); hitSrc.bleed = Math.max(hitSrc.bleed || 0, 4); fx('spark', w.x, w.y, 14, 3); }
   w.hp -= n; w.hit = .15; floater(w.x, w.y, 22, '-' + n, '#ffb199'); SND.play(w.hp <= 0 ? 'wallbreak' : 'wallhit', { x: w.x, y: w.y });
   if (w.hp <= 0){ removeObj(w); if (Math.hypot(w.x - P.x, w.y - P.y) < 420) toast(josa(WALLS[w.kind].name, '이/가') + ' 부서졌어요!'); }
 }
@@ -1065,7 +1081,7 @@ function toggleBuild(){
 $('btnBuild').addEventListener('click', toggleBuild);
 $('build').addEventListener('click', e => { const b = e.target.closest('.bp'); if (b && running && !paused) selectBuild(b.dataset.k); });
 
-let equipTip = false, autoTip = false;
+let equipTip = false, autoTip = false, trapTip = false, thornTip = false;
 const hasTool = t => t === 'hand' || !!P.tools[t];
 const ownedTools = () => TOOL_ORDER.filter(hasTool);
 function bestFor(tg){          // tool that suits the thing in front of the player, or null to keep the current one
@@ -1309,10 +1325,13 @@ function updatePickups(dt){
     } else if (p.age > p.life) pickups.splice(i, 1);
   }
 }
-function hitCreature(c, dmg, kx, ky, byPlayer, byTower){
+function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
+  if (!creatures.includes(c)) return;
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y, 34, '방어', '#8fc4ff'); dmg = red; }
-  c.hp -= dmg; c.hit = .18; c.sinceHit = 0; SND.hit(c, c.hp <= 0);
+  c.hp -= dmg; c.sinceHit = 0;
+  if (dot && c.hp > 0){ if (sp.rage){ c.state = 'angry'; c.angry = 8; } return; }        // bleeding or burning: no flash, no knockback, no noise until it drops
+  c.hit = .18; SND.hit(c, c.hp <= 0);
   const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1) * (c.boss ? .15 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
   floater(c.x, c.y, 18, '-' + dmg, '#ffd166');
   fx('splat', c.x, c.y, 12, c.hp <= 0 ? 9 : 4, c.k === 'zombie' || c.k === 'brute' ? '120,176,76' : c.k === 'golem' ? '170,172,180' : '196,44,44');
@@ -1880,7 +1899,7 @@ function updateCreatures(dt){
         else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(Math.min(12, 5 + day) * (c.dmgMul || 1))); c.atk = 1; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
-    spd *= c.spdMul || 1;
+    spd *= (c.spdMul || 1) * creatureStatus(c, dt);
     if (c.atk > atk0 + .05){ c.swing = .4; SND.attack(c); }       // it just attacked: play the attack frames (and the sound)
     if (c.gone){ creatures.splice(i, 1); toast(josa(c.name, '이/가') + ' 물러갔어요…'); continue; }
     const sa = sx - sy; if (sa > .1) c.fx = 1; else if (sa < -.1) c.fx = -1;       // faces left or right on screen
@@ -1966,7 +1985,7 @@ function update(dt){
   if (P.auto){ const b = hasTool('gun') && P.inv.ammo > 0 && nearestHostile(AUTO_GUN_RANGE) ? 'gun' : bestFor(target); if (b) setEquip(b); }
   aim = P.equip === 'gun' ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
   for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
   for (let i = corpses.length - 1; i >= 0; i--){ const o = corpses[i]; o.t += dt; if (o.t < .5){ o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy *= .9; } if (o.t > 9) corpses.splice(i, 1); }
   const da = scrAng(P.fx, P.fy) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
@@ -2442,6 +2461,7 @@ function drawWallPix(o, alpha){
     ell(x, y + 5, 12, 5, 'rgba(0,0,0,.22)');
     if (east) objDraw('rail_x', x, y, alpha, flash); if (south) objDraw('rail_y', x, y, alpha, flash);
     objDraw(o.kind === 'gate' ? 'gate' : 'wall_wood', x, y, alpha, flash);
+    if (o.kind === 'thorn') drawThorns(x, y, alpha);
   }
   const top = o.kind === 'tower' ? -66 : o.kind === 'stone' || o.kind === 'iron' ? -36 : o.kind === 'gate' ? -34 : -30;
   ctx.save(); if (alpha) ctx.globalAlpha = alpha;
@@ -2449,6 +2469,14 @@ function drawWallPix(o, alpha){
   if (o.hp < o.max){ ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 11, y + top - 5, 22, 4); ctx.fillStyle = hpk > .5 ? '#8fd16a' : hpk > .25 ? '#f2b84b' : '#ec5a4d'; ctx.fillRect(x - 10, y + top - 4, 20 * Math.max(0, hpk), 2); }
   ctx.restore();
   return true;
+}
+function drawThorns(x, y, alpha){         // sharpened stakes poking out of a wooden fence
+  ctx.save(); if (alpha) ctx.globalAlpha = alpha; ctx.lineCap = 'round';
+  for (const [a, b, c, d] of [[-8, -10, -17, -19], [8, -10, 17, -19], [-5, -19, -10, -31], [5, -19, 10, -31], [-10, -3, -19, -6], [10, -3, 19, -6]]){
+    ctx.strokeStyle = '#2f2214'; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(x + a, y + b); ctx.lineTo(x + c, y + d); ctx.stroke();
+    ctx.strokeStyle = '#a87d4a'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + a, y + b); ctx.lineTo(x + c, y + d); ctx.stroke(); circ(x + c, y + d, 1.2, '#efe6d2');
+  }
+  ctx.restore();
 }
 function drawTree(o){
   if (drawTreePix(o)) return;
@@ -2815,13 +2843,14 @@ function drawBuildGrid(){
 function drawGhost(){
   const g = ghostCell(), x = g.i * GRID + GRID / 2, y = g.j * GRID + GRID / 2;
   let col = '#7bd88f', piece = true;
-  if (buildSel === 'erase'){ col = wallMap.has(g.i + ',' + g.j) ? '#ff6b5e' : 'rgba(255,255,255,.35)'; piece = false; }
+  if (buildSel === 'erase'){ col = wallMap.has(g.i + ',' + g.j) || trapMap.has(g.i + ',' + g.j) ? '#ff6b5e' : 'rgba(255,255,255,.35)'; piece = false; }
   else {
     const cost = WALLS[buildSel].cost;
     if (canBuild(g.i, g.j)){ col = '#ff6b5e'; piece = false; } else if (Object.keys(cost).some(k => P.inv[k] < cost[k])) col = '#ffd166';
   }
   ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.strokeRect(x - GRID / 2, y - GRID / 2, GRID, GRID); ctx.setLineDash([]);
-  if (piece){ ctx.save(); standT(x, y); drawWall({ kind: buildSel, x, y, i: g.i, j: g.j, hp: 1, max: 1, hit: 0 }, .65); ctx.restore(); }
+  if (piece && WALLS[buildSel].trap) drawTrap({ kind: buildSel, x, y, amt: 0 }, .65);
+  else if (piece){ ctx.save(); standT(x, y); drawWall({ kind: buildSel, x, y, i: g.i, j: g.j, hp: 1, max: 1, hit: 0 }, .65); ctx.restore(); }
 }
 function drawWreck(o){
   if (drawWreckPix(o)) return;
@@ -3192,7 +3221,7 @@ function render(){
   const lakes = [], list = [], seen = (x, y) => { const sx = w2sx(x, y), sy = w2sy(x, y); return sx > -130 && sx < W + 130 && sy > -50 && sy < H + 250; };
   gridQuery(vx0 - 110, vy0 - 110, vx1 + 110, vy1 + 110, o => { if (o.t === 'water') lakes.push(o); else if (seen(o.x, o.y)) list.push(o); });
   drawLakes(lakes);
-  drawDecals(vx0, vy0, vx1, vy1);
+  drawDecals(vx0, vy0, vx1, vy1); drawTraps(vx0, vy0, vx1, vy1);
 
   // ground markers: safe zones, target ring
   for (const s of structs){
@@ -3226,7 +3255,7 @@ function render(){
     ctx.restore();
   }
   if (buildMode && running) drawGhost();
-  drawFishing();
+  drawFishing(); drawFlames();
 
   uprightT();
   drawParts(); drawBullets();
@@ -3249,7 +3278,7 @@ function render(){
     lx.fillStyle = Z.cave ? `rgba(3,4,10,${.9 * dk})` : `rgba(4,8,24,${.9 * dk})`; lx.fillRect(0, 0, lc.width, lc.height);
     lx.globalCompositeOperation = 'destination-out';
     if (running){ punch(P.x, P.y, lightR(), 8); punchCone(P.x, P.y, lightAng, lightR() * 2, .55, 10); }
-    for (const o of list) if (o.t === 'furnace' && o.glow > 0) punch(o.x, o.y, 120, 6);
+    for (const o of list) if (o.t === 'furnace' && o.glow > 0) punch(o.x, o.y, 120, 6); else if (o.t === 'trap' && o.fire > 0) punch(o.x, o.y, 150, 4);
     for (const s of structs){
       if (s.x < vx0 - 300 || s.x > vx1 + 300 || s.y < vy0 - 300 || s.y > vy1 + 300) continue;
       if (s.t === 'fire' && s.fuel > 0) punch(s.x, s.y, 250 + Math.sin(anim * 11 + s.x) * 8, 6);
@@ -3260,6 +3289,87 @@ function render(){
   uprightT(); drawPickups(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   updateAtmosphere(t, dk); drawMini();
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
+}
+
+/* ================= traps: flat things on the build grid that hurt what walks over them (you can step on your own) ================= */
+const TRAP_RANGE = 15;
+function addTrap(i, j, kind, uses){ return addObj({ t: 'trap', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 13, amt: uses == null ? WALLS[kind].uses : uses, cd: 0, fire: 0, v: Math.random() }); }
+const trapsIgnore = c => c.k === 'rabbit' || c.k === 'bat' || FLYING[c.k];
+function creatureDot(c, dps, dt){          // damage over time (bleeding, burning) without the knockback and the noise of a hit
+  c.dot = (c.dot || 0) + dps * dt;
+  if (c.dot >= 1){ const n = Math.floor(c.dot); c.dot -= n; hitCreature(c, n, 0, 0, true, false, true); }
+}
+function springTrap(o, c){
+  const def = WALLS[o.kind];
+  if (o.kind === 'spike'){ hitCreature(c, 10, c.x - o.x, c.y - o.y, true); c.bleed = Math.max(c.bleed || 0, 6); c.slow = Math.max(c.slow || 0, 1.5); o.cd = .8; SND.play('spike', { x: o.x, y: o.y }); fx('rock', o.x, o.y, 6, 4); }
+  else if (o.kind === 'snare'){ c.root = c.boss ? 1.2 : 4; hitCreature(c, 4, 0, 0, true); o.cd = 1.5; SND.play('snap', { x: o.x, y: o.y }); fx('chip', o.x, o.y, 6, 5); floater(c.x, c.y, 40, '묶임!', '#e6c88c'); }
+  else if (o.kind === 'flame'){ o.fire = 4; o.cd = 5; SND.play('flame', { x: o.x, y: o.y }); fx('ember', o.x, o.y, 6, 14); fx('glow', o.x, o.y, 8, 10, '255,140,50'); }
+  o.amt--; o.shake = .2;
+  if (o.amt <= 0 && o.kind !== 'flame') breakTrap(o);
+}
+function breakTrap(o){ removeObj(o); if (Math.hypot(o.x - P.x, o.y - P.y) < 420) toast(josa(WALLS[o.kind].name, '이/가') + ' 다 닳았어요'); }
+function updateTraps(dt){
+  if (!trapMap.size) return;
+  for (const o of [...trapMap.values()]){
+    o.cd = Math.max(0, o.cd - dt); if (o.shake > 0) o.shake -= dt;
+    if (o.fire > 0){
+      o.fire -= dt;
+      if (Math.random() < dt * 22) fx('ember', o.x + rand(-14, 14), o.y + rand(-10, 10), 4, 1);
+      if (Math.random() < dt * 5) fx('smoke', o.x, o.y, 20, 1);
+      for (const c of creatures) if (!FLYING[c.k] && Math.hypot(c.x - o.x, c.y - o.y) < 46 + c.r * .5){ c.flame = Math.max(c.flame || 0, .6); }
+      if (o.fire <= 0 && o.amt <= 0) breakTrap(o);
+      continue;
+    }
+    if (o.cd > 0 || o.amt <= 0) continue;
+    for (const c of creatures){
+      if (trapsIgnore(c) || o.kind === 'snare' && (c.root > 0 || c.rootImm > 0)) continue;
+      if (Math.abs(c.x - o.x) < TRAP_RANGE + c.r * .5 && Math.abs(c.y - o.y) < TRAP_RANGE + c.r * .5){ springTrap(o, c); break; }
+    }
+  }
+}
+function creatureStatus(c, dt){            // what traps and thorns left on an animal; returns the speed factor
+  let k = 1;
+  if (c.bleed > 0){ c.bleed -= dt; creatureDot(c, 2, dt); if (Math.random() < dt * 3) bloodAt(c.x, c.y, c.k, false); }
+  if (c.flame > 0){ c.flame -= dt; c.burn = .3; creatureDot(c, 7, dt); if (Math.random() < dt * 10) fx('ember', c.x, c.y, 14, 1); }
+  if (c.slow > 0){ c.slow -= dt; k *= .5; }
+  if (c.root > 0){ c.root -= dt; k = 0; if (Math.random() < dt * 4) fx('chip', c.x, c.y, 3, 1); if (c.root <= 0) c.rootImm = 3; }      // just freed: a few seconds before a snare can hold it again
+  else if (c.rootImm > 0) c.rootImm -= dt;
+  return k;
+}
+function drawTrap(o, alpha){                 // flat on the ground (world coordinates)
+  const x = o.x, y = o.y, h = 11, sh = o.shake > 0 ? Math.sin(o.shake * 80) * 1 : 0;
+  ctx.save(); if (alpha) ctx.globalAlpha = alpha; ctx.translate(x + sh, y);
+  if (o.kind === 'spike'){
+    ctx.fillStyle = '#4a3320'; ctx.fillRect(-h, -h, h * 2, h * 2); ctx.fillStyle = '#6b4a2a'; ctx.fillRect(-h + 1.5, -h + 1.5, h * 2 - 3, h * 2 - 3);
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++){ const px = a * 6.5, py = b * 6.5; ctx.fillStyle = '#2b2e31'; ctx.beginPath(); ctx.arc(px, py, 2.6, 0, TAU); ctx.fill(); ctx.fillStyle = '#c9ced2'; ctx.beginPath(); ctx.arc(px - .6, py - .6, 1.3, 0, TAU); ctx.fill(); }
+  } else if (o.kind === 'snare'){
+    ctx.strokeStyle = '#3a2a18'; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.arc(0, 0, h, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = '#c9a36a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, h, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#7b8288'; for (let i = 0; i < 8; i++){ const a = i / 8 * TAU; ctx.beginPath(); ctx.moveTo(Math.cos(a) * (h - 2), Math.sin(a) * (h - 2)); ctx.lineTo(Math.cos(a + .2) * (h - 7), Math.sin(a + .2) * (h - 7)); ctx.lineTo(Math.cos(a + .4) * (h - 2), Math.sin(a + .4) * (h - 2)); ctx.fill(); }
+    ctx.fillStyle = '#4a3320'; ctx.fillRect(h - 2, -2, 6, 4);
+  } else {
+    const hot = o.fire > 0;
+    ctx.fillStyle = hot ? 'rgba(255,120,40,.35)' : 'rgba(0,0,0,0)'; if (hot){ ctx.beginPath(); ctx.arc(0, 0, 46, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = '#26292c'; ctx.fillRect(-h, -h, h * 2, h * 2); ctx.fillStyle = '#3d4246'; ctx.fillRect(-h + 1.5, -h + 1.5, h * 2 - 3, h * 2 - 3);
+    ctx.fillStyle = hot ? '#ffb347' : '#8a4a1c'; for (let i = -1; i <= 1; i++) ctx.fillRect(-h + 4, i * 6 - 1.2, h * 2 - 8, 2.4);
+  }
+  if (!alpha){ for (let i = 0; i < Math.min(o.amt, 6); i++){ ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(-h + i * 4, h + 2, 3, 3); ctx.fillStyle = '#e6c88c'; ctx.fillRect(-h + i * 4 + .5, h + 2.5, 2, 2); } }
+  ctx.restore();
+}
+function drawTraps(vx0, vy0, vx1, vy1){
+  for (const o of trapMap.values()) if (o.x > vx0 - 50 && o.x < vx1 + 50 && o.y > vy0 - 50 && o.y < vy1 + 50) drawTrap(o);
+}
+function drawFlames(){                     // the burning traps' flames stand upright
+  for (const o of trapMap.values()){
+    if (!(o.fire > 0)) continue;
+    ctx.save(); standT(o.x, o.y);
+    for (let i = 0; i < 7; i++){
+      const a = i / 7 * TAU + anim * .7, r = 10 + 18 * ((i * 37) % 7) / 7, fx2 = o.x + Math.cos(a) * r, fy2 = o.y + Math.sin(a) * r * .6, hh = 14 + 10 * Math.sin(anim * 9 + i * 1.7);
+      const g = ctx.createLinearGradient(fx2, fy2, fx2, fy2 - hh); g.addColorStop(0, 'rgba(255,90,20,.9)'); g.addColorStop(.6, 'rgba(255,190,60,.75)'); g.addColorStop(1, 'rgba(255,240,170,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(fx2 - 5, fy2); ctx.quadraticCurveTo(fx2 - 3, fy2 - hh * .6, fx2, fy2 - hh); ctx.quadraticCurveTo(fx2 + 3, fy2 - hh * .6, fx2 + 5, fy2); ctx.fill();
+    }
+    ctx.restore();
+  }
 }
 
 /* ================= status effects: bleeding, infection, poison, frost, and fatigue from staying awake ================= */
@@ -3689,6 +3799,9 @@ const SND = (() => {
     cricket:{ d: .5, cd: 250, fn: (c, o, t) => { const f = rnd(4300, 5000); for (let i = 0; i < 4; i++) tone(c, o, t + i * .04, { f, d: .03, v: .05, a: .004 }); } },
     heart:  { d: .5, cd: 300, v: .8, fn: (c, o, t) => { tone(c, o, t, { f: 62, f1: 38, d: .17, v: 1 }); tone(c, o, t + .19, { f: 58, f1: 36, d: .15, v: .7 }); } },
     kick:   { d: .5, cd: 100, wet: .35, fn: (c, o, t) => { tone(c, o, t, { f: 120, f1: 36, d: .35, v: 1 }); burst(c, o, t, { type: 'lowpass', f: 900, d: .05, v: .5 }); } },
+    spike:  { d: .4, cd: 60, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 2600, d: .04, v: .6 }); tone(c, o, t, { f: 420, f1: 180, d: .09, v: .35, type: 'triangle' }); tone(c, o, t, { f: 110, f1: 55, d: .14, v: .6 }); } },
+    snap:   { d: .3, cd: 60, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 3200, d: .025, v: .9 }); tone(c, o, t, { type: 'square', f: 900, f1: 500, d: .05, v: .12, lp: 3000 }); burst(c, o, t + .05, { f: 900, q: 2, d: .08, v: .3 }); } },
+    flame:  { d: 1.4, cd: 200, wet: .2, fn: (c, o, t) => { burst(c, o, t, { type: 'lowpass', f: 300, f1: 2400, d: .45, a: .08, v: .7 }); burst(c, o, t + .2, { f: 900, q: .6, d: 1.1, a: .2, v: .35, brown: true }); } },
     levelup:{ d: 1.6, cd: 500, wet: .6, fn: (c, o, t) => { arp(c, o, t, [523, 659, 784, 1047, 1319], .07, { type: 'triangle', d: .9, v: .22 }); tone(c, o, t + .35, { f: 2093, d: .8, v: .08 }); } },
     perk:   { d: 1, cd: 300, wet: .5, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 784, d: .5, v: .22 }); tone(c, o, t + .1, { type: 'triangle', f: 1175, d: .8, v: .22 }); tone(c, o, t + .1, { f: 2350, d: .6, v: .05 }); } },
     cast:   { d: .7, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 500, f1: 1800, q: .8, d: .18, a: .05, v: .25 }); burst(c, o, t + .2, { f: 700, f1: 300, q: 1.2, d: .22, v: .55 }); tone(c, o, t + .2, { f: 420, f1: 160, d: .13, v: .35 }); } },
@@ -3918,7 +4031,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

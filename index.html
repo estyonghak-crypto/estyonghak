@@ -233,6 +233,25 @@ body.building #ctx{display:none}
 .how{margin:8px 0 0;padding:12px 16px;max-width:340px;text-align:left;font-size:12.5px;line-height:1.6;color:var(--dim);list-style:none;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .how li+li{margin-top:2px}
 .how b{color:var(--bone);font-weight:500}
+.jt{margin:0;font-family:var(--font-display);font-weight:400;font-size:clamp(30px,8vw,40px)}
+#jobGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(360px,100%)}
+.jobcard{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);color:var(--bone)}
+.jobcard .ji{font-size:26px;line-height:1}
+.jobcard b{font-size:13px;font-weight:700}
+.jobcard.on{border-color:var(--jc);background:color-mix(in srgb,var(--jc) 22%,rgba(12,22,19,.85));box-shadow:0 0 0 2px color-mix(in srgb,var(--jc) 45%,transparent)}
+.jobcard:active{transform:scale(.96)}
+#jobInfo{width:min(360px,100%);text-align:left;padding:12px 14px;border-radius:12px;border:1.5px solid var(--jc,var(--line));background:var(--panel);font-size:13px;line-height:1.5}
+#jobInfo h3{margin:0 0 6px;font-size:17px}
+#jobInfo h3 small{font-size:12px;font-weight:400;color:var(--dim);margin-left:4px}
+#jobInfo dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px}
+#jobInfo dt{color:var(--jc,var(--amber));font-weight:700;white-space:nowrap}
+#jobInfo dd{margin:0;color:var(--bone)}
+#btnSkill{position:relative;width:46px!important;height:46px!important;align-self:center;border-color:var(--jc,var(--line))!important;font-size:20px!important;line-height:1;
+  background:conic-gradient(rgba(0,0,0,.62) 0 var(--cd,0%),rgba(0,0,0,0) var(--cd,0%) 100%),var(--panel)!important}
+#btnSkill .si{display:block}
+#btnSkill small{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-body,inherit);font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000}
+#btnSkill:not(.ready) .si{opacity:.45}
+#btnSkill.ready{box-shadow:0 0 10px color-mix(in srgb,var(--jc) 55%,transparent)}
 .endstat{font-size:14px;color:var(--dim)}
 .endstat b{color:var(--amber);font-size:20px;font-variant-numeric:tabular-nums}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:40;transition:opacity .45s}
@@ -365,6 +384,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <button class="btn" id="btnNew">새 게임</button>
   </div>
   <ul class="how">
+    <li><b>직업</b> 새 게임에서 목수 · 사냥꾼 · 공병 · 약초의 · 광부 · 군인 · 생존자 중 하나를 골라요. 직업마다 시작 장비와 특성, 고유 기술(건축 버튼 옆 동그란 버튼, R)이 달라요</li>
     <li><b>이동</b> 화면을 누른 채 드래그 (키보드 WASD)</li>
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식 알약을 터치 (E)</li>
@@ -385,6 +405,14 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li>전리품(고철, 가죽)으로 제작 창의 <b>강화</b> 탭에서 장비를 올려요</li>
     <li>해안에서 <b>배</b>를 만들면 다른 섬으로 갈 수 있어요. <b>광산</b>에서 광석을 캐 <b>용광로</b>에서 주괴로 녹여 쓰세요</li>
   </ul>
+</div>
+
+<div id="jobs" class="screen" hidden>
+  <h2 class="jt">직업 고르기</h2>
+  <p class="lead">직업마다 시작 장비, 특성, 고유 기술이 달라요</p>
+  <div id="jobGrid"></div>
+  <div id="jobInfo"></div>
+  <div class="stack"><button class="btn" id="jobGo">시작</button><button class="btn ghost" id="jobBack">뒤로</button></div>
 </div>
 
 <div id="end" class="screen" hidden>
@@ -600,7 +628,7 @@ const RECIPES = [
   { id: 'shelter', name: '움막', desc: '낮은 안전지대. 밤에 잠을 자서 아침까지 건너뜁니다.', cost: { wood: 12, stone: 5 }, place: 'shelter' },
   { id: 'boat', name: '작은 배', desc: '바닷가에서 만들면 다른 섬으로 항해할 수 있어요. 배 앞에서 행동 버튼을 누르세요.', cost: { wood: 25, scrap: 4, hide: 3 }, boat: true },
   { id: 'furnace', name: '용광로', desc: '광석을 주괴로 녹이는 시설이에요. 가까이에서 "제련" 탭을 쓰세요.', cost: { stone: 20, wood: 6 }, place: 'furnace' },
-  { id: 'lantern', name: '광부 랜턴', desc: '밤과 갱도에서 보이는 범위가 넓어져요. 한 번만 만들면 계속 써요.', cost: { cuBar: 2, scrap: 2 }, lantern: true },
+  { id: 'lantern', name: '광부 랜턴', desc: '밤과 갱도에서 보이는 범위가 넓어져요. 한 번만 만들면 계속 써요.', get cost(){ return isJob('miner') ? { cuBar: 1, scrap: 1 } : { cuBar: 2, scrap: 2 }; }, lantern: true },
   { id: 'bandage', name: '붕대 2개', desc: '피가 나는 상처(출혈)를 바로 멈추고 체력 +5. 가방의 붕대나 🩸 칩을 눌러 써요.', cost: { hide: 1 }, give: { bandage: 2 } },
   { id: 'rod',     name: '낚싯대', desc: '물가(호수나 바닷가)에서 낚시 버튼이 나타나요. 바늘은 고철로 만들어요. 한 번만 만들면 계속 써요.', cost: { wood: 5, scrap: 1 }, rod: true },
   { id: 'pot',     name: '냄비', desc: '모닥불 곁에서 열매 스튜, 생선 수프, 모험가 정식을 끓일 수 있어요. 한 번만 만들면 돼요.', cost: { scrap: 3, stone: 2 }, pot: true },
@@ -716,7 +744,7 @@ function unpackObjs(list){
     if (o.t === 'ore'){ o.kind = a[8]; o.amt = a[4]; o.regrow = a[7]; o.shake = 0; }
     if (o.t === 'furnace') o.glow = 0;
     if (o.t === 'trap'){ o.kind = a[8]; o.amt = a[4]; o.cd = 0; o.fire = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
-    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = WALLS[o.kind].hp; o.hit = 0; o.ammo = a[10] || 0; o.lv = a[11] || 1; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
+    if (o.t === 'wall'){ o.kind = a[8]; o.hp = a[9]; o.max = wallMax(o.kind); o.hit = 0; o.ammo = a[10] || 0; o.lv = a[11] || 1; o.cd = 0; o.fire = 0; o.aim = 0; o.i = Math.floor(o.x / GRID); o.j = Math.floor(o.y / GRID); }
     addObj(o);
   }
 }
@@ -871,7 +899,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true }, job: 'survivor', jobCd: 0, jobFx: {}, free: {},
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -922,7 +950,7 @@ function phaseOf(t){ return t < .5 ? '낮' : t < .62 ? '해질녘' : t < .9 ? '�
 /* ================= input ================= */
 const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ' ': 'act', j: 'act', J: 'act' };
 addEventListener('keydown', e => {
-  if (e.repeat && 'cCeEqQbB123456zZxXvVmMnNfFkK'.includes(e.key) || e.repeat && e.key === 'Escape') return;
+  if (e.repeat && 'cCeEqQbB123456zZxXvVmMnNfFkKrR'.includes(e.key) || e.repeat && e.key === 'Escape') return;
   const k = KEYMAP[e.key];
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
@@ -938,6 +966,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'n' || e.key === 'N') SND.setMuted(!SND.muted);
   else if (e.key === 'f' || e.key === 'F'){ if (!paused){ if (fish.on) fishStop('낚싯줄을 감았어요'); else fishStart(); } }
   else if (e.key === 'k' || e.key === 'K'){ if (!paused) openCook(); }
+  else if (e.key === 'r' || e.key === 'R'){ if (!paused) useSkill(); }
   else if (e.key === 'Escape') paused && !$('menu').hidden ? closeMenu() : openMenu();
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.key]; if (k) keys[k] = false; });
@@ -1021,7 +1050,7 @@ function frontCell(){          // the free cell nearest to the spot in front of 
 const ghostCell = () => cursor || frontCell();
 function addWall(i, j, kind, hp){
   const def = WALLS[kind];
-  return addObj({ t: 'wall', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 15, hp: hp == null ? def.hp : hp, max: def.hp, hit: 0, ammo: kind === 'tower' ? 10 : 0, lv: 1, cd: 0, fire: 0, aim: 0 });
+  return addObj({ t: 'wall', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 15, hp: hp == null ? wallMax(kind) : hp, max: wallMax(kind), hit: 0, ammo: kind === 'tower' ? 10 : 0, lv: 1, cd: 0, fire: 0, aim: 0 });
 }
 function tryBuild(i, j){
   if (buildSel === 'erase'){
@@ -1030,22 +1059,24 @@ function tryBuild(i, j){
     return demolish(w);
   }
   const why = canBuild(i, j); if (why === 'exists') return; if (why) return buildMsg(why);
-  const cost = WALLS[buildSel].cost;
+  const free = freeLeft(buildSel) > 0, cost = free ? {} : buildCost(buildSel);
   for (const k in cost) if (P.inv[k] < cost[k]) return buildMsg(josa(ITEMS[k].name, '이/가') + ' 부족해요 (' + P.inv[k] + '/' + cost[k] + ')');
   for (const k in cost) P.inv[k] -= cost[k];
+  if (free){ P.free[buildSel]--; renderBuildBar(); }
   if (WALLS[buildSel].trap){ addTrap(i, j, buildSel); if (!trapTip){ trapTip = true; toast('함정은 적이 밟으면 터져요. 나는 밟아도 괜찮아요. 쓸 수 있는 횟수가 아래 점으로 보여요.'); } }
   else { addWall(i, j, buildSel); P.built.wall = true; if (buildSel === 'thorn' && !thornTip){ thornTip = true; toast('가시 울타리를 공격한 적은 다치고 피를 흘려요.'); } }
   SND.play('build');
   if (buildSel === 'tower' && !towerTip){ towerTip = true; toast('탑은 가까운 적을 알아서 쏴요. 탑 앞에서 행동 버튼으로 탄약을 채우세요.'); }
 }
 function demolish(w){
-  const cost = WALLS[w.kind].cost;
+  const cost = buildCost(w.kind);
   for (const k in cost){ const n = Math.floor(cost[k] / 2); if (n){ P.inv[k] += n; floater(w.x, w.y, 18, '+' + n + ' ' + ITEMS[k].icon); } }
   if (w.ammo > 0){ P.inv.ammo += w.ammo; floater(w.x, w.y, 32, '+' + w.ammo + ' ' + ITEMS.ammo.icon); }
   removeObj(w); SND.play('scrap');
 }
 function damageWall(w, n){
   const th = WALLS[w.kind].thorns; if (th && hitSrc && creatures.includes(hitSrc)){ hitCreature(hitSrc, th, hitSrc.x - w.x, hitSrc.y - w.y, true); hitSrc.bleed = Math.max(hitSrc.bleed || 0, 4); fx('spark', w.x, w.y, 14, 3); }
+  if (perk('joinery')) n = Math.max(1, Math.round(n * .75));
   w.hp -= n; w.hit = .15; floater(w.x, w.y, 22, '-' + n, '#ffb199'); SND.play(w.hp <= 0 ? 'wallbreak' : 'wallhit', { x: w.x, y: w.y });
   if (w.hp <= 0){ removeObj(w); if (Math.hypot(w.x - P.x, w.y - P.y) < 420) toast(josa(WALLS[w.kind].name, '이/가') + ' 부서졌어요!'); }
 }
@@ -1069,14 +1100,14 @@ function renderBuildBar(){
   const box = $('build'); box.innerHTML = '';
   for (const k of buildList()){
     const d = WALLS[k], b = document.createElement('button'); b.className = 'bp'; b.dataset.k = k;
-    const cost = k === 'erase' ? '환급 50%' : Object.keys(d.cost).map(r => ITEMS[r].icon + d.cost[r]).join('');
+    const cost = k === 'erase' ? '환급 50%' : freeLeft(k) > 0 ? '무료 ' + freeLeft(k) : Object.entries(buildCost(k)).map(([r, n]) => ITEMS[r].icon + n).join('');
     b.innerHTML = WALL_SVG[k] + '<b>' + d.name + '</b><small>' + cost + '</small>'; box.appendChild(b);
   }
   syncBuildBar();
 }
 function syncBuildBar(){
   $('build').querySelectorAll('.bp').forEach(b => {
-    const k = b.dataset.k, cost = WALLS[k].cost;
+    const k = b.dataset.k, cost = k === 'erase' || freeLeft(k) > 0 ? {} : buildCost(k);
     b.classList.toggle('on', k === buildSel);
     b.classList.toggle('no', Object.keys(cost).some(r => P.inv[r] < cost[r]));
   });
@@ -1197,14 +1228,14 @@ function act(){
   P.swing = .26;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, eq.wood + perk('lumber')); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, eq.stone + perk('miner')); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.wood + perk('lumber') + (isJob('carpenter') ? 1 : 0) + gatherAdj())); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.stone + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj())); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
     case 'ore': {
       const d = ORE[o.kind], eq = stat(P.equip), lv = P.lv.pickaxe || 1;
       if (!P.tools.pickaxe){ P.cd = .5; SND.play('deny'); toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
       if (!eq.ore){ P.cd = .5; SND.play('deny'); toast('곡괭이를 들어야 캘 수 있어요'); break; }
       if (lv < d.tier){ P.cd = .6; SND.play('deny'); floater(o.x, o.y, 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
-      SND.play('ore'); const n = Math.min(o.amt, eq.ore + perk('miner')); gain(o.kind, n); addXp(d.tier * 2 + 1); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
+      SND.play('ore'); const n = Math.min(o.amt, Math.max(1, eq.ore + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) + (perk('vein') && Math.random() < .2 ? 1 : 0)); gain(o.kind, n); addXp(d.tier * 2 + 1); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
       o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) o.regrow = d.regrow;
       break;
     }
@@ -1221,14 +1252,14 @@ function act(){
       if (o.hp < o.max){                                                  // repair with the wall's own material
         const k = Object.keys(WALLS[o.kind].cost)[0]; P.cd = .35;
         if (P.inv[k] < 1){ toast(josa(ITEMS[k].name, '이/가') + ' 필요해요'); break; }
-        P.inv[k]--; o.hp = Math.min(o.max, o.hp + 30); floater(o.x, o.y, 24, '수리 +30', '#9be3a5'); SND.play('build'); break;
+        P.inv[k]--; const rp = isJob('engineer') ? 60 : 30; o.hp = Math.min(o.max, o.hp + rp); floater(o.x, o.y, 24, '수리 +' + rp, '#9be3a5'); SND.play('build'); break;
       }
       if (ts && canTowerUpgrade(o)){ upgradeTower(o); P.cd = .5; }
       break;
     }
     case 'crate': P.cd = .4; openCrate(o); break;
     case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1 + perk('scavenger')); addXp(2); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
-    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', 1 + perk('forager')); if (Math.random() < .15) gain('herb', 1); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
+    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', Math.max(1, 1 + perk('forager') + gatherAdj())); if (Math.random() < .15 * (isJob('herbalist') ? 2 : 1)) gain('herb', 1); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
     case 'water': { SND.play('drink'); P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
     case 'fire':
       P.cd = .35;
@@ -1363,7 +1394,7 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
     if (byPlayer) addXp((KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1));
-    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0); if (n > 0) gain(k, n); }
+    if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0) + (isJob('hunter') && (k === 'meat' || k === 'hide') ? 1 : 0); if (n > 0) gain(k, n); }
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     if (c.boss && (byPlayer || byTower)) bossLoot(c);
     if (SHEET[c.k] && SHEET[c.k].m.cols.die) corpses.push({ k: c.k, x: c.x, y: c.y, hd: c.hd == null ? Math.PI / 4 : c.hd, t: 0, vx: c.kvx * .5, vy: c.kvy * .5, en: !!c.enraged });
@@ -1372,7 +1403,10 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
 }
 function attack(c){
   const eq = stat(P.equip); P.cd = eq.cdA; SND.play('swing');
-  hitCreature(c, Math.round(eq.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler'))), c.x - P.x, c.y - P.y, true);
+  let m = (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler')) * meleeMul();
+  if (P.jobFx.mark){ P.jobFx.mark = 0; m *= 2; floater(c.x, c.y, 44, '급소!', '#ffe08a'); }             // the hunter's tracking: the next blow lands double
+  else if (perk('vital') && Math.random() < .2){ m *= 2; floater(c.x, c.y, 44, '치명타!', '#ffe08a'); }
+  hitCreature(c, Math.round(eq.dmg * m), c.x - P.x, c.y - P.y, true);
 }
 
 /* ================= guns, arrows, towers ================= */
@@ -1395,8 +1429,9 @@ function fireGun(){
   const t = aimTarget(); let ax = P.fx, ay = P.fy;
   if (t){ const d = Math.hypot(t.x - P.x, t.y - P.y) || 1; ax = (t.x - P.x) / d; ay = (t.y - P.y) / d; }
   P.fx = ax; P.fy = ay; if (Math.abs(ax - ay) > .2) P.flip = ax < ay ? -1 : 1;
-  const gs = stat('gun'); if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd; P.flash = .1;
-  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman'))), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet' });
+  const gs = stat('gun'); if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd * gunCdMul(); P.flash = .1;
+  const mk = P.jobFx.mark ? 2 : 1; P.jobFx.mark = 0;
+  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman')) * gunMul() * mk), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet', pierce: perk('pierce') ? 1 : 0 });
   fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2); SND.play('gun');
   try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
 }
@@ -1415,8 +1450,8 @@ function updateTowers(dt){
     for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - w.x, c.y - w.y); if (d < bd){ bd = d; best = c; } }
     if (!best) continue;
     const a = Math.atan2(best.y - w.y, best.x - w.x);
-    bullets.push({ x: w.x, y: w.y, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, dmg: ts.dmg, life: ts.range / 480 + .2, own: 'tower', kind: 'arrow', hostileOnly: true });
-    w.ammo--; w.cd = ts.cd; w.fire = .12; w.aim = a; SND.play('arrow', { x: w.x, y: w.y });
+    bullets.push({ x: w.x, y: w.y, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, dmg: Math.round(ts.dmg * (isJob('engineer') ? 1.2 : 1)), life: ts.range / 480 + .2, own: 'tower', kind: 'arrow', hostileOnly: true });
+    w.ammo--; w.cd = ts.cd * (P.jobFx.over > 0 ? .5 : 1); w.fire = .12; w.aim = a; SND.play('arrow', { x: w.x, y: w.y });
     if (w.ammo === 0 && Math.hypot(w.x - P.x, w.y - P.y) < 600) toast('탑의 탄약이 떨어졌어요!');
   }
 }
@@ -1426,7 +1461,8 @@ function updateBullets(dt){
     let hit = false;
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
-      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); fx('spark', b.x, b.y, 12, 4); hit = true; break; }
+      if (b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
+      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); fx('spark', b.x, b.y, 12, 4); if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
   }
@@ -1441,9 +1477,9 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
   }
 }
 function hurt(n, raw){
-  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')])));
+  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1)));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
-  if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1)) afflict(k); }
+  if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1) * (perk('immune') && (k === 'infect' || k === 'poison') ? .5 : 1)) afflict(k); }
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
   floater(P.x, P.y, 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
@@ -1457,7 +1493,7 @@ function useItem(k){
   if (P.inv[k] <= 0){ toast(josa(ITEMS[k].name, '이/가') + ' 없어요'); return; }
   if (k === 'heal'){
     if (P.hp >= 99 && !anyStatus()){ toast('체력이 가득 차 있어요'); return; }
-    SND.play('heal'); P.inv.heal--; P.hp = Math.min(100, P.hp + 50); cure(Object.keys(STATUS)); floater(P.x, P.y, 30, '+50 체력', '#ff8aa0'); fx('glow', P.x, P.y, 20, 10, '255,120,150'); return;
+    SND.play('heal'); P.inv.heal--; const hv = Math.round(50 * potionMul()); P.hp = Math.min(100, P.hp + hv); cure(Object.keys(STATUS)); floater(P.x, P.y, 30, '+' + hv + ' 체력', '#ff8aa0'); fx('glow', P.x, P.y, 20, 10, '255,120,150'); return;
   }
   if (k === 'tonic'){
     if (P.fatigue < 10 && !(P.buffs.vigor > 0)){ toast('지금은 피곤하지 않아요. 피로가 쌓였을 때 마셔요'); return; }
@@ -1465,8 +1501,8 @@ function useItem(k){
     fx('glow', P.x, P.y, 20, 12, '255,200,90'); floater(P.x, P.y, 30, '피로 -' + (was - Math.round(P.fatigue)), '#ffd166'); toast('🧃 피로회복제! 기운이 나요. 2분 동안 피로가 쌓이지 않아요'); return;
   }
   if (k === 'swift' || k === 'power'){
-    SND.play('buff'); P.inv[k]--; P.buffs[k] = BUFF_T; fx('glow', P.x, P.y, 20, 12, PICK_COL[k]);
-    toast(k === 'swift' ? '신속! ' + BUFF_T + '초 동안 이동이 빨라져요' : '괴력! ' + BUFF_T + '초 동안 공격력 1.5배'); return;
+    SND.play('buff'); P.inv[k]--; P.buffs[k] = BUFF_T * potionMul(); fx('glow', P.x, P.y, 20, 12, PICK_COL[k]);
+    toast(k === 'swift' ? '신속! ' + BUFF_T * potionMul() + '초 동안 이동이 빨라져요' : '괴력! ' + BUFF_T * potionMul() + '초 동안 공격력 1.5배'); return;
   }
   if (k === 'bandage'){
     if (!(P.st.bleed > 0)){ toast('붕대는 피가 날 때(출혈) 써요'); return; }
@@ -1481,7 +1517,7 @@ function useItem(k){
   if (k === 'berry'){ P.hunger = Math.min(100, P.hunger + 12); floater(P.x, P.y, 26, '+12 배고픔', '#f2b84b'); }
   else if (k === 'cooked'){ P.hunger = Math.min(100, P.hunger + 40); P.hp = Math.min(100, P.hp + 10); floater(P.x, P.y, 26, '+40 배고픔', '#f2b84b'); }
   else if (FOOD[k]) eatFood(k);
-  else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6, true); if (Math.random() < .35) afflict('poison'); }
+  else { P.hunger = Math.min(100, P.hunger + 14); toast('날고기는 몸에 해로워요'); hurt(6, true); if (Math.random() < .35 * (perk('immune') ? .5 : 1)) afflict('poison'); }
 }
 const FOOD = {       // what the fish dishes do (raw: damage taken from eating it uncooked; warm / full: seconds of the buff)
   fish:    { hunger: 12, raw: 4, say: '날생선은 비려요' },
@@ -1496,7 +1532,7 @@ function eatFood(k){
   if (f.hp) P.hp = Math.min(100, P.hp + f.hp); if (f.thirst) P.thirst = Math.min(100, P.thirst + f.thirst);
   if (f.warm) P.buffs.warm = Math.max(P.buffs.warm, f.warm * (perk('cook') ? 1.5 : 1)); if (f.full) P.buffs.full = Math.max(P.buffs.full, f.full * (perk('cook') ? 1.5 : 1));
   if (f.cure) cure(f.cure); if (f.rest) P.fatigue = Math.max(0, P.fatigue - f.rest);
-  if (f.say) toast(f.say); if (f.raw){ hurt(f.raw, true); if (Math.random() < .35) afflict('poison'); }
+  if (f.say) toast(f.say); if (f.raw){ hurt(f.raw, true); if (Math.random() < .35 * (perk('immune') ? .5 : 1)) afflict('poison'); }
 }
 function eatBest(){
   for (const k of ['cooked', 'grilled', 'berry', 'fish', 'meat']) if (P.inv[k] > 0){ useItem(k); return; }
@@ -1791,7 +1827,8 @@ function drawMini(force){
   for (const p of pickups) dot(p.x, p.y, 2, 'rgb(' + (PICK_COL[p.k] || '255,220,120') + ')');
   const pulse = Math.sin(anim * 7) > 0;
   for (const c of creatures){
-    const d = dn(c), boss = !!c.boss, elite = !!c.elite; if (!boss && !elite && d > MINI_SEE) continue;
+    const d = dn(c), boss = !!c.boss, elite = !!c.elite, trk = P.jobFx.track > 0 && d < 1600; if (!boss && !elite && d > MINI_SEE && !trk) continue;
+    if (trk) dot(c.x, c.y, pulse ? 7 : 6, 'rgba(255,224,120,.8)');              // the hunter's tracking: every animal around, ringed
     const hostile = c.k in NIGHT_KINDS || c.k === 'bat' || c.k === 'golem' && c.state === 'awake' || (c.k === 'bear' || c.k === 'boar') && c.state === 'angry';
     if (boss) dot(c.x, c.y, pulse ? 6 : 5, '#ffd34a'); else if (elite) dot(c.x, c.y, 4, '#ff9a3c'); else if (hostile) dot(c.x, c.y, 3, '#ff5a4a'); else dot(c.x, c.y, 2, c.k === 'rabbit' ? '#efe6d0' : '#cfa070');
   }
@@ -1841,7 +1878,7 @@ function updateHUD(){
   const boss = creatures.find(c => c.boss), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
   if (boss){ setText($('bossName'), '👑 ' + boss.name); setText($('bossHp'), Math.ceil(boss.hp) + ' / ' + boss.max); const w = (Math.max(0, boss.hp / boss.max) * 100).toFixed(1) + '%'; if ($('bossFill')._w !== w){ $('bossFill')._w = w; $('bossFill').style.width = w; } }
   updateEliteArrow(); layoutHud();
-  setText($('armorBadge'), P.armor ? '🛡' + P.armor : ''); updatePerkHUD();
+  setText($('armorBadge'), P.armor ? '🛡' + P.armor : ''); updatePerkHUD(); updateSkillHUD();
   if (buildMode) syncBuildBar(); updateCtx();
   const lab = buildMode ? (buildSel === 'erase' ? '철거' : '설치') : (P.equip === 'gun' && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
@@ -1978,7 +2015,7 @@ function update(dt){
   if ((P.buffs.swift > 0 || P.buffs.power > 0) && Math.random() < dt * 8) fx('glow', P.x, P.y, 6, 1, P.buffs.swift > 0 ? '110,200,255' : '255,150,70');
   if (P.moving){
     const wd = scr2world(ix, iy); P.fx = wd.x; P.fy = wd.y; if (Math.abs(ix / m) > .2) P.flip = ix < 0 ? -1 : 1;
-    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1) * (1 + .1 * perk('swift')) * statusSpeed();
+    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1) * (1 + .1 * perk('swift')) * statusSpeed() * jobSpeed();
     P.x += P.fx * sp * dt; P.y += P.fy * sp * dt; P.step += dt * 11;
   }
   collide(P, PLAYER_R); clampIsland(P, PLAYER_R + 4);
@@ -1986,16 +2023,16 @@ function update(dt){
 
   // survival stats
   const dark = darkness(t);
-  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1) * [1, .8, .65][perk('hardy')]);
+  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1) * [1, .8, .65][perk('hardy')] * (isJob('miner') ? 1.1 : 1));
   P.thirst = Math.max(0, P.thirst - .28 * dt * [1, .85, .75][perk('hardy')]);
   let warm = false;
   for (const s of structs){
     const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
     if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim){ warm = true; break; }
   }
-  const chill = Z.chill || 0;                                   // caves and the snow island keep draining warmth
+  const chill = (Z.chill || 0) * (Z.cave && isJob('miner') ? .5 : 1);                                   // caves and the snow island keep draining warmth
   if (warm) P.warmth += 8 * dt;
-  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1);
+  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1) * coldMul();
   else P.warmth += 1.6 * dt;
   if (chill && !warm && P.warmth < 30 && T - lastChillT > 40){ lastChillT = T; toast('몸이 얼어붙어요! 모닥불이나 움막 곁에서 몸을 녹이세요.'); }
   P.warmth = clamp(P.warmth, 0, 100);
@@ -2014,10 +2051,10 @@ function update(dt){
     else if (o.t === 'fire' && o.fuel > 0){ o.fuel -= dt; if (o.fuel <= 0) toast('모닥불이 꺼졌어요. 장작을 넣어 다시 피우세요.'); }
   }
   target = findTarget();
-  if (P.auto){ const b = hasTool('gun') && P.inv.ammo > 0 && nearestHostile(AUTO_GUN_RANGE) ? 'gun' : bestFor(target); if (b) setEquip(b); }
+  if (P.auto){ const b = hasTool('gun') && P.inv.ammo > 0 && (nearestHostile(AUTO_GUN_RANGE) || P.jobFx.rapid > 0) ? 'gun' : bestFor(target); if (b) setEquip(b); }
   aim = P.equip === 'gun' ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateBossFx(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateBossFx(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
   for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
   for (let i = corpses.length - 1; i >= 0; i--){ const o = corpses[i]; o.t += dt; if (o.t < .5){ o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy *= .9; } if (o.t > 9) corpses.splice(i, 1); }
   const da = scrAng(P.fx, P.fy) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
@@ -2065,7 +2102,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -2081,6 +2118,8 @@ function loadGame(s){
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
   P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, P.buffs); P.st = Object.assign({ bleed: 0, infect: 0, poison: 0, chill: 0 }, P.st); P.fatigue = P.fatigue || 0; P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {}; P.perk = P.perk || {}; P.xpDone = P.xpDone || {};
+  if (!JOBS[P.job]) P.job = 'survivor'; P.jobCd = P.jobCd || 0; P.jobFx = P.jobFx || {}; P.free = P.free || {};    // older saves: a survivor
+  for (const w of wallMap.values()){ w.max = wallMax(w.kind); w.hp = Math.min(w.hp, w.max); }                                                    // (walls were unpacked before the player, and the job sets their strength)
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
   spawnFauna();
@@ -2091,11 +2130,14 @@ function startRun(){
   running = true; paused = false; sleeping = false; actHeld = false; resetJoy(); fishStop();
   lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; lastGoal = ''; bossTimer = 4; target = null; lastLabel = '';
   cam.x = P.x; cam.y = P.y;
-  $('title').hidden = true; $('end').hidden = true; $('hud').hidden = false;
+  $('title').hidden = true; $('end').hidden = true; $('jobs').hidden = true; $('hud').hidden = false;
   $('craft').hidden = true; $('menu').hidden = true; $('toasts').innerHTML = '';
   setBuild(false); buildEquip(); updateHUD(); save();
 }
-function newGame(){ clearSave(); genWorld(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.'); setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200); }
+function newGame(job){
+  clearSave(); genWorld(); P.job = JOBS[job] ? job : 'survivor'; giveKit(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.'); setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200);
+  const J = jobDef(); if (J.skill) setTimeout(() => toast(J.icon + ' ' + J.name + '의 고유 기술 ' + J.skill.icon + ' ' + J.skill.name + ': 건축 버튼 옆의 동그란 버튼 (R)'), 4600);
+}
 function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try { loadGame(s); startRun(); toast(dayOf() + '일차, 다시 시작합니다.'); } catch (_) { newGame(); } }
 function endGame(win){
   if (!running) return;
@@ -2110,7 +2152,7 @@ function endGame(win){
 }
 function toTitle(){
   save(); running = false; paused = false;
-  $('hud').hidden = true; $('end').hidden = true; $('craft').hidden = true; $('menu').hidden = true; $('title').hidden = false;
+  $('hud').hidden = true; $('end').hidden = true; $('jobs').hidden = true; $('craft').hidden = true; $('menu').hidden = true; $('title').hidden = false;
   refreshTitle(); demoWorld();
 }
 let confirmNew = false;
@@ -2126,10 +2168,10 @@ function demoWorld(){
 }
 $('btnNew').addEventListener('click', () => {
   if (readSave() && !confirmNew){ confirmNew = true; $('btnNew').textContent = '저장 기록이 지워져요. 한 번 더 누르세요'; return; }
-  newGame();
+  openJobs();
 });
 $('btnContinue').addEventListener('click', continueGame);
-$('btnAgain').addEventListener('click', newGame);
+$('btnAgain').addEventListener('click', openJobs);
 $('btnHome').addEventListener('click', toTitle);
 $('craftClose').addEventListener('click', closeCraft);
 $('sailClose').addEventListener('click', closeSail);
@@ -2878,7 +2920,7 @@ function drawGhost(){
   let col = '#7bd88f', piece = true;
   if (buildSel === 'erase'){ col = wallMap.has(g.i + ',' + g.j) || trapMap.has(g.i + ',' + g.j) ? '#ff6b5e' : 'rgba(255,255,255,.35)'; piece = false; }
   else {
-    const cost = WALLS[buildSel].cost;
+    const cost = freeLeft(buildSel) > 0 ? {} : buildCost(buildSel);
     if (canBuild(g.i, g.j)){ col = '#ff6b5e'; piece = false; } else if (Object.keys(cost).some(k => P.inv[k] < cost[k])) col = '#ffd166';
   }
   ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.strokeRect(x - GRID / 2, y - GRID / 2, GRID, GRID); ctx.setLineDash([]);
@@ -3133,8 +3175,8 @@ function drawPlayer(){
   else if (P.moving){ an = 'walk'; f = Math.floor((((P.step / TAU) % 1) + 1) % 1 * 8) % 8; }
   else { an = 'idle'; f = Math.floor(anim * 2.5) % 4; }
   ell(x, y + 2, 14, 6.5, 'rgba(0,0,0,.28)');
-  const armor = Math.min(5, P.armor | 0);
-  pixDraw(S, hurtT > .38 ? whiteOf(S) : (S.tint[armor] || (S.tint[armor] = tintSheet(S.img, ARMOR_RAMP[armor]))), cols[an][0] + f, headRow(Math.atan2(P.fy, P.fx)), x, y);
+  const armor = Math.min(5, P.armor | 0), jr = !armor && jobDef().ramp, tk = jr ? 'j_' + P.job : armor;
+  pixDraw(S, hurtT > .38 ? whiteOf(S) : (S.tint[tk] || (S.tint[tk] = tintSheet(S.img, jr || ARMOR_RAMP[armor]))), cols[an][0] + f, headRow(Math.atan2(P.fy, P.fx)), x, y);
   const fa = scrAng(P.fx, P.fy);
   if (P.lantern){ const fl = .85 + Math.sin(anim * 9) * .1; ctx.fillStyle = 'rgba(255,196,90,' + (.3 * fl).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(x - 9 * (P.flip || 1), y - 14, 10, 0, TAU); ctx.fill(); ctx.fillStyle = '#ffd27a'; ctx.fillRect(x - 9 * (P.flip || 1) - 1.5, y - 16, 3, 5); }
   if (gun && P.flash > 0){
@@ -3278,7 +3320,7 @@ function render(){
   for (const o of corpses) if (seen(o.x, o.y)) draws.push({ k: o.x + o.y - 2, x: o.x, y: o.y, corpse: o });
   if (running) draws.push({ k: P.x + P.y, x: P.x, y: P.y, p: 1 });
   draws.sort((a, b) => a.k - b.k);
-  drawAuras(draws); drawBossGround(); drawBossTelegraphs(draws); drawBuffRings();
+  drawAuras(draws); drawBossGround(); drawBossTelegraphs(draws); drawBuffRings(); drawJobFx();
   castShadows(draws, vx0, vy0, vx1, vy1, dk);
   for (const d of draws){          // every sprite stands upright on the spot where it is
     ctx.save(); standT(d.x, d.y);
@@ -3433,7 +3475,7 @@ function updateEvents(dt){
   for (let i = meteors.length - 1; i >= 0; i--){ const m = meteors[i]; m.t += dt; if (Math.random() < dt * 12) fx('ember', m.x + rand(-6, 6), m.y + rand(-4, 4), 40 + 260 * (1 - m.t / m.T), 1); if (m.t >= m.T){ meteors.splice(i, 1); meteorLand(m); } }
   if (evOn('storm') || evOn('cold')){
     let warm = false; for (const s of structs){ const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE; if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim){ warm = true; break; } }
-    if (!warm) P.warmth = Math.max(0, P.warmth - (evOn('cold') ? 2.6 : 2) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1));
+    if (!warm) P.warmth = Math.max(0, P.warmth - (evOn('cold') ? 2.6 : 2) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1) * coldMul());
   }
   if (evOn('storm')){ boltT -= dt; if (boltT <= 0){ boltT = rand(5, 12); lightningStrike(); } }
 }
@@ -3679,7 +3721,8 @@ const statusTip = {};
 function afflict(k, secs){
   const s = STATUS[k]; if (!s || !P || window.__noStatus) return;          // (__noStatus: tests of other things)
   const had = P.st[k] > 0;
-  P.st[k] = k === 'infect' ? Math.max(P.st[k], secs || s.dur) : Math.min(s.max, P.st[k] + (secs || s.dur));
+  const dur = (secs || s.dur) * (isJob('herbalist') ? .5 : 1);                 // the herbalist shakes things off in half the time
+  P.st[k] = k === 'infect' ? Math.max(P.st[k], dur) : Math.min(s.max, P.st[k] + dur);
   if (!had){ floater(P.x, P.y, 42, s.name + '!', s.col); if (!statusTip[k]){ statusTip[k] = true; toast(s.icon + ' ' + s.tip); } }
 }
 function cure(ks){ let n = 0; for (const k of ks) if (P.st[k] > 0){ P.st[k] = 0; n++; } return n; }
@@ -3742,9 +3785,16 @@ const KILL_XP = { rabbit: 3, boar: 12, wolf: 10, zombie: 12, brute: 45, bear: 36
 function levelInfo(){ const lv = P.level, a = xpTotal(lv), b = lv >= MAXLV ? a : xpTotal(lv + 1); return { lv, into: P.xp - a, need: b - a, max: lv >= MAXLV }; }
 function rollOffer(){
   if (P.perkPts <= 0){ P.offer = null; return; }
-  const pool = Object.keys(PERKS).filter(k => perk(k) < PERKS[k].max);
-  for (let i = pool.length - 1; i > 0; i--){ const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  P.offer = pool.slice(0, 2); if (!P.offer.length){ P.offer = null; P.perkPts = 0; }
+  const J = jobDef(), open = k => perk(k) < PERKS[k].max && (!PERKS[k].job || (PERKS[k].job === P.job && P.level >= PERKS[k].at));
+  const rest = Object.keys(PERKS).filter(open), pick = [];
+  const mine = rest.find(k => PERKS[k].job); if (mine){ pick.push(mine); rest.splice(rest.indexOf(mine), 1); }
+  while (pick.length < 2 && rest.length){                              // the job's related perks weigh double
+    const w = rest.map(k => (J.related.includes(k) ? 2 : 1)); let r = Math.random() * w.reduce((a, b) => a + b, 0), i = 0;
+    while (i < rest.length - 1 && (r -= w[i]) >= 0) i++;
+    pick.push(rest.splice(i, 1)[0]);
+  }
+  if (pick.length === 2 && Math.random() < .5) pick.reverse();
+  P.offer = pick; if (!P.offer.length){ P.offer = null; P.perkPts = 0; }
 }
 function addXp(n, label){
   if (!P || !running || !(n > 0)) return;
@@ -3777,7 +3827,7 @@ function renderPerk(){
     const row = document.createElement('div'); row.className = 'perkcards';
     for (const k of P.offer){
       const d = PERKS[k], b = document.createElement('button'); b.className = 'perkcard';
-      b.innerHTML = `<span class="pi">${d.icon}</span><b>${d.name}</b>${d.max > 1 ? `<em>${perk(k) + 1}단계</em>` : ''}<p>${d.desc}</p>`;
+      b.innerHTML = `<span class="pi">${d.icon}</span><b>${d.name}</b>${d.max > 1 ? `<em>${perk(k) + 1}단계</em>` : ''}${d.job ? `<em>${JOBS[d.job].name} 전용</em>` : ''}<p>${d.desc}</p>`;
       b.addEventListener('click', () => choosePerk(k)); row.appendChild(b);
     }
     box.appendChild(row);
@@ -3798,9 +3848,199 @@ $('perkClose').addEventListener('click', closePerk);
 $('perk').addEventListener('click', e => { if (e.target === $('perk')) closePerk(); });
 function updatePerkHUD(){
   const li = levelInfo(), pct = li.max ? 100 : li.into / li.need * 100, el = $('xpRow');
-  setText($('xpLv'), 'Lv.' + li.lv); const w = pct.toFixed(1) + '%'; if (el._w !== w){ el._w = w; el.querySelector('i').style.width = w; }
+  setText($('xpLv'), (P.job && P.job !== 'survivor' && JOBS[P.job] ? JOBS[P.job].icon + ' ' : '') + 'Lv.' + li.lv); const w = pct.toFixed(1) + '%'; if (el._w !== w){ el._w = w; el.querySelector('i').style.width = w; }
   const on = running && !paused && P.perkPts > 0 && !!P.offer; if ($('btnPerk').hidden === on) $('btnPerk').hidden = !on; if (on) setText($('btnPerk'), '기술 ' + P.perkPts);
 }
+/* ================= jobs: picked when a new game starts. Each has a starting kit, traits, one skill on a cooldown, a weakness and two perks of its own (Lv.5, Lv.10) ================= */
+const JOBS = {
+  carpenter: { name: '목수',   icon: '🪓', tag: '짓고 버티는 사람', ramp: ['#5c2c10', '#8a4416', '#b85e1e', '#e0812e'], ui: '#e0812e',
+    kit: '도끼 Lv.2', traits: ['나무를 벨 때 +1개', '벽 체력 +30%', '건축 재료 -20%'], weak: '소총 피해 -20%',
+    skill: { id: 'barricade', name: '급조 방벽', icon: '🧱', cd: 60, desc: '앞쪽에 울타리 3칸을 공짜로 세워요' }, related: ['lumber', 'tough', 'warm'] },
+  hunter:    { name: '사냥꾼', icon: '🏹', tag: '짐승을 쫓는 사람', ramp: ['#1f3a1e', '#2f5a2b', '#447a3a', '#62a052'], ui: '#62a052',
+    kit: '창, 올가미 덫 2개(공짜로 설치)', traits: ['짐승의 고기·가죽 +1', '함정 재료 절반'], weak: '체온이 15% 빨리 떨어져요',
+    skill: { id: 'track', name: '추적', icon: '🐾', cd: 45, desc: '15초 동안 주변 짐승이 미니맵과 땅 위에 보이고, 다음 공격이 2배' }, related: ['brawler', 'swift', 'hardy'] },
+  engineer:  { name: '공병',   icon: '🔧', tag: '탑으로 지키는 사람', ramp: ['#5a4a10', '#8a7016', '#b8961e', '#e0bc34'], ui: '#e0bc34',
+    kit: '고철 8, 탄약 20', traits: ['탑 재료 -30%', '탑 화력 +20%', '수리량 2배'], weak: '근접 공격 -15%',
+    skill: { id: 'repair', name: '긴급 수리', icon: '🛠️', cd: 75, desc: '주변(반경 230)의 벽과 탑을 한꺼번에 다 고쳐요' }, related: ['scavenger', 'ammo', 'marksman'] },
+  herbalist: { name: '약초의', icon: '🌿', tag: '약초로 살리는 사람', ramp: ['#163f3c', '#1f5f5a', '#2e847c', '#4fb0a4'], ui: '#4fb0a4',
+    kit: '붕대 3, 약초 3', traits: ['약초가 2배로 잘 나와요', '상태 이상 시간 절반', '물약 효과 +50%'], weak: '받는 피해 +10%',
+    skill: { id: 'firstaid', name: '응급 처치', icon: '💉', cd: 90, desc: '체력 +40, 상태 이상을 모두 낫게 해요' }, related: ['regen', 'forager', 'cook'] },
+  miner:     { name: '광부',   icon: '⛏️', tag: '땅속을 파는 사람', ramp: ['#1c2c4e', '#2a4272', '#3a5c9a', '#5a80c4'], ui: '#5a80c4',
+    kit: '곡괭이 (광부 랜턴 재료 절반)', traits: ['돌·광석을 캘 때 +1개', '갱도 추위 절반'], weak: '배고픔이 10% 빨리 줄어요',
+    skill: { id: 'blast', name: '발파', icon: '💥', cd: 60, desc: '주변의 바위와 광석을 한 번에 캐고, 적에게 30 피해' }, related: ['miner', 'night', 'hardy'] },
+  soldier:   { name: '군인',   icon: '🔫', tag: '총으로 싸우는 사람', ramp: ['#33361c', '#4b5028', '#666c36', '#878e4a'], ui: '#a0a85a',
+    kit: '소총, 탄약 30', traits: ['소총 피해 +25%', '장전이 빨라요 (연사 +15%)'], weak: '채집할 때 -1개 (최소 1개)',
+    skill: { id: 'suppress', name: '제압 사격', icon: '🎯', cd: 50, desc: '3초 동안 소총 연사 2배' }, related: ['marksman', 'ammo', 'tough'] },
+  survivor:  { name: '생존자', icon: '🧍', tag: '처음 그대로', ramp: null, ui: '#efe6d2',
+    kit: '없음', traits: ['특별한 점 없이 지금까지와 같아요'], weak: '없음', skill: null, related: [] }
+};
+const JOB_ORDER = ['carpenter', 'hunter', 'engineer', 'herbalist', 'miner', 'soldier', 'survivor'];
+Object.assign(PERKS, {         // each job's own two perks: offered (always as one of the two) once you reach the level
+  joinery:   { name: '튼튼한 이음새', icon: '🔨', max: 1, job: 'carpenter', at: 5,  desc: '벽과 탑이 받는 피해 -25%' },
+  fortress:  { name: '요새 장인',     icon: '🏰', max: 1, job: 'carpenter', at: 10, desc: '급조 방벽이 돌담으로 세워지고, 다시 쓰기까지 40초' },
+  vital:     { name: '급소 노리기',   icon: '🗡️', max: 1, job: 'hunter',    at: 5,  desc: '근접 공격이 20% 확률로 치명타 (2배)' },
+  stalker:   { name: '사냥의 달인',   icon: '🐺', max: 1, job: 'hunter',    at: 10, desc: '추적이 25초 동안 이어지고, 그동안 이동 속도 +20%' },
+  autoload:  { name: '자동 장전기',   icon: '⚙️', max: 1, job: 'engineer',  at: 5,  desc: '모든 탑이 20초마다 탄약 1발을 스스로 만들어요' },
+  overload:  { name: '과부하',        icon: '⚡', max: 1, job: 'engineer',  at: 10, desc: '긴급 수리 뒤 15초 동안 모든 탑의 연사 2배' },
+  immune:    { name: '면역력',        icon: '🛡️', max: 1, job: 'herbalist', at: 5,  desc: '감염과 중독에 걸릴 확률 절반' },
+  renew:     { name: '재생 처방',     icon: '🌱', max: 1, job: 'herbalist', at: 10, desc: '응급 처치 뒤 10초 동안 초당 체력 +2, 다시 쓰기까지 60초' },
+  vein:      { name: '광맥 감각',     icon: '💎', max: 1, job: 'miner',     at: 5,  desc: '광석을 캘 때 20% 확률로 1개 더' },
+  bigblast:  { name: '대발파',        icon: '🧨', max: 1, job: 'miner',     at: 10, desc: '발파 범위 1.5배, 적에게 주는 피해 2배' },
+  rapidfire: { name: '속사',          icon: '💨', max: 1, job: 'soldier',   at: 5,  desc: '소총 연사 +20%' },
+  pierce:    { name: '관통탄',        icon: '🔩', max: 1, job: 'soldier',   at: 10, desc: '소총 총알이 적 하나를 뚫고 뒤의 적까지 맞혀요' }
+});
+const isJob = k => !!P && P.job === k;
+const jobDef = () => (P && JOBS[P.job]) || JOBS.survivor;
+const gatherAdj = () => (isJob('soldier') ? -1 : 0);                   // added to what one swing gathers (never below 1)
+const gunMul = () => (isJob('carpenter') ? .8 : isJob('soldier') ? 1.25 : 1);
+const gunCdMul = () => (isJob('soldier') ? .85 * (perk('rapidfire') ? .8 : 1) : 1) * (P.jobFx.rapid > 0 ? .5 : 1);
+const meleeMul = () => (isJob('engineer') ? .85 : 1);
+const potionMul = () => (isJob('herbalist') ? 1.5 : 1);
+const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1);
+const coldMul = () => (isJob('hunter') ? 1.15 : 1);
+function wallMax(kind){ const d = WALLS[kind]; return Math.round(d.hp * (isJob('carpenter') && !d.trap ? 1.3 : 1)); }
+function buildCost(k){           // what one piece costs you, after your job's discount
+  const base = WALLS[k].cost, out = {};
+  for (const r in base){
+    let n = base[r];
+    if (WALLS[k].trap){ if (isJob('hunter')) n = Math.ceil(n / 2); }
+    else if (k === 'tower' && isJob('engineer')) n = Math.max(1, Math.round(n * .7));
+    else if (isJob('carpenter')) n = Math.max(1, Math.round(n * .8));
+    out[r] = n;
+  }
+  return out;
+}
+const freeLeft = k => (P.free && P.free[k]) || 0;
+function giveKit(){              // the starting kit of a fresh game
+  const j = P.job, give = (k, n) => { P.inv[k] += n; P.seen[k] = true; };
+  P.free = {}; P.jobCd = 0; P.jobFx = {};
+  if (j === 'carpenter'){ P.tools.axe = true; P.lv.axe = 2; }
+  else if (j === 'hunter'){ P.tools.spear = true; P.free.snare = 2; }
+  else if (j === 'engineer'){ give('scrap', 8); give('ammo', 20); }
+  else if (j === 'herbalist'){ give('bandage', 3); give('herb', 3); }
+  else if (j === 'miner'){ P.tools.pickaxe = true; }
+  else if (j === 'soldier'){ P.tools.gun = true; give('ammo', 30); }
+}
+
+/* the skill button: one small round button beside "건축" (R on a keyboard). A ring fills up while it recharges */
+const skillCd = () => { const s = jobDef().skill; return !s ? 0 : s.id === 'barricade' && perk('fortress') ? 40 : s.id === 'firstaid' && perk('renew') ? 60 : s.cd; };
+const SKILL_FN = {
+  barricade(){
+    const ci = Math.floor((P.x + P.fx * 44) / GRID), cj = Math.floor((P.y + P.fy * 44) / GRID), along = Math.abs(P.fx) >= Math.abs(P.fy);
+    const kind = perk('fortress') ? 'stone' : 'wood'; let n = 0;
+    for (const d of [0, -1, 1]){
+      const i = along ? ci : ci + d, j = along ? cj + d : cj;
+      if (canBuild(i, j)) continue;
+      const w = addWall(i, j, kind); n++; fx('dust', w.x, w.y, 4, 4); fx('chip', w.x, w.y, 14, 3);
+    }
+    if (!n){ toast('앞에 방벽을 세울 자리가 없어요. 탁 트인 쪽을 보고 써 보세요'); return false; }
+    P.built.wall = true; SND.play('build'); floater(P.x, P.y, 40, '급조 방벽!', '#ffd166'); return true;
+  },
+  track(){
+    P.jobFx.track = perk('stalker') ? 25 : 15; P.jobFx.mark = 1;
+    SND.play('buff'); fx('glow', P.x, P.y, 20, 10, '255,220,120'); floater(P.x, P.y, 40, '추적!', '#ffe08a');
+    let n = 0; for (const c of creatures) if (Math.hypot(c.x - P.x, c.y - P.y) < 1600) n++;
+    toast('🐾 추적! ' + (n ? '주변 짐승 ' + n + '마리가 미니맵에 보여요.' : '주변에 짐승이 없어요.') + ' 다음 공격은 2배'); return true;
+  },
+  repair(){
+    let n = 0;
+    for (const w of wallMap.values()) if (w.hp < w.max && Math.hypot(w.x - P.x, w.y - P.y) < 230){ w.hp = w.max; n++; fx('glow', w.x, w.y, 18, 4, '150,230,160'); floater(w.x, w.y, 26, '수리!', '#9be3a5'); }
+    const over = perk('overload') && [...wallMap.values()].some(w => w.kind === 'tower');
+    if (!n && !over){ toast('주변에 고칠 벽이나 탑이 없어요'); return false; }
+    if (over) P.jobFx.over = 15;
+    SND.play('upgrade'); toast('🛠️ 긴급 수리! ' + (n ? n + '개를 고쳤어요' : '') + (over ? (n ? ' · ' : '') + '15초 동안 탑 연사 2배' : '')); return true;
+  },
+  firstaid(){
+    if (P.hp >= 99 && !anyStatus()){ toast('체력이 가득하고 아픈 곳도 없어요'); return false; }
+    const was = Math.round(P.hp); P.hp = Math.min(100, P.hp + 40); cure(Object.keys(STATUS)); if (perk('renew')) P.jobFx.regen = 10;
+    SND.play('heal'); fx('glow', P.x, P.y, 20, 14, '120,230,200'); floater(P.x, P.y, 34, '+' + (Math.round(P.hp) - was) + ' 체력', '#8ff0d0'); return true;
+  },
+  blast(){
+    const R = perk('bigblast') ? 172 : 115, dmg = perk('bigblast') ? 60 : 30, eq = stat(P.tools.pickaxe ? 'pickaxe' : 'hand');
+    let rocks = 0, foes = 0, low = 0; const hit = [];
+    gridQuery(P.x - R, P.y - R, P.x + R, P.y + R, o => { if ((o.t === 'rock' || o.t === 'ore') && o.amt > 0 && Math.hypot(o.x - P.x, o.y - P.y) <= R + o.r) hit.push(o); });
+    for (const o of hit){                                              // (collected first: mining a rock out removes it from the grid being walked)
+      if (o.t === 'rock'){
+        const n = Math.min(o.amt, Math.max(1, eq.stone + 1 + perk('miner')) * 2); gain('stone', n); addXp(1); o.amt -= n; rocks++;
+        fx('rock', o.x, o.y, 10, 5); fx('smoke', o.x, o.y, 10, 2); if (o.amt <= 0) removeObj(o); else o.shake = .3;
+      } else {
+        const d = ORE[o.kind]; if ((P.lv.pickaxe || 1) < d.tier || !P.tools.pickaxe){ low++; continue; }
+        const n = Math.min(o.amt, (Math.max(1, eq.ore) + 1 + perk('miner')) * 2); gain(o.kind, n); addXp(d.tier * 2 + 1); o.amt -= n; rocks++;
+        fx('glow', o.x, o.y, 14, 4, d.rgb); fx('rock', o.x, o.y, 10, 4); if (o.amt <= 0) o.regrow = d.regrow; else o.shake = .3;
+      }
+    }
+    for (const c of [...creatures]){ const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < R + c.r){ hitCreature(c, dmg, c.x - P.x, c.y - P.y, true); foes++; } }
+    if (!rocks && !foes){ toast(low ? '이 광석은 곡괭이 레벨이 모자라요' : '주변에 캘 바위나 광석, 적이 없어요'); return false; }
+    for (let i = 0; i < 16; i++){ const a = i / 16 * TAU; fx('dust', P.x + Math.cos(a) * R * .8, P.y + Math.sin(a) * R * .8, 2, 1); fx('smoke', P.x + Math.cos(a) * R * .5, P.y + Math.sin(a) * R * .5, 6, 1); }
+    fx('spark', P.x, P.y, 16, 14); shakeT = .45; SND.play('slam', { key: 1 }); floater(P.x, P.y, 44, '발파!', '#ffb347');
+    try { navigator.vibrate && navigator.vibrate([40, 30, 60]); } catch (_) {}
+    return true;
+  },
+  suppress(){
+    if (!P.tools.gun){ toast('소총이 있어야 써요'); return false; }
+    if (P.inv.ammo <= 0){ toast('탄약이 없어요. 제작에서 탄약을 만드세요'); return false; }
+    P.jobFx.rapid = 3; if (P.equip !== 'gun') setEquip('gun');
+    SND.play('reload'); fx('glow', P.x, P.y, 20, 8, '255,210,120'); floater(P.x, P.y, 40, '제압 사격!', '#ffd166'); return true;
+  }
+};
+function useSkill(){
+  const s = jobDef().skill; if (!running || paused || sleeping || !s) return;
+  if (P.jobCd > 0){ SND.play('deny'); toast(josa(s.name, '은/는') + ' ' + Math.ceil(P.jobCd) + '초 뒤에 다시 쓸 수 있어요'); return; }
+  if (!SKILL_FN[s.id]()) { SND.play('deny'); return; }          // could not be used: nothing spent, no cooldown
+  P.jobCd = skillCd(); updateSkillHUD();
+}
+function updateJob(dt){
+  P.jobCd = Math.max(0, P.jobCd - dt);
+  const F = P.jobFx;
+  for (const k of ['track', 'rapid', 'regen', 'over']) if (F[k] > 0) F[k] = Math.max(0, F[k] - dt);
+  if (!(F.track > 0)) F.mark = 0;
+  if (F.regen > 0 && P.hp > 0) P.hp = Math.min(100, P.hp + 2 * dt);
+  if (perk('autoload')){
+    F.load = (F.load || 0) + dt;
+    if (F.load >= 20){ F.load = 0; for (const w of wallMap.values()) if (w.kind === 'tower' && w.ammo < tw(w).max) w.ammo++; }
+  }
+}
+const skillBtn = document.createElement('button'); skillBtn.id = 'btnSkill'; skillBtn.hidden = true; skillBtn.innerHTML = '<span class="si"></span><small></small>';
+$('ctx').insertBefore(skillBtn, $('ctx').firstChild);
+skillBtn.addEventListener('click', useSkill);
+function updateSkillHUD(){
+  const s = jobDef().skill, on = running && !!s; if (skillBtn.hidden === on) skillBtn.hidden = !on;
+  if (!on) return;
+  if (skillBtn._job !== P.job){ skillBtn._job = P.job; skillBtn.querySelector('.si').textContent = s.icon; skillBtn.setAttribute('aria-label', s.name); skillBtn.style.setProperty('--jc', jobDef().ui); }
+  const cd = P.jobCd, full = skillCd() || 1, p = cd > 0 ? (cd / full * 100).toFixed(1) + '%' : '0%';
+  if (skillBtn._p !== p){ skillBtn._p = p; skillBtn.style.setProperty('--cd', p); }
+  skillBtn.classList.toggle('ready', !(cd > 0)); setText(skillBtn.querySelector('small'), cd > 0 ? String(Math.ceil(cd)) : '');
+}
+function drawJobFx(){            // tracking: a soft yellow ring under every animal near you
+  if (!running || !(P.jobFx.track > 0)) return;
+  const a = (.45 + .25 * Math.sin(anim * 6)).toFixed(2);
+  ctx.strokeStyle = 'rgba(255,224,120,' + a + ')'; ctx.lineWidth = 2;
+  for (const c of creatures){ if (Math.hypot(c.x - P.x, c.y - P.y) > 900) continue; ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 7 + Math.sin(anim * 5) * 1.5, 0, TAU); ctx.stroke(); }
+}
+
+/* picking a job: a screen between "새 게임" and the island */
+let jobSel = 'survivor';
+try { const j = localStorage.getItem('island.job'); if (JOBS[j]) jobSel = j; } catch (_) {}
+function renderJobs(){
+  const grid = $('jobGrid'); grid.innerHTML = '';
+  for (const k of JOB_ORDER){
+    const d = JOBS[k], b = document.createElement('button'); b.className = 'jobcard' + (k === jobSel ? ' on' : ''); b.dataset.k = k; b.style.setProperty('--jc', d.ui);
+    b.innerHTML = `<span class="ji">${d.icon}</span><b>${d.name}</b>`; b.addEventListener('click', () => { jobSel = k; renderJobs(); SND.play('ui'); }); grid.appendChild(b);
+  }
+  const d = JOBS[jobSel], ps = Object.keys(PERKS).filter(k => PERKS[k].job === jobSel).map(k => 'Lv.' + PERKS[k].at + ' ' + PERKS[k].icon + ' ' + PERKS[k].name);
+  $('jobInfo').style.setProperty('--jc', d.ui);
+  $('jobInfo').innerHTML = `<h3>${d.icon} ${d.name} <small>${d.tag}</small></h3><dl>`
+    + `<dt>시작</dt><dd>${d.kit}</dd><dt>특성</dt><dd>${d.traits.join(' · ')}</dd>`
+    + (d.skill ? `<dt>기술</dt><dd>${d.skill.icon} <b>${d.skill.name}</b> — ${d.skill.desc} (${d.skill.cd}초마다)</dd>` : '')
+    + `<dt>약점</dt><dd>${d.weak}</dd>` + (ps.length ? `<dt>전용</dt><dd>${ps.join(' · ')}</dd>` : '') + '</dl>';
+  $('jobGo').textContent = josa(d.name, '으로/로') + ' 시작';
+}
+function openJobs(){
+  if (window.__autoJob){ newGame(JOBS[window.__autoJob] ? window.__autoJob : 'survivor'); return; }      // (__autoJob: tests skip the picker)
+  renderJobs(); $('title').hidden = true; $('end').hidden = true; $('jobs').hidden = false; $('jobs').scrollTop = 0;
+}
+$('jobGo').addEventListener('click', () => { try { localStorage.setItem('island.job', jobSel); } catch (_) {} $('jobs').hidden = true; newGame(jobSel); });
+$('jobBack').addEventListener('click', () => { $('jobs').hidden = true; $('title').hidden = false; refreshTitle(); });
 /* ================= fishing: cast, wait for a nibble, hook it when the bobber dives, then time three taps on the moving bar ================= */
 const FISH_KIND = {
   small: { name: '작은 물고기', n: 1, zw: .36, sp: .85, bite: 1.25 },
@@ -4327,7 +4567,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob };
 })();
 </script>
 </body>

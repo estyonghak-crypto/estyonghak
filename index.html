@@ -107,6 +107,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .chip.tired{border-color:#c9b98f;color:#efe2c0}
 .chip.warm{border-color:#ff8a3d;color:#ffd0a8}
 .chip.full{border-color:#8fd16a;color:#cdeeb5}
+.chip.vigor{border-color:#ffc94a;color:#ffe6a3}
 @media (max-width:520px){.chip{flex:none}}
 #goal{margin-top:8px;align-self:flex-start;max-width:100%;padding:5px 10px;font-size:12.5px;line-height:1.35;border-radius:999px}
 #goal b{color:var(--amber);font-weight:700}
@@ -371,7 +372,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>사건</b> 하루에도 무슨 일이 생겨요. 낮에는 표류 화물 · 운석 · 약초 · 사냥감 · 폭풍 · 한파 · 버려진 야영지, 밤에는 늑대 무리 · 좀비 떼 · 안개 · 보름달. 날씨 사건은 시계 아래에 표시돼요</li>
     <li><b>보스</b> 3일 · 6일 · 9일 밤마다 와요. 판마다 두 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕, 좀비 군주 / 역병 거인, 산군 / 서리 거상)</li>
     <li><b>함정</b> 건축 메뉴의 가시 함정 · 올가미 덫 · 화염 함정은 적이 밟으면 터져요. 가시 울타리는 공격한 적을 다치게 해요</li>
-    <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요</li>
+    <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요. 냄비로 달인 피로회복제를 마시면 기운이 나요</li>
     <li><b>기술</b> 베고, 캐고, 싸우고, 만들고, 하루를 버티면 경험치가 쌓여요 (왼쪽 위의 보라 막대). 레벨이 오르면 <b>기술</b> 버튼이 깜빡이고, 둘 중 하나를 골라요</li>
     <li><b>낚시·요리</b> 낚싯대(나무 5 · 고철 1)를 만들면 물가에 <b>낚시</b> 버튼이 나타나요 (F). 입질이 오면 바로 누르고, 움직이는 막대가 초록 칸에 올 때 세 번 눌러 끌어올려요. 모닥불 곁의 <b>요리</b> 버튼 (K)으로 구이·스튜·수프를 만들어요</li>
     <li><b>소리</b> 위쪽 스피커 버튼으로 끄고 켜요 (N). 일시정지 메뉴에서 음악만 따로 끌 수 있어요</li>
@@ -487,6 +488,7 @@ const ITEMS = {
   bandage: { name: '붕대',       icon: '🩹', use: 1 },                  // stops bleeding
   herb:    { name: '약초',       icon: '🌿', use: 1 },                  // cures infection and poison
   tea:     { name: '약초차',     icon: '🍵', food: 1, mini: 1 },
+  tonic:   { name: '피로회복제', icon: '🧃', use: 1 },                  // fatigue -60, then 2 minutes without getting tired
   fish:    { name: '생선',       icon: '🐟', food: 1, mini: 1 },         // fishing; grill it (or put it in a stew)
   grilled: { name: '구운생선',   icon: '🍢', food: 1, mini: 1 },
   stew:    { name: '열매스튜',   icon: '🍲', food: 1, mini: 1 },         // warms you for a while
@@ -501,7 +503,7 @@ const ORE = {     // minable nodes: pickaxe level needed, units per node, second
 const mkOre = kind => (x, y) => ({ t: 'ore', kind, x, y, r: 15, amt: ORE[kind].amt, v: Math.random(), shake: 0, regrow: 0 });
 const ALWAYS_SHOWN = { wood: 1, stone: 1 };           // every other bag slot appears when you hold some and disappears when you run out
 const RARE = { ammo: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1, fish: 1, grilled: 1, stew: 1, soup: 1, feast: 1 };   // bag slots that stay hidden until you first get one
-const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1, bandage: 1, herb: 1 };                           // these live in the second bag row
+const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1, bandage: 1, herb: 1, tonic: 1 };                           // these live in the second bag row
 const BUFF_T = 30;
 const SPECS = {
   rabbit: { hp: 3,   r: 7,  speed: 55,  flee: 140, drop: { meat: 1 } },
@@ -553,7 +555,7 @@ const AFFIX = {
 const ELITE_LOOT = { heal: [.45, 1, 1], swift: [.22, 1, 1], power: [.22, 1, 1], ammo: [.35, 10, 20], core: [.22, 1, 1] };   // item -> [chance, min, max]
 const AFFIX_LOOT = { frenzy: { swift: .42, power: .42 }, armor: { core: .42 }, regen: { heal: .7 }, split: { ammo: .55 } };   // each affix favours some drops
 const ELITE_BONUS = { wolf: { hide: [2, 3] }, zombie: { scrap: [3, 5] }, bear: { hide: [3, 4], meat: [3, 4] }, golem: { iron: [2, 3], copper: [2, 3], gold: [0, 1] } };               // sure drops, picked up from the ground
-const PICK_COL = { herb: '120,220,110', bandage: '240,230,220', heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110', copper: '255,150,80', iron: '190,210,235', gold: '255,215,90', cuBar: '255,150,80', feBar: '190,210,235', auBar: '255,215,90' };
+const PICK_COL = { tonic: '255,200,90', herb: '120,220,110', bandage: '240,230,220', heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110', copper: '255,150,80', iron: '190,210,235', gold: '255,215,90', cuBar: '255,150,80', feBar: '190,210,235', auBar: '255,215,90' };
 const PICK_BEAM = { heal: 1, swift: 1, power: 1, core: 1 };
 const TOOLS = {   // what each equipped tool does: yield per swing, damage, extra reach, swing cooldowns (wood / stone / attack)
   hand:    { name: '맨손',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 },
@@ -869,7 +871,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true },
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -1457,6 +1459,11 @@ function useItem(k){
     if (P.hp >= 99 && !anyStatus()){ toast('체력이 가득 차 있어요'); return; }
     SND.play('heal'); P.inv.heal--; P.hp = Math.min(100, P.hp + 50); cure(Object.keys(STATUS)); floater(P.x, P.y, 30, '+50 체력', '#ff8aa0'); fx('glow', P.x, P.y, 20, 10, '255,120,150'); return;
   }
+  if (k === 'tonic'){
+    if (P.fatigue < 10 && !(P.buffs.vigor > 0)){ toast('지금은 피곤하지 않아요. 피로가 쌓였을 때 마셔요'); return; }
+    SND.play('buff'); P.inv.tonic--; const was = Math.round(P.fatigue); P.fatigue = Math.max(0, P.fatigue - 60); P.buffs.vigor = 120; P.thirst = Math.min(100, P.thirst + 10);
+    fx('glow', P.x, P.y, 20, 12, '255,200,90'); floater(P.x, P.y, 30, '피로 -' + (was - Math.round(P.fatigue)), '#ffd166'); toast('🧃 피로회복제! 기운이 나요. 2분 동안 피로가 쌓이지 않아요'); return;
+  }
   if (k === 'swift' || k === 'power'){
     SND.play('buff'); P.inv[k]--; P.buffs[k] = BUFF_T; fx('glow', P.x, P.y, 20, 12, PICK_COL[k]);
     toast(k === 'swift' ? '신속! ' + BUFF_T + '초 동안 이동이 빨라져요' : '괴력! ' + BUFF_T + '초 동안 공격력 1.5배'); return;
@@ -1726,7 +1733,7 @@ for (const k in ITEMS){
   b.innerHTML = `<span class="ic">${ITEMS[k].icon}</span><span class="nm">${ITEMS[k].name}</span><span class="n">0</span>`; if (ITEMS[k].ore || ITEMS[k].bar || ITEMS[k].mini){ b.classList.add('mini'); b.title = ITEMS[k].name; b.setAttribute('aria-label', ITEMS[k].name); }
   (ITEMS[k].ore || ITEMS[k].bar || ITEMS[k].mini ? inv3El : SPECIAL[k] ? inv2El : invEl).appendChild(b);
 }
-for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥'], ['chipWarm', 'warm', '🔥'], ['chipFull', 'full', '🍲']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
+for (const [id, k, ic] of [['chipSwift', 'swift', '💨'], ['chipPower', 'power', '💥'], ['chipWarm', 'warm', '🔥'], ['chipFull', 'full', '🍲'], ['chipVigor', 'vigor', '⚡']]){ const c = document.createElement('span'); c.className = 'chip ' + k; c.id = id; c.hidden = true; c.dataset.ic = ic; inv2El.appendChild(c); }
 function setText(el, v){ if (el._v !== v){ el._v = v; el.textContent = v; } }
 /* ================= minimap: the island turned 45 degrees (so "up" on the map is "up" on the screen), tap it to switch between the whole island and your surroundings ================= */
 const miniCv = $('mini'), mx = miniCv.getContext('2d');
@@ -1825,10 +1832,10 @@ function updateHUD(){
     s.classList.toggle('dim', n === 0);
     const hide = n === 0 && !ALWAYS_SHOWN[k] && !(k === 'ammo' && P.tools.gun); if (s.hidden !== hide) s.hidden = hide;
   });
-  for (const [id, k] of [['chipSwift', 'swift'], ['chipPower', 'power'], ['chipWarm', 'warm'], ['chipFull', 'full']]){
+  for (const [id, k] of [['chipSwift', 'swift'], ['chipPower', 'power'], ['chipWarm', 'warm'], ['chipFull', 'full'], ['chipVigor', 'vigor']]){
     const el = $(id), on = P.buffs[k] > 0; if (el.hidden === on) el.hidden = !on; if (on) setText(el, el.dataset.ic + ' ' + Math.ceil(P.buffs[k]));
   }
-  const stOn = updateStatusHUD(), anyBuff = P.buffs.swift > 0 || P.buffs.power > 0 || P.buffs.warm > 0 || P.buffs.full > 0 || stOn, row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || anyBuff;
+  const stOn = updateStatusHUD(), anyBuff = P.buffs.swift > 0 || P.buffs.power > 0 || P.buffs.warm > 0 || P.buffs.full > 0 || P.buffs.vigor > 0 || stOn, row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || anyBuff;
   const row3 = [...inv3El.querySelectorAll('.slot')].some(s => !s.hidden); if (inv3El.hidden === row3) inv3El.hidden = !row3;
   if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', anyBuff);
   const boss = creatures.find(c => c.boss), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
@@ -1967,7 +1974,7 @@ function update(dt){
   const m = Math.hypot(ix, iy);
   P.cd = Math.max(0, P.cd - dt * (fatigueLv() === 2 ? .8 : 1)); P.swing = Math.max(0, P.swing - dt); P.flash = Math.max(0, (P.flash || 0) - dt);
   P.moving = m > .1;
-  P.buffs.swift = Math.max(0, P.buffs.swift - dt); P.buffs.power = Math.max(0, P.buffs.power - dt); P.buffs.warm = Math.max(0, P.buffs.warm - dt); P.buffs.full = Math.max(0, P.buffs.full - dt);
+  P.buffs.swift = Math.max(0, P.buffs.swift - dt); P.buffs.power = Math.max(0, P.buffs.power - dt); P.buffs.warm = Math.max(0, P.buffs.warm - dt); P.buffs.full = Math.max(0, P.buffs.full - dt); P.buffs.vigor = Math.max(0, P.buffs.vigor - dt);
   if ((P.buffs.swift > 0 || P.buffs.power > 0) && Math.random() < dt * 8) fx('glow', P.x, P.y, 6, 1, P.buffs.swift > 0 ? '110,200,255' : '255,150,70');
   if (P.moving){
     const wd = scr2world(ix, iy); P.fx = wd.x; P.fy = wd.y; if (Math.abs(ix / m) > .2) P.flip = ix < 0 ? -1 : 1;
@@ -2073,7 +2080,7 @@ function loadGame(s){
   P = Object.assign(newPlayer(), s.p); T = s.T;
   P.inv = Object.assign(newPlayer().inv, P.inv); P.tools = Object.assign(newPlayer().tools, P.tools);   // older saves lack newer fields
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
-  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0 }, P.buffs); P.st = Object.assign({ bleed: 0, infect: 0, poison: 0, chill: 0 }, P.st); P.fatigue = P.fatigue || 0; P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {}; P.perk = P.perk || {}; P.xpDone = P.xpDone || {};
+  P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, P.buffs); P.st = Object.assign({ bleed: 0, infect: 0, poison: 0, chill: 0 }, P.st); P.fatigue = P.fatigue || 0; P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {}; P.perk = P.perk || {}; P.xpDone = P.xpDone || {};
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
   spawnFauna();
@@ -3332,7 +3339,7 @@ const EVENTS = {
   fog:    { name: '짙은 안개',       icon: '🌫️', when: 'night', w: 2, min: 2, night: 1, say: '짙은 안개가 꼈어요. 앞이 잘 안 보이고 좀비가 더 많이 나와요' },
   moon:   { name: '보름달',         icon: '🌕', when: 'night', w: 1, min: 2, night: 1, say: '보름달이 떴어요. 밤이 밝지만 늑대가 더 많고 빨라요' }
 };
-const CRATE_LOOT = [['ammo', 6, 12], ['scrap', 2, 4], ['bandage', 1, 3], ['herb', 1, 3], ['heal', 1, 1], ['hide', 1, 3], ['cuBar', 1, 2], ['feBar', 1, 1], ['berry', 3, 6], ['cooked', 1, 2], ['swift', 1, 1]];
+const CRATE_LOOT = [['tonic', 1, 2], ['ammo', 6, 12], ['scrap', 2, 4], ['bandage', 1, 3], ['herb', 1, 3], ['heal', 1, 1], ['hide', 1, 3], ['cuBar', 1, 2], ['feBar', 1, 1], ['berry', 3, 6], ['cooked', 1, 2], ['swift', 1, 1]];
 let flashT = 0, boltT = 6;
 const evOn = k => !!(P && P.ev && P.ev.k === k && T < P.ev.until && !Z.cave);
 function pickEvent(when, day){
@@ -3686,14 +3693,15 @@ function updateStatus(dt){        // true when it killed you
   if (S.bleed > 0){ dripT -= dt; if (dripT <= 0){ dripT = .7; bloodAt(P.x + rand(-4, 4), P.y + 4, 'player', false); } }
   if (dps){ P.hp -= dps * dt; hurtT = Math.max(hurtT, .1); if (P.hp <= 0){ P.hp = 0; endGame(false); return true; } }
   const rest = !P.moving && nearRest();
-  P.fatigue = clamp(P.fatigue + (rest ? -1.5 : FATIGUE_RATE * (Z.cave ? 1.3 : 1)) * dt, 0, 100);
+  P.fatigue = clamp(P.fatigue + (rest ? -1.5 : P.buffs.vigor > 0 ? 0 : FATIGUE_RATE * (Z.cave ? 1.3 : 1)) * dt, 0, 100);
   const lv = fatigueLv(); if (lv > lastFat) toast(lv === 1 ? '😴 피곤해요. 움막에서 자거나 모닥불 곁에 가만히 서서 쉬세요 (조금 느려져요)' : '😵 탈진 직전이에요! 더 느려지고 손도 굼떠요'); lastFat = lv;
   return false;
 }
 function treatStatus(k){          // tapping a status chip uses the right remedy if you have it
   if (k === 'bleed'){ if (P.inv.bandage > 0) useItem('bandage'); else if (P.inv.heal > 0) useItem('heal'); else toast('붕대가 없어요. 제작 메뉴에서 가죽 1개로 붕대 2개를 만들어요'); }
   else if (k === 'infect' || k === 'poison'){ if (P.inv.herb > 0) useItem('herb'); else if (P.inv.tea > 0) useItem('tea'); else if (P.inv.heal > 0) useItem('heal'); else toast('약초가 없어요. 덤불에서 열매를 딸 때 가끔 나와요'); }
-  else if (k === 'tired') toast('움막에서 밤에 자거나, 모닥불 곁에 가만히 서 있으면 풀려요. 스튜·수프·약초차도 도움이 돼요');
+  else if (k === 'tired' && P.inv.tonic > 0) useItem('tonic');
+  else if (k === 'tired') toast('움막에서 밤에 자거나, 모닥불 곁에 가만히 서 있으면 풀려요. 스튜·수프·약초차, 피로회복제(냄비: 약초 1 + 열매 3)도 도움이 돼요');
   else toast('곧 풀려요. 모닥불 곁이 따뜻해요');
 }
 const STATUS_CHIPS = ['bleed', 'infect', 'poison', 'chill', 'tired'];
@@ -3801,7 +3809,7 @@ const FISH_KIND = {
   chest: { name: '표류 상자',   n: 0, zw: .34, sp: .9,  bite: 1.2 }
 };
 const FISH_ODDS = { lake: [[70, 'small'], [20, 'big'], [4, 'rare'], [6, 'chest']], sea: [[48, 'small'], [30, 'big'], [16, 'rare'], [6, 'chest']] };
-const CHEST_LOOT = [[{ bandage: 2 }, '붕대'], [{ herb: 2 }, '약초'], [{ ammo: 8 }, '탄약'], [{ scrap: 3 }, '고철'], [{ hide: 2 }, '가죽'], [{ heal: 1 }, '치유약'], [{ swift: 1 }, '신속약'], [{ berry: 6 }, '열매']];
+const CHEST_LOOT = [[{ tonic: 1 }, '피로회복제'], [{ bandage: 2 }, '붕대'], [{ herb: 2 }, '약초'], [{ ammo: 8 }, '탄약'], [{ scrap: 3 }, '고철'], [{ hide: 2 }, '가죽'], [{ heal: 1 }, '치유약'], [{ swift: 1 }, '신속약'], [{ berry: 6 }, '열매']];
 const fish = { on: false, st: 'wait', t: 0, bx: 0, by: 0, water: 'lake', cur: 0, dir: 1, sp: 1, zc: .5, zw: .3, prog: 0, miss: 0, kind: 'small', armed: true, spot: null, bobT: 0, nib: 0, dip: 0, scan: 0, caught: 0, msg: '', msgT: 0 };
 let waterList = [], waterAt = -9;
 function fishSpotNow(){
@@ -3929,7 +3937,8 @@ const COOK = [
   { id: 'stew',      name: '열매 스튜',   from: { berry: 5 },                to: 'stew',    pot: 1, desc: '배고픔 +22 · 2분 동안 추위를 덜 타요' },
   { id: 'soup',      name: '생선 수프',   from: { fish: 2, berry: 2 },       to: 'soup',    pot: 1, desc: '배고픔 +45, 갈증 +25 · 2분 30초 동안 배고픔이 천천히 줄어요' },
   { id: 'feast',     name: '모험가 정식', from: { meat: 1, fish: 1, berry: 3 }, to: 'feast',  pot: 1, desc: '배고픔 +60, 체력 +30 · 두 효과를 2분 동안' },
-  { id: 'tea',       name: '약초차',     from: { herb: 2, berry: 1 },       to: 'tea',    pot: 1, desc: '감염·중독을 낫게 하고 피로 -30, 갈증 +20 · 온기 1분' }
+  { id: 'tea',       name: '약초차',     from: { herb: 2, berry: 1 },       to: 'tea',    pot: 1, desc: '감염·중독을 낫게 하고 피로 -30, 갈증 +20 · 온기 1분' },
+  { id: 'tonic',     name: '피로회복제 2병', from: { herb: 1, berry: 3 },     to: 'tonic',  pot: 1, n: 2, desc: '약초를 진하게 달인 강장 음료. 마시면 피로 -60 · 2분 동안 피로가 쌓이지 않아요' }
 ];
 function nearFire(){ let f = null, bd = 1e9; for (const s of structs) if (s.t === 'fire' && s.fuel > 0){ const d = Math.hypot(s.x - P.x, s.y - P.y); if (d < 110 && d < bd){ bd = d; f = s; } } return f; }
 function canCook(r){ return !(r.pot && !P.pot) && Object.keys(r.from).every(k => P.inv[k] >= r.from[k]); }
@@ -3938,8 +3947,8 @@ function cookIt(r){
   if (r.pot && !P.pot){ toast('냄비가 필요해요 (제작 메뉴)'); return; }
   if (!canCook(r)){ toast('재료가 부족해요'); return; }
   for (const k in r.from) P.inv[k] -= r.from[k];
-  const dbl = Math.random() < .2 * perk('cook'); P.inv[r.to] += dbl ? 2 : 1; P.seen[r.to] = true; SND.play(r.pot ? 'simmer' : 'smelt'); addXp(r.pot ? 10 : 5); fx('smoke', f.x, f.y, 30, 3); fx('ember', f.x, f.y, 18, 4);
-  floater(f.x, f.y, 44, '+' + (dbl ? 2 : 1) + ' ' + ITEMS[r.to].icon, '#ffd166'); renderCook();
+  const dbl = Math.random() < .2 * perk('cook'), got = (r.n || 1) * (dbl ? 2 : 1); P.inv[r.to] += got; P.seen[r.to] = true; SND.play(r.pot ? 'simmer' : 'smelt'); addXp(r.pot ? 10 : 5); fx('smoke', f.x, f.y, 30, 3); fx('ember', f.x, f.y, 18, 4);
+  floater(f.x, f.y, 44, '+' + got + ' ' + ITEMS[r.to].icon, '#ffd166'); renderCook();
 }
 function renderCook(){
   const list = $('cookList'); list.innerHTML = '';

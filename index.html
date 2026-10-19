@@ -252,6 +252,18 @@ body.building #ctx{display:none}
 #btnSkill small{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-body,inherit);font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000}
 #btnSkill:not(.ready) .si{opacity:.45}
 #btnSkill.ready{box-shadow:0 0 10px color-mix(in srgb,var(--jc) 55%,transparent)}
+#awake{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%);z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 26px;border-radius:16px;background:rgba(8,12,16,.8);border:2px solid var(--jc,#ffe08a);box-shadow:0 0 34px color-mix(in srgb,var(--jc,#ffe08a) 60%,transparent);text-align:center;white-space:nowrap}
+#awake[hidden]{display:none}
+#awake small{font-size:13px;letter-spacing:.3em;color:#ffe08a}
+#awake b{font-family:var(--font-display);font-weight:400;font-size:34px;color:var(--jc)}
+#awake span{font-size:13px;color:var(--bone);opacity:.85}
+#awake.on{animation:awake 4.2s ease forwards}
+@keyframes awake{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}10%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}16%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+#jobInfo .hid{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line)}
+#jobInfo .hid>b{color:#ffe08a}
+#jobInfo .hid p{margin:3px 0 0;font-size:12px;color:var(--dim)}
+#jobInfo .hid p.got{color:var(--bone)}
+.jobcard .tro{font-style:normal;font-size:10px;line-height:1}
 @media (max-height:520px){#jobs{gap:8px}#jobs .lead{display:none}.jt{font-size:26px}#jobGrid{grid-template-columns:repeat(7,1fr);width:min(660px,100%)}.jobcard{padding:6px 2px}.jobcard .ji{font-size:22px}#jobInfo{width:min(660px,100%);padding:8px 12px;font-size:12.5px;line-height:1.4}#jobs .stack{flex-direction:row;width:min(420px,100%)}#jobs .stack .btn{flex:1}}
 .endstat{font-size:14px;color:var(--dim)}
 .endstat b{color:var(--amber);font-size:20px;font-variant-numeric:tabular-nums}
@@ -329,6 +341,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <button id="btnAct"><span id="actLabel">행동</span></button>
 </div>
 <div id="toasts"></div>
+<div id="awake" hidden></div>
 
 <div id="craft" class="modal" hidden>
   <div class="sheet">
@@ -610,7 +623,7 @@ const UPGRADES = {  // cost of the next level (tools: Lv1->2 ... Lv4->5; armor: 
 };
 const UP_NAME = { axe: '돌도끼', spear: '나무 창', pickaxe: '곡괭이', gun: '사제 소총' };
 const ARMOR_RED = [0, .15, .3, .45, .6, .72], ARMOR_NAME = ['맨몸', '가죽 옷', '강화 가죽 갑옷', '철판 갑옷', '정예 갑옷', '합금 갑옷'];
-function stat(t){ const s = Object.assign({}, TOOLS[t]), lv = TOOL_LV[t]; if (lv) for (const k in lv) s[k] = lv[k][(P.lv[t] || 1) - 1]; return s; }
+function stat(t){ const s = Object.assign({}, TOOLS[t]), lv = TOOL_LV[t]; if (lv) for (const k in lv) s[k] = lv[k][(P.lv[t] || 1) - 1]; if (t === 'hand' && P && P.job === 'fist') Object.assign(s, { dmg: 35, cdA: .22, reach: 10, wood: 6, stone: 6, ore: 3, cdW: .3, cdS: .3 }); return s; }
 const tw = o => { const l = (o.lv || 1) - 1; return { dmg: TOWER_LV.dmg[l], range: TOWER_LV.range[l], max: TOWER_LV.max[l], cd: TOWER_LV.cd[l] }; };
 const TOOL_SVG = {
   hand: '<svg viewBox="0 0 24 24"><rect x="6.5" y="10" width="11" height="9" rx="3" fill="#f0c9a0"/><circle cx="8.6" cy="9.6" r="2.1" fill="#f0c9a0"/><circle cx="12" cy="8.7" r="2.1" fill="#f0c9a0"/><circle cx="15.4" cy="9.6" r="2.1" fill="#f0c9a0"/><rect x="6.5" y="15" width="11" height="1.6" fill="#d9a878"/></svg>',
@@ -697,7 +710,7 @@ function gridQuery(x0, y0, x1, y1, fn){
   }
 }
 function addObj(o){ objs.push(o); gridAdd(o); if (o.t === 'fire' || o.t === 'shelter') structs.push(o); if (o.t === 'wall') wallMap.set(o.i + ',' + o.j, o); if (o.t === 'trap') trapMap.set(o.i + ',' + o.j, o); return o; }
-function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); if (o.t === 'wall') wallMap.delete(o.i + ',' + o.j); if (o.t === 'trap' && trapMap.get(o.i + ',' + o.j) === o) trapMap.delete(o.i + ',' + o.j); }
+function removeObj(o){ gridRemove(o); const i = objs.indexOf(o); if (i >= 0) objs.splice(i, 1); if (o.t === 'fire' || o.t === 'shelter'){ const k = structs.indexOf(o); if (k >= 0) structs.splice(k, 1); } if (o.t === 'wall') wallMap.delete(o.i + ',' + o.j); if (o.t === 'trap' && trapMap.get(o.i + ',' + o.j) === o) trapMap.delete(o.i + ',' + o.j); }
 
 // distance to the coast, measured inward (positive = on the island)
 function inside(x, y){
@@ -900,7 +913,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true }, job: 'survivor', jobCd: 0, jobFx: {}, free: {},
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true }, job: 'survivor', jobCd: 0, jobFx: {}, free: {}, hx: {},
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -1064,6 +1077,7 @@ function tryBuild(i, j){
   for (const k in cost) if (P.inv[k] < cost[k]) return buildMsg(josa(ITEMS[k].name, '이/가') + ' 부족해요 (' + P.inv[k] + '/' + cost[k] + ')');
   for (const k in cost) P.inv[k] -= cost[k];
   if (free){ P.free[buildSel]--; renderBuildBar(); }
+  P.hx.wall = true;
   if (WALLS[buildSel].trap){ addTrap(i, j, buildSel); if (!trapTip){ trapTip = true; toast('함정은 적이 밟으면 터져요. 나는 밟아도 괜찮아요. 쓸 수 있는 횟수가 아래 점으로 보여요.'); } }
   else { addWall(i, j, buildSel); P.built.wall = true; if (buildSel === 'thorn' && !thornTip){ thornTip = true; toast('가시 울타리를 공격한 적은 다치고 피를 흘려요.'); } }
   SND.play('build');
@@ -1182,6 +1196,7 @@ function findTarget(){
   const reach = 34 + (P.auto ? Math.max(...ownedTools().map(t => stat(t).reach)) : stat(P.equip).reach);   // auto mode will swap to the longest weapon
   let best = null, bs = 1e9;
   for (const c of creatures){
+    if (c.ally) continue;
     const d = Math.hypot(c.x - P.x, c.y - P.y) - c.r;
     if (d < reach && d - 40 < bs){ bs = d - 40; best = { kind: 'creature', o: c }; }
   }
@@ -1229,14 +1244,14 @@ function act(){
   P.swing = .26;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.wood + perk('lumber') + (isJob('carpenter') ? 1 : 0) + gatherAdj())); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.stone + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj())); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
+    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.wood + perk('lumber') + (isJob('carpenter') ? 1 : 0) + gatherAdj()) * gatherMul()); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.stone + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) * gatherMul()); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); break; }
     case 'ore': {
-      const d = ORE[o.kind], eq = stat(P.equip), lv = P.lv.pickaxe || 1;
-      if (!P.tools.pickaxe){ P.cd = .5; SND.play('deny'); toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
+      const d = ORE[o.kind], eq = stat(P.equip), lv = isJob('fist') ? 5 : (P.lv.pickaxe || 1);
+      if (!P.tools.pickaxe && !isJob('fist')){ P.cd = .5; SND.play('deny'); toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
       if (!eq.ore){ P.cd = .5; SND.play('deny'); toast('곡괭이를 들어야 캘 수 있어요'); break; }
       if (lv < d.tier){ P.cd = .6; SND.play('deny'); floater(o.x, o.y, 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
-      SND.play('ore'); const n = Math.min(o.amt, Math.max(1, eq.ore + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) + (perk('vein') && Math.random() < .2 ? 1 : 0)); gain(o.kind, n); addXp(d.tier * 2 + 1); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
+      SND.play('ore'); const n = Math.min(o.amt, (Math.max(1, eq.ore + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) + (perk('vein') && Math.random() < .2 ? 1 : 0)) * gatherMul()); gain(o.kind, n); addXp(d.tier * 2 + 1); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
       o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) o.regrow = d.regrow;
       break;
     }
@@ -1260,8 +1275,8 @@ function act(){
     }
     case 'crate': P.cd = .4; openCrate(o); break;
     case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1 + perk('scavenger')); addXp(2); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
-    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', Math.max(1, 1 + perk('forager') + gatherAdj())); if (Math.random() < .15 * (isJob('herbalist') ? 2 : 1)) gain('herb', 1); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
-    case 'water': { SND.play('drink'); P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
+    case 'bush': { SND.play('rustle'); o.amt--; gain('berry', Math.max(1, 1 + perk('forager') + gatherAdj()) * gatherMul()); if (Math.random() < .15 * (isJob('herbalist') ? 2 : 1)) gain('herb', 1); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
+    case 'water': { SND.play('drink'); P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; if (isJob('phoenix')){ fx('smoke', P.x, P.y, 22, 5); hurt(5, true); } break; }
     case 'fire':
       P.cd = .35;
       if (o.fuel > 0 && P.inv.meat > 0){ P.inv.meat--; P.inv.cooked++; floater(P.x, P.y, 26, '구웠어요 🍖'); SND.play('smelt'); }
@@ -1385,7 +1400,9 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   if (!creatures.includes(c)) return;
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y, 34, '방어', '#8fc4ff'); dmg = red; }
+  if (c.frozen > 0 && !dot) dmg *= 2;                                           // frozen solid: it shatters
   c.hp -= dmg; c.sinceHit = 0;
+  if (byPlayer && !byTower && !dot && c.hp > 0){ if (isJob('phoenix')) c.flame = Math.max(c.flame || 0, 3); if (isJob('frost')) c.slow = Math.max(c.slow || 0, 2); }
   if (dot && c.hp > 0){ if (sp.rage){ c.state = 'angry'; c.angry = 8; } return; }        // bleeding or burning: no flash, no knockback, no noise until it drops
   c.hit = .18; SND.hit(c, c.hp <= 0);
   const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1) * (c.boss ? .15 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
@@ -1398,6 +1415,8 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0) + (isJob('hunter') && (k === 'meat' || k === 'hide') ? 1 : 0); if (n > 0) gain(k, n); }
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     if (c.boss && (byPlayer || byTower)) bossLoot(c);
+    if (c.boss) onBossDown(c, byPlayer, byTower);
+    if (byPlayer && isJob('lich') && P.hp > 0){ P.hp = Math.min(100, P.hp + 5); floater(P.x, P.y, 34, '+5', '#c9a8ff'); }
     if (SHEET[c.k] && SHEET[c.k].m.cols.die) corpses.push({ k: c.k, x: c.x, y: c.y, hd: c.hd == null ? Math.PI / 4 : c.hd, t: 0, vx: c.kvx * .5, vy: c.kvy * .5, en: !!c.enraged });
     creatures.splice(creatures.indexOf(c), 1);
   }
@@ -1408,10 +1427,11 @@ function attack(c){
   if (P.jobFx.mark){ P.jobFx.mark = 0; m *= 2; floater(c.x, c.y, 44, '급소!', '#ffe08a'); }             // the hunter's tracking: the next blow lands double
   else if (perk('vital') && Math.random() < .2){ m *= 2; floater(c.x, c.y, 44, '치명타!', '#ffe08a'); }
   hitCreature(c, Math.round(eq.dmg * m), c.x - P.x, c.y - P.y, true);
+  if (!creatures.includes(c)) onWolfPunched(c);
 }
 
 /* ================= guns, arrows, towers ================= */
-const isHostile = c => (SPECS[c.k].boss > 0) || c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || (SPECS[c.k].rage && c.state === 'angry');
+const isHostile = c => !c.ally && ((SPECS[c.k].boss > 0) || c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || (SPECS[c.k].rage && c.state === 'angry'));
 function nearestHostile(maxD){
   let best = null, bd = maxD;
   for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
@@ -1420,7 +1440,7 @@ function nearestHostile(maxD){
 function aimTarget(){           // what the rifle would shoot at: hostile animals first, then the nearest animal
   let best = null, bs = 1e9;
   for (const c of creatures){
-    const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > stat('gun').range) continue;
+    if (c.ally) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > stat('gun').range) continue;
     const sc = d - (isHostile(c) ? 1000 : 0); if (sc < bs){ bs = sc; best = c; }
   }
   return best;
@@ -1462,7 +1482,7 @@ function updateBullets(dt){
     let hit = false;
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
-      if (b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
+      if (c.ally || b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
       if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); fx('spark', b.x, b.y, 12, 4); if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
@@ -1478,7 +1498,7 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
   }
 }
 function hurt(n, raw){
-  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1)));
+  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1)));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1) * (perk('immune') && (k === 'infect' || k === 'poison') ? .5 : 1)) afflict(k); }
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
@@ -1569,6 +1589,8 @@ function nearCoast(){
 function craftBlock(r){
   for (const k in r.cost) if (P.inv[k] < r.cost[k]) return '재료가 부족해요';
   if (r.tool && P.tools[r.tool]) return '이미 가지고 있어요';
+  if (r.tool && isJob('fist')) return '권왕은 도구를 쓰지 않아요';
+  if (r.raft && isJob('owner')) return '섬의 주인은 섬을 떠나지 않아요';
   if (r.lantern && P.lantern) return '이미 가지고 있어요';
   if (r.rod && P.rod) return '이미 가지고 있어요';
   if (r.pot && P.pot) return '이미 가지고 있어요';
@@ -1612,7 +1634,7 @@ function craft(r){
   for (const k in r.cost) P.inv[k] -= r.cost[k]; SND.play(r.tool || r.boat || r.lantern || r.rod || r.pot ? 'upgrade' : 'craft');
   if (!P.xpDone[r.id] && !r.give){ P.xpDone[r.id] = true; addXp(r.tool || r.boat || r.lantern ? 20 : 12); }
   if (r.tool){
-    P.tools[r.tool] = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
+    P.tools[r.tool] = true; P.hx.tool = true; buildEquip(); setEquip(r.tool); toast(josa(r.name, '을/를') + ' 만들어 장착했어요!');
     if (r.tool === 'gun') setTimeout(() => toast('탄약은 제작 메뉴에서 만들어요. 탑에도 같은 탄약을 써요.'), 3000);
     if (!equipTip){ equipTip = true; setTimeout(() => toast('오른쪽 장비 슬롯으로 교체할 수 있어요. "자동"이면 알아서 바뀝니다.'), 2600); }
   }
@@ -1831,7 +1853,7 @@ function drawMini(force){
     const d = dn(c), boss = !!c.boss, elite = !!c.elite, trk = P.jobFx.track > 0 && d < 1600; if (!boss && !elite && d > MINI_SEE && !trk) continue;
     if (trk) dot(c.x, c.y, pulse ? 7 : 6, 'rgba(255,224,120,.8)');              // the hunter's tracking: every animal around, ringed
     const hostile = c.k in NIGHT_KINDS || c.k === 'bat' || c.k === 'golem' && c.state === 'awake' || (c.k === 'bear' || c.k === 'boar') && c.state === 'angry';
-    if (boss) dot(c.x, c.y, pulse ? 6 : 5, '#ffd34a'); else if (elite) dot(c.x, c.y, 4, '#ff9a3c'); else if (hostile) dot(c.x, c.y, 3, '#ff5a4a'); else dot(c.x, c.y, 2, c.k === 'rabbit' ? '#efe6d0' : '#cfa070');
+    if (c.ally) dot(c.x, c.y, 3, '#b48cff'); else if (boss) dot(c.x, c.y, pulse ? 6 : 5, '#ffd34a'); else if (elite) dot(c.x, c.y, 4, '#ff9a3c'); else if (hostile) dot(c.x, c.y, 3, '#ff5a4a'); else dot(c.x, c.y, 2, c.k === 'rabbit' ? '#efe6d0' : '#cfa070');
   }
   const px = tx(P.x, P.y), py = ty(P.x, P.y), a = Math.atan2(P.fx + P.fy, P.fx - P.fy);      // which way the player faces on the map
   mx.fillStyle = '#fff'; mx.strokeStyle = 'rgba(0,0,0,.85)'; mx.lineWidth = 1.5; mx.lineJoin = 'round'; mx.beginPath();
@@ -1887,8 +1909,9 @@ function objective(){
   const day = dayOf(), boss = creatures.find(c => c.boss);
   if (boss) return '<b>목표</b> 보스 <b>' + boss.name + '</b>' + josa(boss.name, '을/를').slice(boss.name.length) + ' 쓰러뜨리세요!';
   if (isBossDay(day) && !P.bossKills[day] && dayT() > .3 && !Z.cave) return '<b>목표</b> 오늘 밤 나타나는 <b>' + bossOf(day).name + '</b> 대비 (벽 · 탑 · 함정 · 탄약)';
-  if (!P.tools.axe) return '<b>목표</b> 나무 3 · 돌 2를 모아 <b>돌도끼</b> 만들기';
-  if (!P.tools.spear) return '<b>목표</b> 나무 4 · 돌 2로 <b>나무 창</b> 만들기';
+  if (isJob('owner')) return '<b>목표</b> ' + OWNER_DAY + '일차 아침까지 섬을 지키기 (<b>섬의 주인</b> 엔딩)';
+  if (!P.tools.axe && !isJob('fist')) return '<b>목표</b> 나무 3 · 돌 2를 모아 <b>돌도끼</b> 만들기';
+  if (!P.tools.spear && !isJob('fist')) return '<b>목표</b> 나무 4 · 돌 2로 <b>나무 창</b> 만들기';
   if (!P.built.fire) return '<b>목표</b> 해가 지기 전에 <b>모닥불</b> 피우기';
   if (!P.built.shelter) return '<b>목표</b> 나무 12 · 돌 5로 <b>움막</b> 짓기';
   if (!P.built.wall && day < RAFT_DAY) return '<b>목표</b> <b>건축</b> 버튼으로 울타리를 쳐서 늑대 막기';
@@ -1919,11 +1942,13 @@ function updateCreatures(dt){
     if (c.affix === 'regen' && c.hp < c.max && c.sinceHit > 2){ c.hp = Math.min(c.max, c.hp + c.max * .04 * dt); if (Math.random() < dt * 7) fx('glow', c.x, c.y, 14, 1, '110,226,124'); }
     if (c.affix === 'frenzy' && Math.random() < dt * 6) fx('glow', c.x, c.y, 16, 1, '255,84,72');
     let sx = 0, sy = 0, spd = 0;
-    if (c.k === 'rabbit'){
+    if (c.frozen > 0){ c.frozen -= dt; c.kvx = c.kvy = 0; if (Math.random() < dt * 4) fx('spark', c.x, c.y, 10, 1); }                // frozen solid: no moving, no biting, no casting
+    else if (c.ally){ const r = allyAI(c, dt); if (!r){ creatures.splice(i, 1); continue; } sx = r[0]; sy = r[1]; spd = r[2]; if (r[3] != null) c.hd = Math.atan2(r[4], r[3]); c.hop += dt * (spd ? 5 : 0); }
+    else if (c.k === 'rabbit'){
       if (d < sp.flee){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 2.4; c.hop += dt * 16; }
       else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; if (sx || sy) c.hop += dt * 9; }
     } else if (sp.rage){                    // boar and bear: calm until hurt (a bear also snaps if you trespass)
-      if (c.state !== 'angry' && sp.territory && d < sp.territory){ c.state = 'angry'; c.angry = 8; }
+      if (c.state !== 'angry' && sp.territory && d < sp.territory && !tamed(c)){ c.state = 'angry'; c.angry = 8; }
       if (c.state === 'angry'){
         c.angry -= dt; sx = dx / d; sy = dy / d; spd = sp.speed * sp.rage;
         if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
@@ -1934,12 +1959,12 @@ function updateCreatures(dt){
       const r = bossAI(c, sp, dt, dx, dy, d, night); sx = r[0]; sy = r[1]; spd = r[2];
     } else if (c.k === 'bat'){              // flutters erratically; swoops at the player in the dark
       c.hop += dt * 18;
-      if (d < 240){
+      if (d < 240 && !tamed(c)){
         const a = Math.atan2(dy, dx) + Math.sin(anim * 5 + c.hop * .3) * 1.1; sx = Math.cos(a); sy = Math.sin(a); spd = sp.speed;
         if (d < c.r + PLAYER_R + 4 && c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; c.kvx = -dx / d * 150; c.kvy = -dy / d * 150; }
       } else { if (c.timer <= 0){ c.ang = rand(0, TAU); c.timer = rand(.5, 1.3); } sx = Math.cos(c.ang || 0); sy = Math.sin(c.ang || 0); spd = sp.speed * .5; }
     } else if (c.k === 'golem'){            // dormant until you come close, then a slow, heavy chase that smashes walls
-      if (c.state !== 'awake' && d < 150){ c.state = 'awake'; c.atk = .8; }
+      if (c.state !== 'awake' && d < 150 && !tamed(c)){ c.state = 'awake'; c.atk = .8; }
       if (c.state === 'awake'){
         sx = dx / d; sy = dy / d; spd = sp.speed; c.hop += dt * 5;
         if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } }
@@ -1951,16 +1976,18 @@ function updateCreatures(dt){
       const big = c.k === 'brute';
       if (!night){ c.hp -= (big ? 4 : 10) * dt * (c.elite ? .6 : 1); c.burn = .3; }
       for (const s of structs) if (s.t === 'fire' && s.fuel > 0 && Math.hypot(c.x - s.x, c.y - s.y) < FIRE_SAFE * .8){ c.hp -= (big ? 3 : 6) * dt * (c.elite ? .6 : 1); c.burn = .3; }
+      if (isJob('phoenix') && d < FIRE_SAFE * .8){ c.hp -= (big ? 3 : 6) * dt * (c.elite ? .6 : 1); c.burn = .3; }
       if (c.burn > 0 && Math.random() < dt * 9) fx(Math.random() < .5 ? 'ember' : 'smoke', c.x, c.y, 22, 1);
       if (c.hp <= 0){ creatures.splice(i, 1); continue; }
-      if (d < offD() + 260){
+      if (d < offD() + 260 && !isJob('lich')){
         sx = dx / d; sy = dy / d; spd = sp.speed;
         if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (1 + (day - 1) * .1) * (c.dmgMul || 1))); c.atk = 1.2; c.swing = .4; } }
         else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round((big ? 22 : 7) * (c.dmgMul || 1))); c.atk = 1.2; c.swing = .4; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .5; }
       c.hop += dt * (spd ? 5 : 0);
     } else {                                // wolf
-      if (!night && !Z.dayWolves){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > offD() + 120){ creatures.splice(i, 1); continue; } }
+      if (tamed(c)){ wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .5; }
+      else if (!night && !Z.dayWolves){ sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.1; if (d > offD() + 120){ creatures.splice(i, 1); continue; } }
       else if (d < offD() + 260){
         sx = dx / d; sy = dy / d; spd = sp.speed;
         if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(Math.min(14, 6 + day) * (c.dmgMul || 1))); c.atk = 1; } }
@@ -1983,6 +2010,7 @@ function updateCreatures(dt){
         const ex = c.x - s.x, ey = c.y - s.y, ed = Math.hypot(ex, ey) || 1;
         if (lim && ed < lim){ c.x = s.x + ex / ed * lim; c.y = s.y + ey / ed * lim; }
       }
+      if (isJob('phoenix')){ const ex = c.x - P.x, ey = c.y - P.y, ed = Math.hypot(ex, ey) || 1, lim = FIRE_SAFE * .8; if (ed < lim){ c.x = P.x + ex / ed * lim; c.y = P.y + ey / ed * lim; } }     // the phoenix keeps wolves off like a campfire
     }
   }
   hitSrc = null;
@@ -1992,7 +2020,7 @@ function update(dt){
   T += dt;
   const day = dayOf(), t = dayT(), ph = phaseOf(t);
   if (ph !== lastPhase){
-    lastPhase = ph;
+    lastPhase = ph; hiddenPhase(ph, day);
     if (Z.cave){}
     else if (ph === '해질녘'){ SND.play('dusk', { key: 1 }); toast('해가 저물고 있어요. 모닥불을 준비하세요!'); if (isBossDay(day) && !P.bossKills[day]) setTimeout(() => toast('⚠ 오늘 밤 보스가 나타나요!'), 1900); }
     else if (ph === '밤'){ SND.play('night', { key: 1 }); toast('밤이 되었습니다. 늑대를 조심하세요.'); }
@@ -2001,7 +2029,8 @@ function update(dt){
   if (day !== lastDay){
     lastDay = day; if (day > 1) addXp(15 + day * 5); SND.play('dawn', { key: 1 }); toast(day + '일차 아침이 밝았습니다');
     if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스 ' + josa(bossOf(day).name, '이/가') + ' 나타나요. 미리 준비하세요!'), 1800);
-    if (day === RAFT_DAY) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
+    if (day === RAFT_DAY && !(canWake() && !P.hx.wall) && !isJob('owner')) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
+    hiddenDay(day);
   }
 
   updateEvents(dt);
@@ -2031,16 +2060,22 @@ function update(dt){
     const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
     if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim){ warm = true; break; }
   }
+  if (P.hx.frost && (warm || Z.id !== 'snow')) P.hx.frost = 0;                 // the frost's night is lost by a fire or a roof
   const chill = (Z.chill || 0) * (Z.cave && isJob('miner') ? .5 : 1);                                   // caves and the snow island keep draining warmth
   if (warm) P.warmth += 8 * dt;
   else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1) * coldMul();
   else P.warmth += 1.6 * dt;
   if (chill && !warm && P.warmth < 30 && T - lastChillT > 40){ lastChillT = T; toast('몸이 얼어붙어요! 모닥불이나 움막 곁에서 몸을 녹이세요.'); }
-  P.warmth = clamp(P.warmth, 0, 100);
+  P.warmth = isJob('frost') ? 100 : clamp(P.warmth, 0, 100);
+  const sunlit = isJob('lich') && !Z.cave && dark < .3 && !structs.some(s => s.t === 'shelter' && Math.hypot(s.x - P.x, s.y - P.y) < SHELTER_SAFE);
+  if (sunlit){ P.hp -= .5 * dt; if (Math.random() < dt * 3) fx('smoke', P.x, P.y, 26, 1); }                   // the lich and daylight
+  let melting = false;
+  if (isJob('frost')) for (const s of structs) if (s.t === 'fire' && s.fuel > 0 && Math.hypot(s.x - P.x, s.y - P.y) < FIRE_WARM){ melting = true; P.hp -= dt; hurtT = Math.max(hurtT, .1); if (Math.random() < dt * 6) fx('smoke', P.x, P.y, 22, 1); break; }      // the frost melts by a fire
+  if (P.hp <= 0){ P.hp = 0; endGame(false); return; }
   if (updateStatus(dt)) return;
   const zeros = (P.hunger <= 0) + (P.thirst <= 0) + (P.warmth <= 0);
   if (zeros){ P.hp -= 1.8 * zeros * dt; hurtT = Math.max(hurtT, .22); if (P.hp <= 0){ P.hp = 0; endGame(false); return; } }
-  else if (P.hunger > 50 && P.thirst > 50 && P.warmth > 40 && !(P.st.bleed > 0 || P.st.infect > 0 || P.st.poison > 0)) P.hp = Math.min(100, P.hp + .8 * dt * (perk('regen') ? 1.8 : 1));
+  else if (P.hunger > 50 && P.thirst > 50 && P.warmth > 40 && !(P.st.bleed > 0 || P.st.infect > 0 || P.st.poison > 0) && !sunlit && !melting) P.hp = Math.min(100, P.hp + .8 * dt * (perk('regen') ? 1.8 : 1) * (isJob('owner') ? 3 : 1));
 
   // world
   for (const o of objs){
@@ -2055,7 +2090,7 @@ function update(dt){
   if (P.auto){ const b = hasTool('gun') && P.inv.ammo > 0 && (nearestHostile(AUTO_GUN_RANGE) || P.jobFx.rapid > 0) ? 'gun' : bestFor(target); if (b) setEquip(b); }
   aim = P.equip === 'gun' ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateBossFx(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateHidden(dt); updateBossFx(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
   for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
   for (let i = corpses.length - 1; i >= 0; i--){ const o = corpses[i]; o.t += dt; if (o.t < .5){ o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy *= .9; } if (o.t > 9) corpses.splice(i, 1); }
   const da = scrAng(P.fx, P.fy) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
@@ -2063,7 +2098,7 @@ function update(dt){
   if (isNight() && !Z.cave){
     wolfTimer -= dt;
     if (wolfTimer <= 0){
-      const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
+      const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have && !c.ally) have[c.k]++;
       const want = { wolf: Math.min(9, 1 + day), zombie: day >= 2 ? Math.min(12, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(5, Math.floor((day - 2) / 2)) : 0 };
       if (evOn('fog')) want.zombie = Math.ceil(want.zombie * 1.5) + 1; if (evOn('moon')) want.wolf += 2;
       if (isBossDay(day)) for (const k in want) want[k] = Math.ceil(want[k] * .65);       // on a boss night the boss is the main event
@@ -2103,7 +2138,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -2120,6 +2155,7 @@ function loadGame(s){
   P.lv = Object.assign(newPlayer().lv, P.lv); P.seen = P.seen || {}; P.armor = P.armor || 0;
   P.visited = Object.assign({ home: true }, P.visited); P.buffs = Object.assign({ swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, P.buffs); P.st = Object.assign({ bleed: 0, infect: 0, poison: 0, chill: 0 }, P.st); P.fatigue = P.fatigue || 0; P.stats = Object.assign({ elites: 0, bosses: 0 }, P.stats); P.bossKills = P.bossKills || {}; P.perk = P.perk || {}; P.xpDone = P.xpDone || {};
   if (!JOBS[P.job]) P.job = 'survivor'; P.jobCd = P.jobCd || 0; P.jobFx = P.jobFx || {}; P.free = P.free || {};    // older saves: a survivor
+  P.hx = P.hx || {}; if (P.hx.tool == null && ['axe', 'spear', 'pickaxe', 'gun'].some(t => P.tools[t])) P.hx.tool = true; if (P.hx.wall == null && P.built && P.built.wall) P.hx.wall = true;
   for (const w of wallMap.values()){ w.max = wallMax(w.kind); w.hp = Math.min(w.hp, w.max); }                                                    // (walls were unpacked before the player, and the job sets their strength)
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
@@ -2140,15 +2176,17 @@ function newGame(job){
   const J = jobDef(); if (J.skill) setTimeout(() => toast(J.icon + ' ' + J.name + '의 고유 기술 ' + J.skill.icon + ' ' + J.skill.name + ': 건축 버튼 옆의 동그란 버튼 (R)'), 4600);
 }
 function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try { loadGame(s); startRun(); toast(dayOf() + '일차, 다시 시작합니다.'); } catch (_) { newGame(); } }
-function endGame(win){
+function endGame(win, how){
   if (!running) return;
+  if (!win && isJob('phoenix') && P.hx.rev !== dayOf()){ phoenixRise(); return; }
   running = false; paused = false; actHeld = false; resetJoy(); clearSave(); setBuild(false);
   const days = dayOf(); let best = 0;
   try { best = +localStorage.getItem(BEST_KEY) || 0; if (!win && days > best){ best = days; localStorage.setItem(BEST_KEY, String(days)); } } catch (_) {}
-  $('endTitle').innerHTML = win ? '탈출 <em>성공!</em>' : '<em>쓰러졌습니다</em>';
-  $('endText').textContent = win ? '뗏목이 파도를 가르며 섬에서 멀어집니다. 살아서 돌아가는 거예요.' : (P.hp <= 0 && isNight() ? '어둠 속에서 힘이 다했습니다.' : '섬은 만만치 않았습니다.');
+  $('endTitle').innerHTML = how === 'owner' ? '섬의 <em>주인</em>' : win ? '탈출 <em>성공!</em>' : '<em>쓰러졌습니다</em>';
+  $('endText').textContent = how === 'owner' ? '섬은 이제 당신의 것입니다. 짐승들은 고개를 숙이고, 파도마저 잦아들었어요.' : win ? '뗏목이 파도를 가르며 섬에서 멀어집니다. 살아서 돌아가는 거예요.' : (P.hp <= 0 && isNight() ? '어둠 속에서 힘이 다했습니다.' : '섬은 만만치 않았습니다.');
   const ek = (P.stats && P.stats.elites ? ' · 엘리트 ' + P.stats.elites + '마리 처치' : '') + (P.stats && P.stats.bosses ? ' · 보스 ' + P.stats.bosses + '마리 처치' : '');
-  $('endStat').innerHTML = (win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`) + ek;
+  const hj = JOBS[P.job] && JOBS[P.job].hidden ? ' · ✦ ' + JOBS[P.job].icon + ' ' + JOBS[P.job].name : '';
+  $('endStat').innerHTML = (how === 'owner' ? `<b>${days}</b>일 동안 섬을 다스림` : win ? `<b>${days}</b>일 만에 탈출` : `<b>${days}</b>일 생존${best ? ' · 최고 ' + best + '일' : ''}`) + ek + hj;
   $('hud').hidden = true; $('end').hidden = false; SND.play(win ? 'win' : 'lose', { key: 1 });
 }
 function toTitle(){
@@ -3238,7 +3276,7 @@ function resize(){
 }
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
 
-const lightR = () => ((Z.cave ? 135 : 110) + (P.lantern ? 70 : 0) + (perk('night') ? 35 : 0)) * (evOn('fog') ? .65 : 1);
+const lightR = () => ((Z.cave ? 135 : 110) + (P.lantern ? 70 : 0) + (perk('night') ? 35 : 0) + (isJob('phoenix') ? 60 : 0)) * (evOn('fog') ? .65 : 1);
 function punchCone(x, y, ang, len, half, h){          // a soft wedge of light ahead of the player (like a flashlight)
   const cx = w2sx(x, y) / 2, cy = (w2sy(x, y) - (h || 0)) / 2, L = len * zoom * .5 * Math.hypot(ux(P.fx, P.fy), uy(P.fx, P.fy));
   lx.save(); lx.translate(cx, cy); lx.rotate(ang);
@@ -3321,7 +3359,7 @@ function render(){
   for (const o of corpses) if (seen(o.x, o.y)) draws.push({ k: o.x + o.y - 2, x: o.x, y: o.y, corpse: o });
   if (running) draws.push({ k: P.x + P.y, x: P.x, y: P.y, p: 1 });
   draws.sort((a, b) => a.k - b.k);
-  drawAuras(draws); drawBossGround(); drawBossTelegraphs(draws); drawBuffRings(); drawJobFx();
+  drawAuras(draws); drawBossGround(); drawBossTelegraphs(draws); drawBuffRings(); drawJobFx(); drawHiddenFx();
   castShadows(draws, vx0, vy0, vx1, vy1, dk);
   for (const d of draws){          // every sprite stands upright on the spot where it is
     ctx.save(); standT(d.x, d.y);
@@ -3332,7 +3370,7 @@ function render(){
     ctx.restore();
   }
   if (buildMode && running) drawGhost();
-  drawFishing(); drawFlames(); drawBoulders(); drawMeteors();
+  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts();
 
   uprightT();
   drawParts(); drawBullets();
@@ -3626,7 +3664,7 @@ function drawBossTelegraph2(c, p){          // warnings for the new bosses' atta
 /* ================= traps: flat things on the build grid that hurt what walks over them (you can step on your own) ================= */
 const TRAP_RANGE = 15;
 function addTrap(i, j, kind, uses){ return addObj({ t: 'trap', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 13, amt: uses == null ? WALLS[kind].uses : uses, cd: 0, fire: 0, v: Math.random() }); }
-const trapsIgnore = c => c.k === 'rabbit' || c.k === 'bat' || FLYING[c.k];
+const trapsIgnore = c => c.k === 'rabbit' || c.k === 'bat' || FLYING[c.k] || c.ally;
 function creatureDot(c, dps, dt){          // damage over time (bleeding, burning) without the knockback and the noise of a hit
   c.dot = (c.dot || 0) + dps * dt;
   if (c.dot >= 1){ const n = Math.floor(c.dot); c.dot -= n; hitCreature(c, n, 0, 0, true, false, true); }
@@ -3648,7 +3686,7 @@ function updateTraps(dt){
       o.fire -= dt;
       if (Math.random() < dt * 22) fx('ember', o.x + rand(-14, 14), o.y + rand(-10, 10), 4, 1);
       if (Math.random() < dt * 5) fx('smoke', o.x, o.y, 20, 1);
-      for (const c of creatures) if (!FLYING[c.k] && Math.hypot(c.x - o.x, c.y - o.y) < 46 + c.r * .5){ c.flame = Math.max(c.flame || 0, .6); }
+      for (const c of creatures) if (!FLYING[c.k] && !c.ally && Math.hypot(c.x - o.x, c.y - o.y) < 46 + c.r * .5){ c.flame = Math.max(c.flame || 0, .6); }
       if (o.fire <= 0 && o.amt <= 0) breakTrap(o);
       continue;
     }
@@ -3720,7 +3758,8 @@ const FATIGUE_RATE = 100 / (DAY_LEN * 1.6);               // awake for about a d
 let hitSrc = null, dripT = 0, lastFat = 0;
 const statusTip = {};
 function afflict(k, secs){
-  const s = STATUS[k]; if (!s || !P || window.__noStatus) return;          // (__noStatus: tests of other things)
+  const s = STATUS[k]; if (!s || !P || window.__noStatus) return;
+  if (isJob('lich') && (k === 'infect' || k === 'poison') || isJob('frost') && k === 'chill') return;          // (__noStatus: tests of other things)
   const had = P.st[k] > 0;
   const dur = (secs || s.dur) * (isJob('herbalist') ? .5 : 1);                 // the herbalist shakes things off in half the time
   P.st[k] = k === 'infect' ? Math.max(P.st[k], dur) : Math.min(s.max, P.st[k] + dur);
@@ -3849,7 +3888,7 @@ $('perkClose').addEventListener('click', closePerk);
 $('perk').addEventListener('click', e => { if (e.target === $('perk')) closePerk(); });
 function updatePerkHUD(){
   const li = levelInfo(), pct = li.max ? 100 : li.into / li.need * 100, el = $('xpRow');
-  setText($('xpLv'), (P.job && P.job !== 'survivor' && JOBS[P.job] ? JOBS[P.job].icon + ' ' : '') + 'Lv.' + li.lv); const w = pct.toFixed(1) + '%'; if (el._w !== w){ el._w = w; el.querySelector('i').style.width = w; }
+  setText($('xpLv'), (P.job && P.job !== 'survivor' && JOBS[P.job] ? (JOBS[P.job].hidden ? '✦' : '') + JOBS[P.job].icon + ' ' : '') + 'Lv.' + li.lv); const w = pct.toFixed(1) + '%'; if (el._w !== w){ el._w = w; el.querySelector('i').style.width = w; }
   const on = running && !paused && P.perkPts > 0 && !!P.offer; if ($('btnPerk').hidden === on) $('btnPerk').hidden = !on; if (on) setText($('btnPerk'), '기술 ' + P.perkPts);
 }
 /* ================= jobs: picked when a new game starts. Each has a starting kit, traits, one skill on a cooldown, a weakness and two perks of its own (Lv.5, Lv.10) ================= */
@@ -3873,7 +3912,7 @@ const JOBS = {
     kit: '소총, 탄약 30', traits: ['소총 피해 +25%', '장전이 빨라요 (연사 +15%)'], weak: '채집할 때 -1개 (최소 1개)',
     skill: { id: 'suppress', name: '제압 사격', icon: '🎯', cd: 50, desc: '3초 동안 소총 연사 2배' }, related: ['marksman', 'ammo', 'tough'] },
   survivor:  { name: '생존자', icon: '🧍', tag: '처음 그대로', ramp: null, ui: '#efe6d2',
-    kit: '없음', traits: ['특별한 점 없이 지금까지와 같아요'], weak: '없음', skill: null, related: [] }
+    kit: '없음', traits: ['특별한 점은 없지만, 생존자만 걸을 수 있는 숨겨진 길이 있어요'], weak: '없음', skill: null, related: [] }
 };
 const JOB_ORDER = ['carpenter', 'hunter', 'engineer', 'herbalist', 'miner', 'soldier', 'survivor'];
 Object.assign(PERKS, {         // each job's own two perks: offered (always as one of the two) once you reach the level
@@ -3897,7 +3936,7 @@ const gunMul = () => (isJob('carpenter') ? .8 : isJob('soldier') ? 1.25 : 1);
 const gunCdMul = () => (isJob('soldier') ? .85 * (perk('rapidfire') ? .8 : 1) : 1) * (P.jobFx.rapid > 0 ? .5 : 1);
 const meleeMul = () => (isJob('engineer') ? .85 : 1);
 const potionMul = () => (isJob('herbalist') ? 1.5 : 1);
-const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1);
+const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1) * (isJob('phoenix') && P.jobFx.blaze > 0 ? 1.3 : 1);
 const coldMul = () => (isJob('hunter') ? 1.15 : 1);
 function wallMax(kind){ const d = WALLS[kind]; return Math.round(d.hp * (isJob('carpenter') && !d.trap ? 1.3 : 1)); }
 function buildCost(k){           // what one piece costs you, after your job's discount
@@ -4026,14 +4065,14 @@ function renderJobs(){
   const grid = $('jobGrid'); grid.innerHTML = '';
   for (const k of JOB_ORDER){
     const d = JOBS[k], b = document.createElement('button'); b.className = 'jobcard' + (k === jobSel ? ' on' : ''); b.dataset.k = k; b.style.setProperty('--jc', d.ui);
-    b.innerHTML = `<span class="ji">${d.icon}</span><b>${d.name}</b>`; b.addEventListener('click', () => { jobSel = k; renderJobs(); SND.play('ui'); }); grid.appendChild(b);
+    b.innerHTML = `<span class="ji">${d.icon}</span><b>${d.name}</b>` + (k === 'survivor' && woken.length ? `<i class="tro">${woken.map(h => JOBS[h].icon).join('')}</i>` : ''); b.addEventListener('click', () => { jobSel = k; renderJobs(); SND.play('ui'); }); grid.appendChild(b);
   }
   const d = JOBS[jobSel], ps = Object.keys(PERKS).filter(k => PERKS[k].job === jobSel).map(k => 'Lv.' + PERKS[k].at + ' ' + PERKS[k].icon + ' ' + PERKS[k].name);
   $('jobInfo').style.setProperty('--jc', d.ui);
   $('jobInfo').innerHTML = `<h3>${d.icon} ${d.name} <small>${d.tag}</small></h3><dl>`
     + `<dt>시작</dt><dd>${d.kit}</dd><dt>특성</dt><dd>${d.traits.join(' · ')}</dd>`
     + (d.skill ? `<dt>기술</dt><dd>${d.skill.icon} <b>${d.skill.name}</b> — ${d.skill.desc} (${d.skill.cd}초마다)</dd>` : '')
-    + `<dt>약점</dt><dd>${d.weak}</dd>` + (ps.length ? `<dt>전용</dt><dd>${ps.join(' · ')}</dd>` : '') + '</dl>';
+    + `<dt>약점</dt><dd>${d.weak}</dd>` + (ps.length ? `<dt>전용</dt><dd>${ps.join(' · ')}</dd>` : '') + '</dl>' + (jobSel === 'survivor' ? hiddenHint() : '');
   $('jobGo').textContent = josa(d.name, '으로/로') + ' 시작';
 }
 function openJobs(){
@@ -4042,6 +4081,185 @@ function openJobs(){
 }
 $('jobGo').addEventListener('click', () => { try { localStorage.setItem('island.job', jobSel); } catch (_) {} $('jobs').hidden = true; newGame(jobSel); });
 $('jobBack').addEventListener('click', () => { $('jobs').hidden = true; $('title').hidden = false; refreshTitle(); });
+/* ================= hidden jobs: only someone who started as a plain survivor can awaken into one, mid-run, by pulling off something very hard.
+   They are meant to be overpowered; they last for the rest of that run only ================= */
+Object.assign(JOBS, {
+  fist:    { name: '권왕', icon: '👊', tag: '맨주먹의 왕', hidden: true, ramp: ['#6e6a62', '#9c978b', '#cfcabd', '#f2eee4'], ui: '#f2eee4', glow: '255,240,210',
+    riddle: '어떤 도구도 만들지 않고, 맨주먹만으로 늑대 열 마리를 꺾은 자',
+    kit: '각성', traits: ['맨손 공격 35 · 빠른 연타', '맨손으로 나무·돌 6개, 광석 3개 (곡괭이 레벨 상관없이)', '받는 피해 -30%'], weak: '도구와 소총을 쓸 수 없어요',
+    skill: { id: 'quake', name: '진각', icon: '💥', cd: 20, desc: '반경 170 안의 모든 적에게 120 피해, 멀리 날려 보내요' }, related: [] },
+  phoenix: { name: '불사조', icon: '🔥', tag: '재에서 되살아나는 자', hidden: true, ramp: ['#5a1208', '#902212', '#d0451a', '#ffb03a'], ui: '#ff8a3d', glow: '255,150,60',
+    riddle: '꺼져 가는 목숨(체력 10 이하)으로 보스의 숨통을 끊은 자',
+    kit: '각성', traits: ['하루 한 번, 쓰러지면 체력 100으로 되살아나며 주변에 200 폭발', '걸어 다니는 모닥불: 늑대가 다가오지 못하고 좀비는 곁에서 타요', '내 공격에 맞은 적은 3초 동안 불타요 (초당 7) · 시야 +60'], weak: '물을 마시면 체력 -5',
+    skill: { id: 'blaze', name: '업화', icon: '☀️', cd: 40, desc: '10초 동안 몸에 불이 붙어 주변(130) 적이 초당 40 피해, 이동 +30%' }, related: [] },
+  lich:    { name: '역병의 군주', icon: '🧟', tag: '망자를 부리는 자', hidden: true, ramp: ['#1e1230', '#341f52', '#503178', '#7a52a8'], ui: '#b48cff', glow: '180,140,255',
+    riddle: '병든 몸으로 여섯째 밤의 지배자를 쓰러뜨린 자',
+    kit: '각성', traits: ['좀비와 거대 좀비가 나를 공격하지 않아요', '감염·중독에 걸리지 않아요', '직접 쓰러뜨린 적마다 체력 +5'], weak: '낮에 햇빛 아래(움막 곁·갱도 밖)에서는 체력이 차오르지 않고 초당 0.5씩 줄어요',
+    skill: { id: 'march', name: '망자의 행진', icon: '💀', cd: 45, desc: '좀비 5마리를 30초 동안 부하로 불러 적과 싸우게 해요' }, related: [] },
+  frost:   { name: '빙결의 군주', icon: '❄️', tag: '얼음을 다스리는 자', hidden: true, ramp: ['#1a3550', '#2e5f88', '#5c9ccc', '#bfe6ff'], ui: '#9fd8ff', glow: '170,220,255',
+    riddle: '설원섬의 긴 밤을 불도 지붕도 없이 견뎌 낸 자',
+    kit: '각성', traits: ['추위와 빙결에 걸리지 않아요 (체온이 늘 가득)', '내 공격에 맞은 적은 2초 동안 느려져요', '받는 피해 -25%'], weak: '불타는 모닥불 곁에서는 체력이 초당 1씩 녹아내려요',
+    skill: { id: 'zero', name: '절대영도', icon: '🧊', cd: 35, desc: '반경 200 안의 적을 4초 동안 꽁꽁 얼려요 (보스는 1.5초). 언 적은 피해를 2배로 받아요' }, related: [] },
+  owner:   { name: '섬의 주인', icon: '🌲', tag: '섬이 인정한 자', hidden: true, ramp: ['#2a3a14', '#46601e', '#6f8f2c', '#b8d060'], ui: '#b8d060', glow: '190,230,120',
+    riddle: '울타리 하나 세우지 않고 열째 날 아침을 맞은 자',
+    kit: '각성', traits: ['늑대·곰·멧돼지·박쥐·골렘이 먼저 공격하지 않아요 (좀비와 보스는 공격해요)', '채집 3배', '체력이 3배 빨리 차올라요'], weak: '뗏목을 만들 수 없어요. 대신 15일차 아침을 맞으면 "섬의 주인" 엔딩',
+    skill: { id: 'wrath', name: '섬의 분노', icon: '⚡', cd: 30, desc: '주변(450) 적 8마리에게 번개를 내리꽂아요 (각 80)' }, related: [] }
+});
+const HIDDEN_ORDER = ['fist', 'phoenix', 'lich', 'frost', 'owner'];
+const OWNER_DAY = 15;
+const TAME = { wolf: 1, bear: 1, boar: 1, bat: 1, golem: 1 };          // what leaves the island's owner alone
+const gatherMul = () => (isJob('owner') ? 3 : 1);
+const tamed = c => isJob('owner') && TAME[c.k];
+let woken = [];
+try { woken = JSON.parse(localStorage.getItem('island.hidden') || '[]'); if (!Array.isArray(woken)) woken = []; } catch (_) {}
+function awaken(id){
+  if (!P || P.job !== 'survivor' || !JOBS[id] || !JOBS[id].hidden) return false;
+  const J = JOBS[id]; P.job = id; P.jobCd = 0; P.jobFx = {}; P.hx.woke = id;
+  if (!woken.includes(id)){ woken.push(id); try { localStorage.setItem('island.hidden', JSON.stringify(woken)); } catch (_) {} }
+  if (id === 'fist'){ P.auto = true; setEquip('hand'); buildEquip(); }
+  if (id === 'frost'){ P.warmth = 100; cure(['chill']); }
+  if (id === 'lich') cure(['infect', 'poison']);
+  if (id === 'owner') for (const c of creatures) if (TAME[c.k]){ c.state = c.k === 'golem' ? 'idle' : c.state === 'angry' ? 'idle' : c.state; c.angry = 0; }
+  flashT = .5; shakeT = .5; SND.play('levelup', { key: 1 }); setTimeout(() => SND.play('perk', { key: 1 }), 350);
+  fx('glow', P.x, P.y, 30, 34, J.glow); fx('spark', P.x, P.y, 20, 20); floater(P.x, P.y, 64, '✦ 각성 ✦', '#ffe08a');
+  const b = $('awake'); b.innerHTML = `<small>✦ 각성 ✦</small><b>${J.icon} ${J.name}</b><span>${J.tag}</span>`; b.style.setProperty('--jc', J.ui); b.hidden = false; b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+  clearTimeout(awaken.t); awaken.t = setTimeout(() => { b.hidden = true; }, 4200);
+  toast('✦ 각성! ' + J.icon + ' ' + J.name + ' — ' + J.traits[0]);
+  setTimeout(() => toast(J.icon + ' 고유 기술 ' + J.skill.icon + ' ' + J.skill.name + ': 건축 버튼 옆의 동그란 버튼 (R)'), 2800);
+  if (id === 'owner') setTimeout(() => toast('🌲 ' + OWNER_DAY + '일차 아침까지 섬을 지키면 "섬의 주인" 엔딩이에요. 뗏목은 만들 수 없어요'), 5600);
+  updateSkillHUD(); updatePerkHUD(); save(); return true;
+}
+const canWake = () => P && P.job === 'survivor';
+function onWolfPunched(c){         // the fist: a wolf finished off bare-handed, with no tool ever made this run
+  if (!canWake() || P.hx.tool || P.equip !== 'hand' || c.k !== 'wolf') return;
+  P.hx.fist = (P.hx.fist || 0) + 1; floater(P.x, P.y, 50, '👊 ' + P.hx.fist + '/10', '#f2eee4');
+  if (P.hx.fist >= 10) awaken('fist');
+}
+function onBossDown(c, byPlayer, byTower){
+  if (!canWake()) return;
+  if (byPlayer && P.hp > 0 && P.hp <= 10) awaken('phoenix');
+  else if ((c.k === 'zombielord' || c.k === 'plaguegiant') && (byPlayer || byTower) && P.st.infect > 0) awaken('lich');
+}
+function hiddenPhase(ph, day){     // the frost: a whole night on the snow island, never by a fire or a shelter
+  if (!canWake()) return;
+  if (ph === '밤') P.hx.frost = Z.id === 'snow' ? day : 0;
+  else if (ph === '새벽' && P.hx.frost === day && Z.id === 'snow'){ P.hx.frost = 0; awaken('frost'); }
+}
+function hiddenDay(day){           // the owner: the tenth morning without ever having built a wall, a tower or a trap
+  if (canWake() && day === RAFT_DAY && !P.hx.wall) awaken('owner');
+  if (isJob('owner') && day >= OWNER_DAY) setTimeout(() => endGame(true, 'owner'), 1200);
+}
+function phoenixRise(){            // once a day the phoenix gets up from the ashes
+  P.hx.rev = dayOf(); P.hp = 100; P.hunger = Math.max(P.hunger, 40); P.thirst = Math.max(P.thirst, 40); P.warmth = Math.max(P.warmth, 60); cure(Object.keys(STATUS));
+  for (const c of [...creatures]) if (!c.ally && Math.hypot(c.x - P.x, c.y - P.y) < 160 + c.r){ hitCreature(c, 200, c.x - P.x, c.y - P.y, true); if (creatures.includes(c)) c.flame = Math.max(c.flame || 0, 3); }
+  flashT = .5; shakeT = .6; SND.play('slam', { key: 1 }); fx('glow', P.x, P.y, 26, 40, '255,150,60'); fx('ember', P.x, P.y, 20, 30); floater(P.x, P.y, 60, '부활!', '#ffb347');
+  for (let i = 0; i < 18; i++){ const a = i / 18 * TAU; fx('ember', P.x + Math.cos(a) * 110, P.y + Math.sin(a) * 110, 6, 2); }
+  toast('🔥 불사조가 재에서 되살아났어요! 오늘은 다시 되살아날 수 없어요');
+}
+const isAlly = c => !!c.ally;
+function allyTarget(c){
+  let best = null, bd = 420;
+  for (const e of creatures){
+    if (e === c || e.ally || !isHostile(e) || ((e.k === 'zombie' || e.k === 'brute') && isJob('lich'))) continue;
+    const d = Math.hypot(e.x - c.x, e.y - c.y); if (d < bd){ bd = d; best = e; }
+  }
+  return best;
+}
+function allyAI(c, dt){            // a summoned zombie: goes for the nearest enemy, otherwise stays close to its master
+  c.ally -= dt;
+  if (c.ally <= 0){ fx('smoke', c.x, c.y, 16, 6); fx('glow', c.x, c.y, 14, 4, '180,140,255'); return null; }
+  const e = allyTarget(c);
+  if (e){
+    const dx = e.x - c.x, dy = e.y - c.y, d = Math.hypot(dx, dy) || 1;
+    if (d < c.r + e.r + 6){ if (c.atk <= 0){ hitCreature(e, 14, dx, dy, false); c.atk = .9; c.swing = .4; } return [0, 0, 0, dx / d, dy / d]; }
+    return [dx / d, dy / d, SPECS.zombie.speed * 2.2];
+  }
+  const dx = P.x - c.x, dy = P.y - c.y, d = Math.hypot(dx, dy) || 1;
+  return d > 70 ? [dx / d, dy / d, SPECS.zombie.speed * 2.2] : [0, 0, 0];
+}
+let bolts = [];
+Object.assign(SKILL_FN, {
+  quake(){
+    let n = 0;
+    for (const c of [...creatures]){
+      if (c.ally || tamed(c) && c.state !== 'angry') continue;
+      if (Math.hypot(c.x - P.x, c.y - P.y) < 170 + c.r){ hitCreature(c, 120, c.x - P.x, c.y - P.y, true); n++; if (creatures.includes(c)){ c.kvx *= 3.5; c.kvy *= 3.5; } }
+    }
+    if (!n){ toast('주변에 적이 없어요'); return false; }
+    for (let i = 0; i < 20; i++){ const a = i / 20 * TAU; fx('dust', P.x + Math.cos(a) * 120, P.y + Math.sin(a) * 120, 2, 2); fx('rock', P.x + Math.cos(a) * 60, P.y + Math.sin(a) * 60, 6, 1); }
+    shakeT = .55; SND.play('slam', { key: 1 }); floater(P.x, P.y, 44, '진각!', '#f2eee4');
+    try { navigator.vibrate && navigator.vibrate([60, 40, 90]); } catch (_) {}
+    return true;
+  },
+  blaze(){ P.jobFx.blaze = 10; SND.play('flame', { key: 1 }); fx('glow', P.x, P.y, 24, 18, '255,150,60'); floater(P.x, P.y, 44, '업화!', '#ffb347'); return true; },
+  march(){
+    const n = 5;
+    for (let i = 0; i < n; i++){
+      const a = i / n * TAU + rand(-.3, .3), x = P.x + Math.cos(a) * 46, y = P.y + Math.sin(a) * 46;
+      const c = spawnAt('zombie', x, y); c.ally = 30; c.hp = c.max = 60; c.elite = false; c.state = 'ally'; fx('smoke', x, y, 10, 5); fx('glow', x, y, 14, 6, '180,140,255');
+    }
+    SND.play('howl', { key: 1 }); floater(P.x, P.y, 44, '망자의 행진!', '#c9a8ff'); toast('💀 망자 다섯이 일어났어요. 30초 동안 적과 싸워요'); return true;
+  },
+  zero(){
+    let n = 0;
+    for (const c of creatures){
+      if (c.ally || Math.hypot(c.x - P.x, c.y - P.y) > 200 + c.r) continue;
+      c.frozen = c.boss ? 1.5 : 4; n++; fx('glow', c.x, c.y, 16, 6, '170,220,255');
+    }
+    if (!n){ toast('주변에 얼릴 적이 없어요'); return false; }
+    for (let i = 0; i < 24; i++){ const a = i / 24 * TAU; fx('spark', P.x + Math.cos(a) * 150, P.y + Math.sin(a) * 150, 4, 1); }
+    SND.play('cast', { key: 1 }); floater(P.x, P.y, 44, '절대영도!', '#bfe6ff'); return true;
+  },
+  wrath(){
+    const tg = creatures.filter(c => !c.ally && !(tamed(c) && c.state !== 'angry') && isHostile(c) && Math.hypot(c.x - P.x, c.y - P.y) < 450).sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y)).slice(0, 8);
+    if (!tg.length){ toast('주변에 적이 없어요'); return false; }
+    flashT = .4; SND.play('thunder', { key: 1 }); shakeT = .3;
+    for (const c of tg){
+      bolts.push({ x: c.x, y: c.y, t: .35, seed: Math.random() * 1000 }); decals.push({ x: c.x, y: c.y, r: 12, rot: 0, col: '25,22,20', a: .55, life: 60 });
+      fx('spark', c.x, c.y, 10, 10); fx('glow', c.x, c.y, 20, 8, '200,220,255'); hitCreature(c, 80, 0, 1, true);
+    }
+    floater(P.x, P.y, 44, '섬의 분노!', '#d8f08a'); return true;
+  }
+});
+function updateHidden(dt){
+  const J = jobDef(); if (!J.hidden) return;
+  if (Math.random() < dt * 4) fx('glow', P.x + rand(-8, 8), P.y + rand(-6, 6), rand(8, 30), 1, J.glow);            // a faint aura: you are not a plain survivor any more
+  if (isJob('phoenix') && P.jobFx.blaze > 0){
+    P.jobFx.blaze = Math.max(0, P.jobFx.blaze - dt);
+    if (Math.random() < dt * 30) fx('ember', P.x + rand(-16, 16), P.y + rand(-10, 10), rand(4, 30), 1);
+    for (const c of [...creatures]) if (!c.ally && Math.hypot(c.x - P.x, c.y - P.y) < 130 + c.r){ creatureDot(c, 40, dt); if (creatures.includes(c)) c.burn = .3; }
+  }
+  if (isJob('frost')){ P.warmth = 100; if (P.st.chill > 0) P.st.chill = 0; }
+  for (const b of bolts) b.t -= dt; bolts = bolts.filter(b => b.t > 0);
+}
+function drawHiddenFx(){           // ground rings: summoned dead (purple), frozen (ice), the phoenix's blaze
+  if (!running) return;
+  for (const c of creatures){
+    if (c.ally){ ctx.strokeStyle = 'rgba(180,140,255,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 6, 0, TAU); ctx.stroke(); }
+    if (c.frozen > 0){ ctx.fillStyle = 'rgba(190,230,255,.35)'; ctx.strokeStyle = 'rgba(220,245,255,.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 8, 0, TAU); ctx.fill(); ctx.stroke(); }
+  }
+  if (isJob('phoenix') && P.jobFx.blaze > 0){
+    const a = (.35 + .2 * Math.sin(anim * 9)).toFixed(2);
+    ctx.fillStyle = 'rgba(255,120,40,' + (a * .35).toFixed(3) + ')'; ctx.strokeStyle = 'rgba(255,170,60,' + a + ')'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(P.x, P.y, 130, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+}
+function drawBolts(){              // the island's wrath: jagged bolts from the sky, upright on screen
+  if (!bolts.length) return;
+  ctx.save(); uprightT();
+  for (const b of bolts){
+    const x = ux(b.x, b.y), y = uy(b.x, b.y), r = mulberry32(b.seed | 0), k = Math.min(1, b.t / .35);
+    ctx.strokeStyle = 'rgba(235,245,255,' + k.toFixed(2) + ')'; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(160,200,255,.9)'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.moveTo(x + (r() - .5) * 40, y - 320);
+    for (let i = 1; i <= 8; i++) ctx.lineTo(x + (i < 8 ? (r() - .5) * 34 : 0), y - 320 + i * 40);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function hiddenHint(){            // the survivor's card: five riddles; the ones you have lived through show their name
+  return '<div class="hid"><b>✦ 숨겨진 길</b><p>생존자로 시작한 판에서만, 그 판 안에서 이루면 그 자리에서 각성해요 (그 판 동안만)</p>'
+    + HIDDEN_ORDER.map(k => { const J = JOBS[k]; return woken.includes(k) ? `<p class="got">${J.icon} <b>${J.name}</b> — ${J.riddle}</p>` : `<p>❓ ${J.riddle}</p>`; }).join('') + '</div>';
+}
 /* ================= fishing: cast, wait for a nibble, hook it when the bobber dives, then time three taps on the moving bar ================= */
 const FISH_KIND = {
   small: { name: '작은 물고기', n: 1, zw: .36, sp: .85, bite: 1.25 },
@@ -4568,7 +4786,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, get woken(){ return woken; }, endGame };
 })();
 </script>
 </body>

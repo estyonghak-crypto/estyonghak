@@ -16,7 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(HERE, '..', '..', 'index.html')
 
 sheets = {}
-LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem', 'batqueen', 'plaguegiant', 'frostgiant')]
+LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun', 'sword', 'hammer', 'wrench', 'sickle', 'bombpick', 'bow', 'shotgun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem', 'batqueen', 'plaguegiant', 'frostgiant')]
 for look, tools in LOOKS:
     for tool in tools:
         key = tool if look == 'survivor' else look

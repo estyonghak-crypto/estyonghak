@@ -48,6 +48,10 @@ MAT = {
   'batf':   ramp('#251f30', '#352d45', '#493e5e', '#625780'), 'batw': ramp('#2b2339', '#3d3253', '#54476f', '#716391'), 'bred': ramp('#7a1010', '#b01818', '#d62a2a', '#ff5a4a'),
   'rock':   ramp('#43484e', '#595f66', '#737a82', '#8f979f'), 'rock2': ramp('#33373c', '#454a50', '#585e65', '#6f767e'),
   'glow':   ramp('#a65a12', '#d98122', '#f5a64a', '#ffd185'), 'glow2': ramp('#4a8a22', '#74c032', '#a3ec55', '#d4ff8a'),
+  # boss variants (materials swapped in with SWAP)
+  'pskin':  ramp('#4f522a', '#6e7136', '#8f9245', '#b0b25e'), 'pshirt': ramp('#1c2114', '#28301d', '#384229', '#4a5636'),
+  'ice':    ramp('#355670', '#4f7c9e', '#77a9cf', '#acd8f2'), 'ice2': ramp('#263c52', '#365670', '#4d7494', '#6e98ba'), 'frost': ramp('#4fb0e2', '#83d0f4', '#bce8ff', '#effaff'),
+  'qfur':   ramp('#330d14', '#4e1520', '#6e1f2e', '#922f42'), 'qwing': ramp('#260a0f', '#3b0f18', '#561624', '#742134'),
   'robe':   ramp('#231a3c', '#35275a', '#4c3a80', '#6a52a8'), 'robe2': ramp('#1a1230', '#271b44', '#372860', '#4b3a80'), 'lskin': ramp('#5f7a52', '#7c9a6c', '#9cc78c', '#b8e0a8'),
 }
 
@@ -62,8 +66,9 @@ class Node:
         if parent is not None: self.p = parent.p + parent.R @ self.p; self.R = parent.R @ self.R
 
 FAT = [1.0]
+SWAP = {}                      # material name -> material name, for recoloured variants (see swapped())
 def box(boxes, node, off, size, mat, name):
-    f = FAT[0]
+    f = FAT[0]; mat = SWAP.get(mat, mat)
     boxes.append((node.p + node.R @ np.array(off, float), np.array(size, float) * np.array([f, 1, f]), node.R, mat, name))
 
 FACES = [((0, 0, 1), [(-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)]), ((0, 0, -1), [(1, -1, -1), (-1, -1, -1), (-1, 1, -1), (1, 1, -1)]),
@@ -311,6 +316,14 @@ LOOKS['survivor'] = dict(frames=_PEOPLE, pose=lambda an, ph, tool: survivor_pose
 for _k, _p in (('zombie', 1.0), ('brute', 1.42)):
     LOOKS[_k] = dict(frames=_PEOPLE + [('die', 5)], pose=(lambda k: lambda an, ph, tool: zombie_pose(an, ph, k))(_k), model=(lambda k: lambda pose, tool: person(pose, k, None))(_k), ppu=_p)
 
+def swapped(swap, model):
+    """the same model painted with other materials"""
+    def m(pose, tool):
+        SWAP.clear(); SWAP.update(swap)
+        try: return model(pose, tool)
+        finally: SWAP.clear()
+    return m
+
 def build_sheet(look, tool=None, half=False):
     """returns (RGBA image cropped to the used area, meta). half: keep only S, SW, W, NW, N (the game mirrors them for SE, E, NE)"""
     seq = LOOKS[look]['frames']
@@ -337,4 +350,7 @@ def build_sheet(look, tool=None, half=False):
 
 _BIGP = [('idle', 2), ('walk', 8), ('attack', 4), ('hurt', 1), ('die', 5)]
 LOOKS['golem'] = dict(frames=_BIGP[:1] + [('walk', 8), ('attack', 4), ('hurt', 1), ('die', 4)], pose=lambda an, ph, tool: golem_pose(an, ph), model=lambda pose, tool: person(pose, 'golem', None), ppu=1.15)
+# boss variants: a bloated plague giant (the brute, greener and bigger) and a frost giant (the golem, made of ice and bigger)
+LOOKS['plaguegiant'] = dict(frames=_PEOPLE + [('die', 5)], pose=lambda an, ph, tool: zombie_pose(an, ph, 'brute'), model=swapped(dict(bskin='pskin', bshirt='pshirt', bpants='zpants', blood='glow2', zeye='glow2'), lambda pose, tool: person(pose, 'brute', None)), ppu=1.95)
+LOOKS['frostgiant'] = dict(frames=[('idle', 2), ('walk', 8), ('attack', 4), ('hurt', 1), ('die', 4)], pose=lambda an, ph, tool: golem_pose(an, ph), model=swapped(dict(rock='ice', rock2='ice2', glow='frost'), lambda pose, tool: person(pose, 'golem', None)), ppu=1.95)
 LOOKS['zombielord'] = dict(frames=_BIGP, pose=lambda an, ph, tool: zombie_pose(an, ph, 'zombie'), model=lambda pose, tool: person(pose, 'lord', None), ppu=1.55)

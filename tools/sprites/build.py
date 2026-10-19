@@ -1,4 +1,4 @@
-"""Bake the pixel-art sheets (survivor x 5 tools, 11 creatures, and an atlas of trees, rocks, bushes, ore and buildings) and embed them into ../../index.html.
+"""Bake the pixel-art sheets (survivor x 5 tools, 14 creatures, and an atlas of trees, rocks, bushes, ore and buildings) and embed them into ../../index.html.
 
     python3 tools/sprites/build.py          # needs numpy + pillow
 
@@ -16,7 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(HERE, '..', '..', 'index.html')
 
 sheets = {}
-LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem')]
+LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem', 'batqueen', 'plaguegiant', 'frostgiant')]
 for look, tools in LOOKS:
     for tool in tools:
         key = tool if look == 'survivor' else look

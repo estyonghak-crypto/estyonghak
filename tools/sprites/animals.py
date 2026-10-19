@@ -142,3 +142,4 @@ for _n, _sp in SPECIES.items():
     frames = [('idle', 2), ('walk', 6), ('hurt', 1), ('die', 3)] if _n == 'rabbit' else _Q
     LOOKS[_n] = dict(frames=frames, pose=(lambda n: lambda an, ph, tool: quad_pose(n, an, ph, tool))(_n), model=(lambda sp: lambda pose, tool: quad(sp, pose))(_sp), ppu=_sp['ppu'])
 LOOKS['bat'] = dict(frames=[('fly', 6), ('hurt', 1), ('die', 4)], pose=lambda an, ph, tool: bat_pose(an, ph, tool), model=lambda pose, tool: bat(pose), ppu=1.9)
+LOOKS['batqueen'] = dict(frames=[('fly', 6), ('hurt', 1), ('die', 4)], pose=lambda an, ph, tool: bat_pose(an, ph, tool), model=R.swapped(dict(batf='qfur', batw='qwing', bred='gold'), lambda pose, tool: bat(pose)), ppu=4.3)      # boss: the vampire bat queen

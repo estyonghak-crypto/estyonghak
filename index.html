@@ -240,6 +240,9 @@ body.building #ctx{display:none}
 #fxHaze{position:fixed;left:0;right:0;top:0;height:42%;pointer-events:none;z-index:2;background:linear-gradient(rgba(200,225,245,.17),rgba(200,225,245,0));opacity:1}
 #fxTint{position:fixed;inset:0;pointer-events:none;z-index:2;background:rgb(255,150,70);opacity:0}
 #fxVig{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at 50% 50%,rgba(2,8,6,0) 52%,rgba(2,8,6,.62) 100%)}
+#fxFlash{position:fixed;inset:0;pointer-events:none;z-index:4;background:#e8f0ff;opacity:0}
+#evTag{display:block;margin-top:3px;font-size:9.5px;line-height:1;color:#ffd98a;white-space:nowrap}
+#evTag:empty{display:none}
 #fxWet{position:fixed;inset:0;pointer-events:none;z-index:2;background:#0a1318;opacity:0}
 #fxGrade{position:fixed;inset:0;pointer-events:none;z-index:2;background:#7d8272;mix-blend-mode:saturation;opacity:.5}
 #fxGrain{position:fixed;inset:-64px;pointer-events:none;z-index:3;opacity:.13;mix-blend-mode:overlay;background-repeat:repeat;animation:grain .8s steps(1) infinite}
@@ -274,7 +277,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div id="fxClouds"></div><div id="fxSnow1"></div><div id="fxSnow2"></div><div id="fxRain1"></div><div id="fxRain2"></div><div id="fxHaze"></div><div id="fxTint"></div><div id="fxWet"></div><div id="fxGrade"></div><div id="fxGrain"></div><div id="fxVig"></div>
+<div id="fxFlash"></div><div id="fxClouds"></div><div id="fxSnow1"></div><div id="fxSnow2"></div><div id="fxRain1"></div><div id="fxRain2"></div><div id="fxHaze"></div><div id="fxTint"></div><div id="fxWet"></div><div id="fxGrade"></div><div id="fxGrain"></div><div id="fxVig"></div>
 <div id="hurt"></div>
 <div id="joy"><div id="joyKnob"></div></div>
 
@@ -287,7 +290,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
       <div class="stat" id="st-warmth" style="--c:var(--ember)"><label>체온</label><div class="bar"><i></i></div></div>
       <div class="xp" id="xpRow"><span id="xpLv">Lv.1</span><div class="bar"><i style="width:0"></i></div></div>
     </div>
-    <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div><small id="zoneTag"></small></div>
+    <div id="dayBox" class="panel"><div id="dayNum"><span id="dayTxt">1일차</span><small id="phase">낮</small></div><div id="clock"><i id="clockHand"></i></div><small id="zoneTag"></small><small id="evTag"></small></div>
     <div class="sys"><button id="menuBtn" aria-label="메뉴">☰</button><button id="sndBtn" aria-label="소리 켜고 끄기" aria-pressed="false">🔊</button></div>
   </div>
   <div id="bossBar" class="panel" hidden><div class="bn"><span id="bossName"></span><small id="bossHp"></small></div><div class="bbar"><i id="bossFill"></i></div></div>
@@ -365,6 +368,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
     <li><b>먹기</b> 위쪽 가방의 음식 알약을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
+    <li><b>사건</b> 하루에도 무슨 일이 생겨요. 낮에는 표류 화물 · 운석 · 약초 · 사냥감 · 폭풍 · 한파 · 버려진 야영지, 밤에는 늑대 무리 · 좀비 떼 · 안개 · 보름달. 날씨 사건은 시계 아래에 표시돼요</li>
     <li><b>보스</b> 3일 · 6일 · 9일 밤마다 와요. 판마다 두 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕, 좀비 군주 / 역병 거인, 산군 / 서리 거상)</li>
     <li><b>함정</b> 건축 메뉴의 가시 함정 · 올가미 덫 · 화염 함정은 적이 밟으면 터져요. 가시 울타리는 공격한 적을 다치게 해요</li>
     <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요</li>
@@ -643,7 +647,7 @@ let objs = [], grid = [], structs = [], creatures = [], floaters = [];
 let P = null, T = 0;
 let running = false, paused = false, sleeping = false, anim = 0;
 let target = null, actHeld = false;
-const bullets = [], parts = [], pickups = [], decals = [], corpses = [], pools = [], boulders = []; let aim = null, towerTip = false, dustT = 0;
+const bullets = [], parts = [], pickups = [], decals = [], corpses = [], pools = [], boulders = [], meteors = []; let aim = null, towerTip = false, dustT = 0;
 let hurtT = 0, shakeT = 0, lastDay = 1, lastPhase = '', lastLabel = '';
 let lightAng = 0, rainOn = false, rainZone = '', bossTimer = 4, lastChillT = -99, wolfTimer = 0, respawnTimer = 0, saveTimer = 0, goalTimer = 0, eliteNight = 0;
 const keys = {};
@@ -692,7 +696,7 @@ function collide(e, r){
 }
 
 function setZone(id){ Z = ZONES[id]; WORLD = Z.world; ISL_M = Z.margin; ISL_R = Z.rad; GN = Math.ceil(WORLD / CELL); }
-function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); trapMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; corpses.length = 0; pools.length = 0; boulders.length = 0; }
+function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); trapMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; corpses.length = 0; pools.length = 0; boulders.length = 0; meteors.length = 0; }
 function spawnFauna(){          // the animals a zone starts with (they are not saved; a zone repopulates when you arrive)
   for (const k in Z.fauna) for (let i = 0; i < Z.fauna[k]; i++) spawnCreature(k, 300, undefined, false);
 }
@@ -865,7 +869,7 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true },
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true },
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -1171,6 +1175,7 @@ function labelFor(tg){
     case 'bush': return '따기';
     case 'wall': return o.kind === 'tower' && P.inv.ammo > 0 && o.ammo < tw(o).max ? '장전' : o.hp < o.max ? '수리' : '강화';
     case 'wreck': return '뒤지기';
+    case 'crate': return '열기';
     case 'water': return '마시기';
     case 'fire': return o.fuel > 0 && (P.inv.meat > 0 || P.inv.fish > 0) ? '굽기' : o.fuel > 1e6 ? '불' : '장작';
     case 'shelter': return isNight() ? '잠자기' : '움막';
@@ -1219,6 +1224,7 @@ function act(){
       if (ts && canTowerUpgrade(o)){ upgradeTower(o); P.cd = .5; }
       break;
     }
+    case 'crate': P.cd = .4; openCrate(o); break;
     case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1 + perk('scavenger')); addXp(2); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
     case 'bush': { SND.play('rustle'); o.amt--; gain('berry', 1 + perk('forager')); if (Math.random() < .15) gain('herb', 1); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
     case 'water': { SND.play('drink'); P.thirst = Math.min(100, P.thirst + 28); floater(P.x, P.y, 26, '+갈증', '#7fd0ff'); P.cd = .5; break; }
@@ -1772,6 +1778,7 @@ function drawMini(force){
       case 'boat': dot(o.x, o.y, 4, '#a8dcff'); break;
       case 'mine': dot(o.x, o.y, 4, '#c0a8ff'); break;
       case 'exit': dot(o.x, o.y, 4, '#8ff08f'); break;
+      case 'crate': dot(o.x, o.y, 4, '#ffd34a'); break;
     }
   }
   for (const p of pickups) dot(p.x, p.y, 2, 'rgb(' + (PICK_COL[p.k] || '255,220,120') + ')');
@@ -1811,7 +1818,7 @@ function updateHUD(){
     const el = $('st-' + id), pct = Math.round(clamp(v, 0, 100));
     if (el._p !== pct){ el._p = pct; el.firstElementChild.nextElementSibling.firstElementChild.style.width = pct + '%'; el.classList.toggle('low', pct < 25); }
   }
-  setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT())); setText($('zoneTag'), Z.name);
+  setText($('dayTxt'), dayOf() + '일차'); setText($('phase'), phaseOf(dayT())); setText($('zoneTag'), Z.name); setText($('evTag'), evTag());
   $('clockHand').style.left = (dayT() * 100).toFixed(1) + '%';
   document.querySelectorAll('#inv .slot, #inv2 .slot, #inv3 .slot').forEach(s => {
     const k = s.dataset.k, n = P.inv[k] || 0; setText(s.querySelector('.n'), String(n));
@@ -1915,7 +1922,7 @@ function updateCreatures(dt){
         else if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, Math.round(Math.min(12, 5 + day) * (c.dmgMul || 1))); c.atk = 1; } }
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed * .6; }
     }
-    spd *= (c.spdMul || 1) * creatureStatus(c, dt);
+    spd *= (c.spdMul || 1) * creatureStatus(c, dt) * (c.k === 'wolf' && evOn('moon') ? 1.25 : 1);
     if (c.atk > atk0 + .05){ c.swing = .4; SND.attack(c); }       // it just attacked: play the attack frames (and the sound)
     if (c.gone){ creatures.splice(i, 1); toast(josa(c.name, '이/가') + ' 물러갔어요…'); continue; }
     const sa = sx - sy; if (sa > .1) c.fx = 1; else if (sa < -.1) c.fx = -1;       // faces left or right on screen
@@ -1951,6 +1958,8 @@ function update(dt){
     if (isBossDay(day)) setTimeout(() => toast('오늘 밤에는 보스 ' + josa(bossOf(day).name, '이/가') + ' 나타나요. 미리 준비하세요!'), 1800);
     if (day === RAFT_DAY) toast('바다가 잠잠해졌어요. 뗏목을 만들 수 있습니다!');
   }
+
+  updateEvents(dt);
 
   // movement
   let ix = (joy.active ? joy.x : 0) + (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
@@ -2011,6 +2020,7 @@ function update(dt){
     if (wolfTimer <= 0){
       const have = { wolf: 0, zombie: 0, brute: 0 }; for (const c of creatures) if (c.k in have) have[c.k]++;
       const want = { wolf: Math.min(9, 1 + day), zombie: day >= 2 ? Math.min(12, (day - 1) * 2) : 0, brute: day >= 4 ? Math.min(5, Math.floor((day - 2) / 2)) : 0 };
+      if (evOn('fog')) want.zombie = Math.ceil(want.zombie * 1.5) + 1; if (evOn('moon')) want.wolf += 2;
       if (isBossDay(day)) for (const k in want) want[k] = Math.ceil(want[k] * .65);       // on a boss night the boss is the main event
       for (const k of ['zombie', 'brute', 'wolf']) if (have[k] < want[k]){
         const force = day >= 2 && eliteNight !== day && !!ELITE_OK[k] && have.wolf + have.zombie >= 2;    // from night 2 there is always one elite
@@ -2048,7 +2058,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -3178,7 +3188,7 @@ function resize(){
 }
 addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 150));
 
-const lightR = () => (Z.cave ? 135 : 110) + (P.lantern ? 70 : 0) + (perk('night') ? 35 : 0);
+const lightR = () => ((Z.cave ? 135 : 110) + (P.lantern ? 70 : 0) + (perk('night') ? 35 : 0)) * (evOn('fog') ? .65 : 1);
 function punchCone(x, y, ang, len, half, h){          // a soft wedge of light ahead of the player (like a flashlight)
   const cx = w2sx(x, y) / 2, cy = (w2sy(x, y) - (h || 0)) / 2, L = len * zoom * .5 * Math.hypot(ux(P.fx, P.fy), uy(P.fx, P.fy));
   lx.save(); lx.translate(cx, cy); lx.rotate(ang);
@@ -3206,13 +3216,14 @@ function fxStyle(id, prop, v){ const key = id + prop; if (fxCache[key] !== v){ f
 const hash01 = n => mulberry32(Math.imul(n, 2654435761))();
 function rainAmt(){            // 0..1. Some days (from day 2) get a rain shower; it depends only on the day number, so a reload gives the same weather
   if (Z.cave || Z.ground === 'snow') return 0;
+  if (evOn('storm')) return 1;
   const day = dayOf(); if (day < 2 || hash01(day * 7 + 1) > .4) return 0;
   const s0 = .1 + hash01(day * 7 + 2) * .4, e0 = s0 + .2 + hash01(day * 7 + 3) * .25, t = dayT();
   return clamp(Math.min((t - s0) / .04, (e0 - t) / .04), 0, 1);
 }
 function updateAtmosphere(t, dk){   // CSS layers over the canvas: haze, warm grading, drifting cloud shadows
   const day = Z.cave ? 0 : 1 - dk, gh = Z.cave ? 0 : goldenHour(t);
-  const sn = Z.ground === 'snow' ? (day > .5 ? '.9' : '.5') : '0'; fxStyle('fxSnow1', 'opacity', sn); fxStyle('fxSnow2', 'opacity', sn);
+  const sn = Z.ground === 'snow' || evOn('cold') ? (day > .5 ? '.9' : '.5') : '0'; fxStyle('fxFlash', 'opacity', (Math.min(1, flashT * 1.6) * .7).toFixed(2)); fxStyle('fxSnow1', 'opacity', sn); fxStyle('fxSnow2', 'opacity', sn);
   const rw = running ? rainAmt() : 0; fxStyle('fxRain1', 'opacity', (rw * .85).toFixed(2)); fxStyle('fxRain2', 'opacity', (rw * .6).toFixed(2)); fxStyle('fxWet', 'opacity', (rw * .26).toFixed(2));
   fxStyle('fxHaze', 'opacity', (day * (1 - rw * .5)).toFixed(2)); fxStyle('fxTint', 'opacity', gh.toFixed(3));
   const co = dk < .9 && !Z.cave ? (.9 * day).toFixed(2) : '0'; fxStyle('fxClouds', 'opacity', co);
@@ -3231,7 +3242,7 @@ function render(){
   // the world box that covers the screen (plus room for tall sprites): the corners of the screen, taken back into the world
   let vx0 = 1e9, vy0 = 1e9, vx1 = -1e9, vy1 = -1e9;
   for (const [cx, cy] of [[-130, -50], [W + 130, -50], [-130, H + 250], [W + 130, H + 250]]){ const q = s2w(cx, cy); vx0 = Math.min(vx0, q.x); vx1 = Math.max(vx1, q.x); vy0 = Math.min(vy0, q.y); vy1 = Math.max(vy1, q.y); }
-  const t = dayT(), dk = Z.cave ? .94 : darkness(t);
+  const t = dayT(), dk = Z.cave ? .94 : darkness(t) * (evOn('moon') ? .72 : 1);
   drawGround(vx0, vy0, vx1, vy1);
 
   const lakes = [], list = [], seen = (x, y) => { const sx = w2sx(x, y), sy = w2sy(x, y); return sx > -130 && sx < W + 130 && sy > -50 && sy < H + 250; };
@@ -3267,11 +3278,11 @@ function render(){
     if (d.p) drawPlayer();
     else if (d.corpse) drawCorpse(d.corpse);
     else if (d.c) drawCreature(d.c);
-    else switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'ore': drawOre(d.o); break; case 'furnace': drawFurnace(d.o); break; case 'boat': drawBoat(d.o); break; case 'mine': drawMineDoor(d.o); break; case 'exit': drawCaveExit(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; }
+    else switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'ore': drawOre(d.o); break; case 'furnace': drawFurnace(d.o); break; case 'boat': drawBoat(d.o); break; case 'mine': drawMineDoor(d.o); break; case 'exit': drawCaveExit(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; case 'crate': drawCrate(d.o); break; }
     ctx.restore();
   }
   if (buildMode && running) drawGhost();
-  drawFishing(); drawFlames(); drawBoulders();
+  drawFishing(); drawFlames(); drawBoulders(); drawMeteors();
 
   uprightT();
   drawParts(); drawBullets();
@@ -3305,6 +3316,143 @@ function render(){
   uprightT(); drawPickups(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   updateAtmosphere(t, dk); drawMini();
   $('hurt').style.opacity = running ? Math.min(1, hurtT * 2.2 + (P.hp < 25 ? .18 + .12 * Math.sin(anim * 6) : 0)) : 0;
+}
+
+/* ================= random events: most days something happens by day, and from day 2 often at night too ================= */
+const EVENTS = {
+  crate:  { name: '표류 화물',       icon: '📦', when: 'day',   w: 3, say: '해안에 화물 상자가 떠밀려 왔어요! 미니맵의 노란 점을 찾아보세요' },
+  meteor: { name: '운석 낙하',       icon: '☄️', when: 'day',   w: 2, min: 2, say: '하늘에서 불덩이가 떨어지고 있어요! 떨어진 자리에 광석이 생겨요' },
+  herbs:  { name: '약초 군락',       icon: '🌿', when: 'day',   w: 2, say: '근처에 약초가 잔뜩 돋아났어요. 미니맵의 초록 점을 주우세요' },
+  herd:   { name: '사냥감 무리',     icon: '🐗', when: 'day',   w: 2, say: '토끼와 멧돼지 무리가 근처를 지나가요. 사냥할 기회예요' },
+  camp:   { name: '버려진 야영지',   icon: '🏕️', when: 'day',   w: 1, say: '누군가 버리고 간 야영지를 찾았어요. 불이 아직 타고 있어요' },
+  storm:  { name: '폭풍',           icon: '⛈️', when: 'day',   w: 2, min: 2, dur: 90, say: '폭풍이 몰려와요! 비바람에 몸이 식고 번개가 쳐요. 움막이나 모닥불 곁으로 가세요' },
+  cold:   { name: '한파',           icon: '🥶', when: 'day',   w: 1, min: 3, dur: 80, say: '한파가 닥쳤어요! 체온이 빨리 떨어져요' },
+  raid:   { name: '늑대 무리 습격',  icon: '🐺', when: 'night', w: 3, min: 2, say: '멀리서 늑대 무리가 울부짖어요… 곧 한쪽에서 몰려와요!' },
+  horde:  { name: '좀비 떼',        icon: '🧟', when: 'night', w: 3, min: 3, say: '좀비 떼가 한꺼번에 밀려와요! 벽과 함정이 버텨 줘야 해요' },
+  fog:    { name: '짙은 안개',       icon: '🌫️', when: 'night', w: 2, min: 2, night: 1, say: '짙은 안개가 꼈어요. 앞이 잘 안 보이고 좀비가 더 많이 나와요' },
+  moon:   { name: '보름달',         icon: '🌕', when: 'night', w: 1, min: 2, night: 1, say: '보름달이 떴어요. 밤이 밝지만 늑대가 더 많고 빨라요' }
+};
+const CRATE_LOOT = [['ammo', 6, 12], ['scrap', 2, 4], ['bandage', 1, 3], ['herb', 1, 3], ['heal', 1, 1], ['hide', 1, 3], ['cuBar', 1, 2], ['feBar', 1, 1], ['berry', 3, 6], ['cooked', 1, 2], ['swift', 1, 1]];
+let flashT = 0, boltT = 6;
+const evOn = k => !!(P && P.ev && P.ev.k === k && T < P.ev.until && !Z.cave);
+function pickEvent(when, day){
+  const pool = Object.keys(EVENTS).filter(k => EVENTS[k].when === when && day >= (EVENTS[k].min || 1) && !(k === 'storm' && Z.ground === 'snow'));
+  let r = Math.random() * pool.reduce((a, k) => a + EVENTS[k].w, 0);
+  for (const k of pool){ r -= EVENTS[k].w; if (r <= 0) return k; } return pool[0];
+}
+function planEvents(day){             // once a day: maybe one by day, maybe one by night (never on a boss night)
+  const d0 = (day - 1) * DAY_LEN; P.evPlan = (P.evPlan || []).filter(e => e.at > T);
+  if (Math.random() < .7) P.evPlan.push({ k: pickEvent('day', day), at: d0 + DAY_LEN * rand(.12, .42) });
+  if (day >= 2 && !isBossDay(day) && Math.random() < .55) P.evPlan.push({ k: pickEvent('night', day), at: d0 + DAY_LEN * rand(.64, .72) });
+}
+function spotAway(minD, maxD, test){  // a free spot on this island between minD and maxD from you
+  for (let i = 0; i < 80; i++){
+    const a = rand(0, TAU), d = rand(minD, maxD), x = P.x + Math.cos(a) * d, y = P.y + Math.sin(a) * d;
+    if (inside(x, y) < 40 || blocked(x, y, 22)) continue;
+    if (test && !test(x, y)) continue;
+    return { x, y };
+  }
+  return null;
+}
+function beachSpot(minD){            // walk out from you in a random direction until the sand begins
+  for (let i = 0; i < 40; i++){
+    const a = rand(0, TAU), ca = Math.cos(a), sa = Math.sin(a);
+    for (let d = 120; d < WORLD; d += 12){
+      const x = P.x + ca * d, y = P.y + sa * d, ins = inside(x, y);
+      if (ins < 95){ if (ins >= 40 && d >= minD && !blocked(x, y, 22)) return { x, y }; break; }
+    }
+  }
+  return null;
+}
+function startEvent(k){
+  const day = dayOf();
+  if (k === 'raid!' || k === 'horde!'){ spawnWave(k === 'raid!' ? 'wolf' : 'zombie', day); return true; }      // the pack itself, a few seconds after the warning
+  const E = EVENTS[k]; if (!E) return false;
+  if (k === 'crate'){ const s = beachSpot(260); if (!s) return false; addObj({ t: 'crate', x: s.x, y: s.y, r: 12, v: Math.random() }); }
+  else if (k === 'meteor'){ const s = spotAway(300, 700, (x, y) => inside(x, y) > 140 && !blocked(x, y, 60)); if (!s) return false; meteors.push({ x: s.x, y: s.y, t: 0, T: 3 }); SND.play('meteor', { key: 1 }); }
+  else if (k === 'herbs'){ const s = spotAway(180, 480); if (!s) return false; for (let i = 0; i < 6; i++){ const p = { k: 'herb', n: 1, ox: s.x, oy: s.y, x: s.x, y: s.y, tx: s.x + rand(-40, 40), ty: s.y + rand(-28, 28), z: 0, age: 1, life: 320 }; p.x = p.tx; p.y = p.ty; pickups.push(p); } }
+  else if (k === 'herd'){ const s = spotAway(300, 520); if (!s) return false; for (let i = 0; i < 4; i++) spawnAt('rabbit', s.x + rand(-40, 40), s.y + rand(-30, 30)); for (let i = 0; i < 2; i++) spawnAt('boar', s.x + rand(-50, 50), s.y + rand(-30, 30)); }
+  else if (k === 'camp'){ const s = spotAway(260, 600, (x, y) => !blocked(x, y, 60)); if (!s) return false; addObj({ t: 'fire', x: s.x, y: s.y, r: 9, fuel: 150 }); addObj({ t: 'crate', x: s.x + 34, y: s.y + 14, r: 12, v: Math.random() }); }
+  else if (k === 'raid' || k === 'horde'){ P.evPlan.push({ k: k + '!', at: T + 7 }); SND.play('howl', { key: 1, v: k === 'raid' ? 1 : .5, r: k === 'raid' ? .9 : .6 }); }
+  if (E.dur || E.night) P.ev = { k, until: E.night ? day * DAY_LEN + DAY_LEN * .02 : T + E.dur };
+  toast(E.icon + ' ' + E.name + ': ' + E.say); SND.play('event', { key: 1 });
+  return true;
+}
+function spawnWave(kind, day){       // a pack from one side, so walls and traps on that side matter
+  const a = rand(0, TAU), n = kind === 'wolf' ? Math.min(10, 3 + day) : Math.min(14, 5 + day), R = offD() + 80;
+  for (let i = 0; i < n; i++){
+    const s = (i - n / 2) * .09, x = P.x + Math.cos(a + s) * (R + rand(0, 90)), y = P.y + Math.sin(a + s) * (R + rand(0, 90));
+    const c = spawnAt(kind, clamp(x, ISL_M + 40, WORLD - ISL_M - 40), clamp(y, ISL_M + 40, WORLD - ISL_M - 40)); clampIsland(c, c.r + 30);
+    if (i === 0 && ELITE_OK[kind]) makeElite(c);
+  }
+  if (kind === 'zombie' && day >= 5){ const c = spawnAt('brute', P.x + Math.cos(a) * (R + 120), P.y + Math.sin(a) * (R + 120)); clampIsland(c, c.r + 30); }
+  toast(kind === 'wolf' ? '🐺 늑대 무리가 몰려와요!' : '🧟 좀비 떼가 몰려와요!'); shakeT = .2;
+}
+function openCrate(o){
+  const got = [], pool = CRATE_LOOT.slice();
+  for (let i = 0; i < 3 && pool.length; i++){ const [k, a, b] = pool.splice((Math.random() * pool.length) | 0, 1)[0]; const n = a + ((Math.random() * (b - a + 1)) | 0); P.inv[k] += n; P.seen[k] = true; got.push(ITEMS[k].icon + n); }
+  removeObj(o); SND.play('craft'); fx('chip', o.x, o.y, 10, 8); fx('glow', o.x, o.y, 12, 8, '255,214,90'); floater(o.x, o.y, 34, got.join(' '), '#ffd166');
+  toast('📦 상자를 열었어요: ' + got.join(' ')); addXp(8);
+}
+function meteorLand(m){
+  shakeT = .55; SND.play('slam', { x: m.x, y: m.y, r: .8, key: 1 }); flashT = Math.max(flashT, .35);
+  for (let i = 0; i < 4; i++){ decals.push({ x: m.x + rand(-20, 20), y: m.y + rand(-12, 12), r: rand(18, 30), rot: rand(0, TAU), col: '30,24,20', a: .7, life: 260 }); }
+  fx('rock', m.x, m.y, 14, 18); fx('glow', m.x, m.y, 20, 24, '255,150,60'); fx('smoke', m.x, m.y, 30, 8); fx('ember', m.x, m.y, 10, 16);
+  const kinds = Z.ground === 'snow' ? ['iron', 'gold', 'gold'] : ['iron', 'iron', 'gold'];
+  kinds.forEach((k, i) => { const a = i / 3 * TAU + rand(-.3, .3), o = mkOre(k)(m.x + Math.cos(a) * 34, m.y + Math.sin(a) * 26); addObj(o); });
+  if (Math.random() < .35) dropPickup('core', 1, m.x, m.y);
+  for (const c of [...creatures]) if (Math.hypot(c.x - m.x, c.y - m.y) < 80) hitCreature(c, 30, c.x - m.x, c.y - m.y, false);
+  if (Math.hypot(P.x - m.x, P.y - m.y) < 70) hurt(25);
+}
+function lightningStrike(){
+  flashT = .45; SND.play('thunder', { key: 1 });
+  const s = spotAway(80, 340); if (!s) return;
+  decals.push({ x: s.x, y: s.y, r: 12, rot: 0, col: '25,22,20', a: .6, life: 90 }); fx('spark', s.x, s.y, 10, 14); fx('glow', s.x, s.y, 20, 10, '200,220,255');
+  for (const c of [...creatures]) if (Math.hypot(c.x - s.x, c.y - s.y) < 45) hitCreature(c, 25, c.x - s.x, c.y - s.y, false);
+}
+function updateEvents(dt){
+  flashT = Math.max(0, flashT - dt);
+  const day = dayOf();
+  if (P.evRoll !== day){ P.evRoll = day; if (!window.__noEvents) planEvents(day); }
+  if (P.evPlan && P.evPlan.length){
+    for (let i = P.evPlan.length - 1; i >= 0; i--){
+      const e = P.evPlan[i]; if (T < e.at) continue;
+      P.evPlan.splice(i, 1);
+      if (T - e.at > 30 || Z.cave || sleeping) continue;         // missed it (asleep, underground, time skipped): it simply did not happen
+      startEvent(e.k);
+    }
+  }
+  if (P.ev && T >= P.ev.until) P.ev = null;
+  for (let i = meteors.length - 1; i >= 0; i--){ const m = meteors[i]; m.t += dt; if (Math.random() < dt * 12) fx('ember', m.x + rand(-6, 6), m.y + rand(-4, 4), 40 + 260 * (1 - m.t / m.T), 1); if (m.t >= m.T){ meteors.splice(i, 1); meteorLand(m); } }
+  if (evOn('storm') || evOn('cold')){
+    let warm = false; for (const s of structs){ const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE; if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim){ warm = true; break; } }
+    if (!warm) P.warmth = Math.max(0, P.warmth - (evOn('cold') ? 2.6 : 2) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1));
+  }
+  if (evOn('storm')){ boltT -= dt; if (boltT <= 0){ boltT = rand(5, 12); lightningStrike(); } }
+}
+function evTag(){ const e = P && P.ev && T < P.ev.until && EVENTS[P.ev.k]; return e ? e.icon + ' ' + e.name : ''; }
+function drawMeteors(){                 // the falling star: a marked spot on the ground and a fiery streak coming down at it
+  for (const m of meteors){
+    const k = m.t / m.T;
+    ctx.save(); worldT();
+    ctx.fillStyle = 'rgba(255,120,40,' + (.12 + .3 * k).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(m.x, m.y, 70, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,170,90,.9)'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.arc(m.x, m.y, 70, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.restore();
+    ctx.save(); standT(m.x, m.y);
+    const z = 520 * (1 - k), hx = m.x + 120 * (1 - k), hy = m.y - z;
+    const g = ctx.createLinearGradient(hx + 60, hy - 60, hx, hy); g.addColorStop(0, 'rgba(255,200,120,0)'); g.addColorStop(1, 'rgba(255,170,80,.9)');
+    ctx.strokeStyle = g; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hx + 60, hy - 60); ctx.lineTo(hx, hy); ctx.stroke();
+    circ(hx, hy, 7, '#fff1c8'); circ(hx, hy, 11, 'rgba(255,150,60,.5)');
+    ctx.restore();
+  }
+}
+function drawCrate(o){
+  const x = o.x, y = o.y; ell(x, y + 4, 15, 5, 'rgba(0,0,0,.28)');
+  ctx.fillStyle = '#5a3d22'; ctx.fillRect(x - 12, y - 14, 24, 17); ctx.fillStyle = '#7a5530'; ctx.fillRect(x - 11, y - 13, 22, 15);
+  ctx.fillStyle = '#9a6e3f'; ctx.fillRect(x - 12, y - 20, 24, 7); ctx.fillStyle = '#b5874f'; ctx.fillRect(x - 11, y - 19, 22, 5);
+  ctx.fillStyle = '#4a3320'; ctx.fillRect(x - 11, y - 8, 22, 2); ctx.fillRect(x - 1, y - 13, 2, 15);
+  ctx.fillStyle = '#8b939b'; ctx.fillRect(x - 12, y - 14, 3, 3); ctx.fillRect(x + 9, y - 14, 3, 3); ctx.fillRect(x - 12, y, 3, 3); ctx.fillRect(x + 9, y, 3, 3);
+  if (Math.sin(anim * 3 + o.v * 9) > .6){ ctx.fillStyle = 'rgba(255,240,180,.9)'; ctx.fillRect(x + 4, y - 19, 2, 2); }
 }
 
 /* ================= the other three bosses: a vampire bat queen (night 3), a plague giant (night 6), a frost giant (night 9) ================= */
@@ -3854,7 +4002,8 @@ const SND = (() => {
     const d = p.d || .1, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), buf = noise(c, p.brown);
     s.buffer = buf; f.type = p.type || 'bandpass'; f.Q.value = p.q || 1; f.frequency.setValueAtTime(p.f || 1000, t); if (p.f1) f.frequency.exponentialRampToValueAtTime(p.f1, t + d);
     env(g.gain, t, p.a || .003, d, p.v == null ? .5 : p.v);
-    s.connect(f); f.connect(g); g.connect(o); s.start(t, rnd(0, buf.duration - d - .2), d + .05);
+    s.connect(f); f.connect(g); g.connect(o);
+    if (d + .25 > buf.duration){ s.loop = true; s.start(t); s.stop(t + d + .05); } else s.start(t, rnd(0, buf.duration - d - .2), d + .05);      // a long sound loops the noise
   }
   function vocal(c, o, t, p){                      // a throat: a buzzing oscillator pushed through two vowel-like resonances (and an optional growl)
     const os = c.createOscillator(), g = c.createGain(), d = p.d;
@@ -3937,6 +4086,9 @@ const SND = (() => {
     spike:  { d: .4, cd: 60, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 2600, d: .04, v: .6 }); tone(c, o, t, { f: 420, f1: 180, d: .09, v: .35, type: 'triangle' }); tone(c, o, t, { f: 110, f1: 55, d: .14, v: .6 }); } },
     snap:   { d: .3, cd: 60, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 3200, d: .025, v: .9 }); tone(c, o, t, { type: 'square', f: 900, f1: 500, d: .05, v: .12, lp: 3000 }); burst(c, o, t + .05, { f: 900, q: 2, d: .08, v: .3 }); } },
     flame:  { d: 1.4, cd: 200, wet: .2, fn: (c, o, t) => { burst(c, o, t, { type: 'lowpass', f: 300, f1: 2400, d: .45, a: .08, v: .7 }); burst(c, o, t + .2, { f: 900, q: .6, d: 1.1, a: .2, v: .35, brown: true }); } },
+    thunder:{ d: 3, cd: 800, wet: .6, fn: (c, o, t) => { burst(c, o, t, { type: 'highpass', f: 1800, d: .06, v: .8 }); burst(c, o, t + .02, { type: 'lowpass', f: 900, f1: 120, d: 2.4, a: .05, v: 1, brown: true }); tone(c, o, t, { f: 60, f1: 30, d: 1.8, v: .6, a: .1 }); } },
+    event:  { d: 1.2, cd: 600, wet: .5, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 587, d: .9, v: .2 }); tone(c, o, t + .18, { type: 'triangle', f: 880, d: 1, v: .18 }); } },
+    meteor: { d: 3.2, cd: 1000, wet: .5, fn: (c, o, t) => { burst(c, o, t, { f: 2200, f1: 260, q: .7, d: 2.9, a: .6, v: .55 }); tone(c, o, t, { type: 'sawtooth', f: 400, f1: 70, d: 2.9, v: .08, lp: 900 }); } },
     levelup:{ d: 1.6, cd: 500, wet: .6, fn: (c, o, t) => { arp(c, o, t, [523, 659, 784, 1047, 1319], .07, { type: 'triangle', d: .9, v: .22 }); tone(c, o, t + .35, { f: 2093, d: .8, v: .08 }); } },
     perk:   { d: 1, cd: 300, wet: .5, fn: (c, o, t) => { tone(c, o, t, { type: 'triangle', f: 784, d: .5, v: .22 }); tone(c, o, t + .1, { type: 'triangle', f: 1175, d: .8, v: .22 }); tone(c, o, t + .1, { f: 2350, d: .6, v: .05 }); } },
     cast:   { d: .7, cd: 100, fn: (c, o, t) => { burst(c, o, t, { f: 500, f1: 1800, q: .8, d: .18, a: .05, v: .25 }); burst(c, o, t + .2, { f: 700, f1: 300, q: 1.2, d: .22, v: .55 }); tone(c, o, t + .2, { f: 420, f1: 160, d: .13, v: .35 }); } },
@@ -4007,7 +4159,7 @@ const SND = (() => {
       pan = clamp((ux(o.x, o.y) - ux(P.x, P.y)) / 460, -1, 1) * .85;
     }
     last[name] = now; live++; setTimeout(() => live--, (v.d || .5) * 1000 + 150); if (trace.push(name) > 60) trace.shift();
-    v.fn(ac, chain(sfxB, pan, vol, v.wet), ac.currentTime + .004 + (o.delay || 0), (o.r || 1) * (1 + (Math.random() - .5) * (v.j == null ? .12 : v.j)));
+    try { v.fn(ac, chain(sfxB, pan, vol, v.wet), ac.currentTime + .004 + (o.delay || 0), (o.r || 1) * (1 + (Math.random() - .5) * (v.j == null ? .12 : v.j))); } catch (_) {}      // a sound must never stop the game
   }
   function render(name, r, secs){               // offline: used by tests to check a voice is audible, finite and not clipping
     const sr = 44100, oc = new OfflineAudioContext(1, sr * (secs || 4), sr), g = oc.createGain(); g.connect(oc.destination);
@@ -4166,7 +4318,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; } };
 })();
 </script>
 </body>

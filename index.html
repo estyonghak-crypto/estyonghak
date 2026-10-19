@@ -3670,7 +3670,7 @@ const FATIGUE_RATE = 100 / (DAY_LEN * 1.6);               // awake for about a d
 let hitSrc = null, dripT = 0, lastFat = 0;
 const statusTip = {};
 function afflict(k, secs){
-  const s = STATUS[k]; if (!s || !P) return;
+  const s = STATUS[k]; if (!s || !P || window.__noStatus) return;          // (__noStatus: tests of other things)
   const had = P.st[k] > 0;
   P.st[k] = k === 'infect' ? Math.max(P.st[k], secs || s.dur) : Math.min(s.max, P.st[k] + (secs || s.dur));
   if (!had){ floater(P.x, P.y, 42, s.name + '!', s.col); if (!statusTip[k]){ statusTip[k] = true; toast(s.icon + ' ' + s.tip); } }

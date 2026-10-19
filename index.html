@@ -252,6 +252,7 @@ body.building #ctx{display:none}
 #btnSkill small{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-body,inherit);font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000}
 #btnSkill:not(.ready) .si{opacity:.45}
 #btnSkill.ready{box-shadow:0 0 10px color-mix(in srgb,var(--jc) 55%,transparent)}
+@media (max-height:520px){#jobs{gap:8px}#jobs .lead{display:none}.jt{font-size:26px}#jobGrid{grid-template-columns:repeat(7,1fr);width:min(660px,100%)}.jobcard{padding:6px 2px}.jobcard .ji{font-size:22px}#jobInfo{width:min(660px,100%);padding:8px 12px;font-size:12.5px;line-height:1.4}#jobs .stack{flex-direction:row;width:min(420px,100%)}#jobs .stack .btn{flex:1}}
 .endstat{font-size:14px;color:var(--dim)}
 .endstat b{color:var(--amber);font-size:20px;font-variant-numeric:tabular-nums}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:40;transition:opacity .45s}

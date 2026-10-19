@@ -411,7 +411,9 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>먹기</b> 위쪽 가방의 음식 알약을 터치 (E)</li>
     <li><b>제작</b> 도끼·창·모닥불·움막 (C)</li>
     <li><b>사건</b> 하루에도 무슨 일이 생겨요. 낮에는 표류 화물 · 운석 · 약초 · 사냥감 · 폭풍 · 한파 · 버려진 야영지, 밤에는 늑대 무리 · 좀비 떼 · 안개 · 보름달. 날씨 사건은 시계 아래에 표시돼요</li>
-    <li><b>보스</b> 3일마다(3 · 6 · 9 … 27일) 밤에 와요. 판마다 두 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕, 좀비 군주 / 역병 거인, 산군 / 서리 거상). 12일차부터는 더 강해진 보스가 다시 와요</li>
+    <li><b>보스</b> 3일마다(3 · 6 · 9 … 27일) 밤에 와요. 판마다 세 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕 / 구미호, 좀비 군주 / 역병 거인 / 유령 선장, 산군 / 서리 거상 / 고대 거북). 12일차부터는 더 강해진 보스가 다시 와요</li>
+    <li><b>구역 보스</b> 섬마다(광산 갱도에도) 둥지가 하나씩 있고, 그 섬의 주인이 잠들어 있어요 (미니맵의 붉은 점). 가까이 가면 깨어나요. 처음 쓰러뜨리면 <b>유물</b>을 얻고, 5일 뒤 더 강해져서 돌아와요</li>
+    <li><b>섬</b> 무인도 · 광산섬(+갱도) · 설원섬 · 밀림섬 · 화산섬. 범선(Lv.2)이면 설원섬과 밀림섬, 철갑선(Lv.3)이면 화산섬까지 가요</li>
     <li><b>함정</b> 건축 메뉴의 가시 함정 · 올가미 덫 · 화염 함정은 적이 밟으면 터져요. 가시 울타리는 공격한 적을 다치게 해요</li>
     <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요. 냄비로 달인 피로회복제를 마시면 기운이 나요</li>
     <li><b>기술</b> 베고, 캐고, 싸우고, 만들고, 하루를 버티면 경험치가 쌓여요 (왼쪽 위의 보라 막대). 레벨이 오르면 <b>기술</b> 버튼이 깜빡이고, 둘 중 하나를 골라요</li>
@@ -459,24 +461,24 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 'use strict';
 
 /* ================= constants ================= */
-let WORLD = 2400, ISL_M = 24, ISL_R = 230;      // the active zone's island = rounded square (setZone changes these)
+let WORLD = 2960, ISL_M = 24, ISL_R = 230;      // the active zone's island = rounded square (setZone changes these)
 const DAY_LEN = 240, RAFT_DAY = 30;     // survive this many days, then build the raft
 const PLAYER_R = 11, SPEED = 125;
 const FIRE_SAFE = 105, FIRE_WARM = 120, SHELTER_SAFE = 85, FIRE_MAX = 300;
 const CELL = 128; let GN = Math.ceil(WORLD / CELL);
 const SAVE_KEY = 'muindo-survival-v1', BEST_KEY = 'muindo-survival-best';
-const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1, ore: 1, furnace: 1, boat: 1, mine: 1, exit: 1 };
+const SOLID = { tree: 1, rock: 1, water: 1, shelter: 1, fire: 1, wall: 1, wreck: 1, ore: 1, furnace: 1, boat: 1, mine: 1, exit: 1, lava: 1, lair: 1 };
 /* ---- zones: each one is its own map (an island, or the mine below one) with its own look and rules ---- */
 const LAKE_PAL = { rim: ['#b3a47e', '#8e8160'], foam: '#c9dadb', water: '#6aa3b0', deep: '#4a8294', core: '#33687c' };
 const ZONES = {
-  home: { id: 'home', name: '무인도', world: 2400, margin: 24, rad: 230, ground: 'grass', bg: '#2b7089', shallow: ['#3d869c', '#69aabb'], shore: '#b9a97f',
-    cliff: ['#43362a', '#54442f', '#695539', '#7f6a45', '#957f55'], lake: LAKE_PAL, cap: { rabbit: 36, boar: 7, bear: 3 }, fauna: { rabbit: 40, boar: 8, bear: 3 } },
-  mine: { id: 'mine', name: '광산섬', world: 2000, margin: 24, rad: 200, ground: 'rock', bg: '#276279', shallow: ['#397f96', '#639eb0'], shore: '#9d968a',
-    cliff: ['#2f2d2a', '#3f3c37', '#504c44', '#635e53', '#777062'], lake: LAKE_PAL, cap: { rabbit: 10, bear: 2 }, fauna: { rabbit: 12, bear: 2 } },
-  cave: { id: 'cave', name: '광산 갱도', world: 1700, margin: 20, rad: 250, ground: 'cave', bg: '#050608', cave: true, chill: .4, eliteBonus: .08, shallow: ['#16181c', '#1f2227'], shore: '#2a2d33',
-    cliff: ['#0e0f12', '#14161a', '#1a1c21', '#202328', '#272a30'], lake: { rim: ['#3b3e45', '#2b2e34'], foam: '#6f8494', water: '#2f6c86', deep: '#20516b', core: '#163a4d' }, cap: { bat: 10, golem: 6 }, fauna: { bat: 10, golem: 6 } },
-  snow: { id: 'snow', name: '설원섬', world: 2200, margin: 24, rad: 220, ground: 'snow', bg: '#3c7a98', shallow: ['#5f9bb8', '#9ac4d6'], shore: '#d3dbe0', chill: .3, dayWolves: true, eliteBonus: .08,
-    cliff: ['#4e5862', '#626c76', '#79838d', '#939da7', '#aeb7c0'], lake: { rim: ['#d8e3e8', '#b3c8d2'], foam: '#e8f1f4', water: '#aed3e2', deep: '#82b2cb', core: '#609bbf' }, cap: { rabbit: 14, bear: 4 }, fauna: { rabbit: 16, bear: 4 } }
+  home: { id: 'home', name: '무인도', world: 2960, margin: 24, rad: 230, ground: 'grass', bg: '#2b7089', shallow: ['#3d869c', '#69aabb'], shore: '#b9a97f',
+    cliff: ['#43362a', '#54442f', '#695539', '#7f6a45', '#957f55'], lake: LAKE_PAL, cap: { rabbit: 50, boar: 10, bear: 4 }, fauna: { rabbit: 54, boar: 11, bear: 4 } },
+  mine: { id: 'mine', name: '광산섬', world: 2560, margin: 24, rad: 200, ground: 'rock', bg: '#276279', shallow: ['#397f96', '#639eb0'], shore: '#9d968a',
+    cliff: ['#2f2d2a', '#3f3c37', '#504c44', '#635e53', '#777062'], lake: LAKE_PAL, cap: { rabbit: 14, bear: 3 }, fauna: { rabbit: 16, bear: 3 } },
+  cave: { id: 'cave', name: '광산 갱도', world: 2260, margin: 20, rad: 250, ground: 'cave', bg: '#050608', cave: true, chill: .4, eliteBonus: .08, shallow: ['#16181c', '#1f2227'], shore: '#2a2d33',
+    cliff: ['#0e0f12', '#14161a', '#1a1c21', '#202328', '#272a30'], lake: { rim: ['#3b3e45', '#2b2e34'], foam: '#6f8494', water: '#2f6c86', deep: '#20516b', core: '#163a4d' }, cap: { bat: 14, golem: 8 }, fauna: { bat: 14, golem: 8 } },
+  snow: { id: 'snow', name: '설원섬', world: 2760, margin: 24, rad: 220, ground: 'snow', bg: '#3c7a98', shallow: ['#5f9bb8', '#9ac4d6'], shore: '#d3dbe0', chill: .3, dayWolves: true, eliteBonus: .08,
+    cliff: ['#4e5862', '#626c76', '#79838d', '#939da7', '#aeb7c0'], lake: { rim: ['#d8e3e8', '#b3c8d2'], foam: '#e8f1f4', water: '#aed3e2', deep: '#82b2cb', core: '#609bbf' }, cap: { rabbit: 18, bear: 5 }, fauna: { rabbit: 20, bear: 5 } }
 };
 const zoneSave = {}, zoneLeft = {};    // zone id -> its objects (packed away while you are elsewhere) / the game time you left it
 let Z = ZONES.home;
@@ -787,9 +789,10 @@ function collide(e, r){
 }
 
 function setZone(id){ Z = ZONES[id]; WORLD = Z.world; ISL_M = Z.margin; ISL_R = Z.rad; GN = Math.ceil(WORLD / CELL); }
-function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); trapMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; corpses.length = 0; pools.length = 0; boulders.length = 0; meteors.length = 0; }
+function clearWorld(){ objs = []; grid = new Array(GN * GN); structs = []; creatures = []; floaters = []; wallMap.clear(); trapMap.clear(); bullets.length = 0; parts.length = 0; pickups.length = 0; decals.length = 0; corpses.length = 0; pools.length = 0; boulders.length = 0; meteors.length = 0; clearLandFx(); }
 function spawnFauna(){          // the animals a zone starts with (they are not saved; a zone repopulates when you arrive)
   for (const k in Z.fauna) for (let i = 0; i < Z.fauna[k]; i++) spawnCreature(k, 300, undefined, false);
+  lairCheck();
 }
 const GEN = {};                  // zone id -> function that fills a fresh zone with objects (added below)
 function packObjs(){
@@ -829,6 +832,7 @@ function enterZone(id, via){
   zoneSave[Z.id] = packObjs(); zoneLeft[Z.id] = T;
   setZone(id); clearWorld();
   if (zoneSave[id]){ unpackObjs(zoneSave[id]); delete zoneSave[id]; if (zoneLeft[id] != null && T > zoneLeft[id]) catchUp(T - zoneLeft[id]); } else if (GEN[id]) GEN[id]();
+  landsEntered();
   const o = via && objs.find(o => o.t === via);
   if (o) arriveAt(o); else { P.x = P.y = WORLD / 2; }
   target = null; lastLabel = ''; setBuild(false);
@@ -844,7 +848,7 @@ function genWorld(){
 
   // lakes (one guaranteed near the start)
   const centers = [[C + 250, C - 110]];
-  for (let n = 0; n < 6; n++) for (let k = 0; k < 40; k++){
+  for (let n = 0; n < 9; n++) for (let k = 0; k < 40; k++){
     const x = rand(280, WORLD - 280), y = rand(280, WORLD - 280);
     if (inside(x, y) < 230 || Math.hypot(x - C, y - C) < 430) continue;
     if (centers.every(c => Math.hypot(c[0] - x, c[1] - y) > 430)){ centers.push([x, y]); break; }
@@ -869,10 +873,10 @@ function genWorld(){
   const tree = (x, y) => ({ t: 'tree', x, y, r: 11, amt: 6, v: Math.random(), shake: 0 });
   const rock = (x, y) => ({ t: 'rock', x, y, r: 15, amt: 8, v: Math.random() });
   const bush = (x, y) => ({ t: 'bush', x, y, r: 13, amt: 3, v: Math.random(), regrow: 0 });
-  scatter(430, 22, tree, (x, y) => { const f = noise(x / 240, y / 240); return Math.random() < (f > .52 ? .95 : f > .4 ? .3 : .04); });
-  scatter(95, 26, rock);
-  scatter(70, 28, bush);
-  for (let n = 0, tries = 0; n < 7 && tries < 6000; tries++){          // wreckage on the beach: early scrap
+  scatter(660, 22, tree, (x, y) => { const f = noise(x / 240, y / 240); return Math.random() < (f > .52 ? .95 : f > .4 ? .3 : .04); });
+  scatter(145, 26, rock);
+  scatter(105, 28, bush);
+  for (let n = 0, tries = 0; n < 10 && tries < 6000; tries++){          // wreckage on the beach: early scrap
     const x = rand(40, WORLD - 40), y = rand(40, WORLD - 40), ins = inside(x, y);
     if (ins < 34 || ins > 52 || Math.hypot(x - C, y - C) < 120 || tooClose(x, y, 30)) continue;
     addObj({ t: 'wreck', x, y, r: 14, amt: 3, v: Math.random(), shake: 0 }); n++;
@@ -884,6 +888,7 @@ function genWorld(){
     if (!tooClose(x, y, 26)){ addObj(make(x, y)); i++; }
   } };
   starter(4, tree); starter(3, rock); starter(2, bush);
+  placeLair();
 
   P = newPlayer();
   spawnFauna();
@@ -928,11 +933,11 @@ GEN.mine = function(){
   kit.lake(330, C - 170, 4);
   const keep = [[dock.x, dock.y, 100], [door.x, door.y + 20, 110]];                                                               // the dock and the front of the mine door stay clear
   kit.scatter(16, 22, rockObj, { cx: door.x, cy: door.y - 30, rad: 180, ins: 55, keep });                                       // the hillside around the mine door
-  kit.scatter(72, 26, rockObj, { keep });
-  kit.scatter(62, 22, (x, y) => treeObj(x, y, pineV()), { test: (x, y) => noise(x / 260, y / 260) > .5, keep });
-  kit.scatter(12, 28, bushObj, { keep });
-  const avoid = [[dock.x, dock.y, 380], [door.x, door.y, 260]];
-  oreClusters(kit, 'copper', 12, 3, avoid); oreClusters(kit, 'iron', 8, 2, avoid);
+  kit.scatter(110, 26, rockObj, { keep });
+  kit.scatter(95, 22, (x, y) => treeObj(x, y, pineV()), { test: (x, y) => noise(x / 260, y / 260) > .5, keep });
+  kit.scatter(18, 28, bushObj, { keep });
+  const avoid = [[dock.x, dock.y, 380], [door.x, door.y, 260], [WORLD - ISL_M - 230, C, 300]];
+  oreClusters(kit, 'copper', 18, 4, avoid); oreClusters(kit, 'iron', 12, 3, avoid);
 };
 GEN.cave = function(){
   const kit = genKit(), C = kit.C;
@@ -941,10 +946,11 @@ GEN.cave = function(){
   addObj({ t: 'fire', x: ex.x + 78, y: ex.y - 14, r: 9, fuel: 1e9 });           // a lamp that never goes out by the way out
   const pool = [C - 330, C - 220];
   kit.lake(pool[0], pool[1], 3);
-  kit.scatter(74, 28, rockObj, { keep: [ex.x, ex.y, 150], ins: 70 });
-  oreClusters(kit, 'copper', 18, 4, [[ex.x, ex.y, 620], [pool[0], pool[1], 150]]);
-  oreClusters(kit, 'iron', 16, 4, [[ex.x, ex.y, 620], [pool[0], pool[1], 150]]);
-  oreClusters(kit, 'gold', 7, 2, [[ex.x, ex.y, 900], [pool[0], pool[1], 150]]);
+  kit.scatter(120, 28, rockObj, { keep: [ex.x, ex.y, 150], ins: 70 });
+  const lr = [C, ISL_M + 230, 280];
+  oreClusters(kit, 'copper', 26, 6, [[ex.x, ex.y, 620], [pool[0], pool[1], 150], lr]);
+  oreClusters(kit, 'iron', 24, 6, [[ex.x, ex.y, 620], [pool[0], pool[1], 150], lr]);
+  oreClusters(kit, 'gold', 11, 3, [[ex.x, ex.y, 900], [pool[0], pool[1], 150], lr]);
 };
 GEN.snow = function(){
   const kit = genKit(), C = kit.C, noise = makeNoise();
@@ -952,14 +958,15 @@ GEN.snow = function(){
   addObj({ t: 'boat', x: dock.x, y: dock.y, r: 22, v: Math.random() });
   kit.lake(C + 300, C + 190, 4); kit.lake(C - 430, C - 300, 3);
   const keep = [[dock.x, dock.y, 110]];
-  kit.scatter(130, 22, (x, y) => treeObj(x, y), { test: (x, y) => { const f = noise(x / 220, y / 220); return Math.random() < (f > .5 ? .95 : f > .38 ? .3 : .05); }, keep });
-  kit.scatter(60, 26, rockObj, { keep });
-  kit.scatter(10, 28, bushObj, { keep });
-  const avoid = [[dock.x, dock.y, 380]];
-  oreClusters(kit, 'iron', 12, 3, avoid); oreClusters(kit, 'gold', 9, 3, avoid);
+  kit.scatter(200, 22, (x, y) => treeObj(x, y), { test: (x, y) => { const f = noise(x / 220, y / 220); return Math.random() < (f > .5 ? .95 : f > .38 ? .3 : .05); }, keep });
+  kit.scatter(92, 26, rockObj, { keep });
+  kit.scatter(15, 28, bushObj, { keep });
+  const avoid = [[dock.x, dock.y, 380], [C, WORLD - ISL_M - 230, 300]];
+  oreClusters(kit, 'iron', 18, 4, avoid); oreClusters(kit, 'gold', 14, 4, avoid);
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
+    lairs: {}, relic: {}, fill: {},
     inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, arrow: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false, sword: false, hammer: false, wrench: false, sickle: false, bombpick: false, bow: false, shotgun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1, sword: 1, hammer: 1, wrench: 1, sickle: 1, bombpick: 1, bow: 1, shotgun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true }, job: 'survivor', jobCd: 0, jobFx: {}, free: {}, hx: {},
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
@@ -1312,12 +1319,13 @@ function findTarget(){
   const reach = 34 + (P.auto ? Math.max(...ownedTools().map(t => stat(t).reach)) : stat(P.equip).reach);   // auto mode will swap to the longest weapon
   let best = null, bs = 1e9;
   for (const c of creatures){
-    if (c.ally) continue;
+    if (c.ally || c.under) continue;
     const d = Math.hypot(c.x - P.x, c.y - P.y) - c.r;
     if (d < reach && d - 40 < bs){ bs = d - 40; best = { kind: 'creature', o: c }; }
   }
   gridQuery(P.x - 120, P.y - 120, P.x + 120, P.y + 120, o => {
     if ((o.t === 'bush' || o.t === 'ore') && o.amt <= 0) return;
+    if (o.t === 'lava') return;
     if (o.t === 'wall' && o.hp >= o.max && !(o.kind === 'tower' && ((o.ammo < tw(o).max && P.inv.ammo > 0) || canTowerUpgrade(o)))) return;
     const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r;
     if (d < (o.t === 'water' ? 22 : 27) && d < bs){ bs = d; best = { kind: 'obj', o }; }
@@ -1330,6 +1338,7 @@ function labelFor(tg){
   if (tg.kind === 'creature') return '공격';
   const o = tg.o;
   switch (o.t){
+    case 'lair': return '둥지';
     case 'tree': return '베기';
     case 'rock': return '캐기';
     case 'ore': return '채굴';
@@ -1360,15 +1369,15 @@ function act(){
   P.swing = .26;
   if (tg.kind === 'creature'){ attack(o); return; }
   switch (o.t){
-    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.wood + perk('lumber') + (isJob('carpenter') ? 1 : 0) + gatherAdj()) * gatherMul()); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW; if (o.amt <= 0) removeObj(o); break; }
-    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.stone + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) * gatherMul()); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) removeObj(o); if (P.equip === 'bombpick') chainMine(o); break; }
+    case 'tree': { SND.play('chop'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.wood + perk('lumber') + (isJob('carpenter') ? 1 : 0) + gatherAdj()) * gatherMul()); gain('wood', n); addXp(1); fx('leaf', o.x, o.y, 44, 3); fx('chip', o.x, o.y, 12, 3); o.amt -= n; o.shake = .22; P.cd = eq.cdW * relicGather(); if (o.amt <= 0) removeObj(o); break; }
+    case 'rock': { SND.play('rock'); const eq = stat(P.equip), n = Math.min(o.amt, Math.max(1, eq.stone + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) * gatherMul()); gain('stone', n); addXp(1); fx('spark', o.x, o.y, 10, 3); fx('rock', o.x, o.y, 8, 3); o.amt -= n; o.shake = .15; P.cd = eq.cdS * relicGather(); if (o.amt <= 0) removeObj(o); if (P.equip === 'bombpick') chainMine(o); break; }
     case 'ore': {
       const d = ORE[o.kind], eq = stat(P.equip), lv = isJob('fist') ? 5 : P.equip === 'bombpick' ? (P.lv.bombpick || 1) : (P.lv.pickaxe || 1);
       if (!P.tools.pickaxe && !P.tools.bombpick && !isJob('fist')){ P.cd = .5; SND.play('deny'); toast('곡괭이가 필요해요. 제작 메뉴에서 만드세요.'); break; }
       if (!eq.ore){ P.cd = .5; SND.play('deny'); toast('곡괭이를 들어야 캘 수 있어요'); break; }
       if (lv < d.tier){ P.cd = .6; SND.play('deny'); floater(o.x, o.y, 30, '곡괭이 Lv.' + d.tier + ' 필요', '#ffb199'); fx('spark', o.x, o.y, 12, 2); toast(josa(ITEMS[o.kind].name, '은/는') + ' 곡괭이 Lv.' + d.tier + ' 이상이 필요해요'); break; }
       SND.play('ore'); const n = Math.min(o.amt, (Math.max(1, eq.ore + perk('miner') + (isJob('miner') ? 1 : 0) + gatherAdj()) + (perk('vein') && Math.random() < .2 ? 1 : 0)) * gatherMul()); gain(o.kind, n); addXp(d.tier * 2 + 1); fx('spark', o.x, o.y, 12, 3); fx('rock', o.x, o.y, 10, 2); fx('glow', o.x, o.y, 14, 3, d.rgb);
-      o.amt -= n; o.shake = .15; P.cd = eq.cdS; if (o.amt <= 0) o.regrow = d.regrow;
+      o.amt -= n; o.shake = .15; P.cd = eq.cdS * relicGather(); if (o.amt <= 0) o.regrow = d.regrow;
       if (P.equip === 'bombpick') chainMine(o);
       break;
     }
@@ -1391,6 +1400,7 @@ function act(){
       if (ts && canTowerUpgrade(o)){ upgradeTower(o); P.cd = .5; }
       break;
     }
+    case 'lair': P.cd = .5; lairInfo(); break;
     case 'crate': P.cd = .4; openCrate(o); break;
     case 'wreck': { SND.play('scrap'); o.amt--; gain('scrap', 1 + perk('scavenger')); addXp(2); fx('chip', o.x, o.y, 10, 3); fx('spark', o.x, o.y, 10, 2); o.shake = .15; P.cd = .45; if (o.amt <= 0) removeObj(o); break; }
     case 'bush': { SND.play('rustle'); o.amt--; gain('berry', Math.max(1, 1 + perk('forager') + gatherAdj()) * gatherMul()); if (Math.random() < .15 * (isJob('herbalist') ? 2 : 1) + (P.tools.sickle ? .15 : 0)) gain('herb', 1); addXp(1); P.cd = .3; if (o.amt <= 0) o.regrow = 110; break; }
@@ -1425,7 +1435,7 @@ function spawnBoss(def, day){
   return c;
 }
 function bossLoot(c){
-  const def = BOSSES[c.boss - 1]; P.stats.bosses = (P.stats.bosses || 0) + 1; P.bossKills[c.bday] = true;
+  const def = BOSSES[c.boss - 1]; P.stats.bosses = (P.stats.bosses || 0) + 1; if (c.lair) lairDown(c, def); else P.bossKills[c.bday] = true;
   floater(c.x, c.y, 74, '보스 처치!', '#ffd166'); fx('glow', c.x, c.y, 26, 30, def.col); fx('spark', c.x, c.y, 24, 20); shakeT = .45;
   const got = [];
   for (const k in def.loot){ const n = Math.round(rollDrop(def.loot[k]) * (1 + .5 * (c.cycle || 0))); if (n > 0){ dropPickup(k, n, c.x, c.y); got.push(ITEMS[k].icon + (n > 1 ? n : '')); } }
@@ -1442,8 +1452,9 @@ function bossSlam(c, sp){
 }
 function bossAI(c, sp, dt, dx, dy, d, night){      // returns the move [x, y, speed] and runs the boss's special attacks
   let sx = 0, sy = 0, spd = 0;
+  if (c.lair){ const r = lairAI(c, sp, dt, dx, dy, d); if (r) return r; }       // a zone boss: asleep in its lair, or going home
   c.skill = (c.skill == null ? 4 : c.skill) - dt;
-  if (!night){                                      // dawn: it slinks away
+  if (!night && !c.lair){                                      // dawn: it slinks away
     c.cast = 0; c.dash = 0; sx = -dx / d; sy = -dy / d; spd = sp.speed * 1.3; c.hop += dt * 6; c.dawnT = (c.dawnT || 0) + dt;
     if (d > offD() + 120 || c.dawnT > 8) c.gone = true;                    // it may be stuck behind trees, so it fades away after a while anyway
     return [sx, sy, spd];
@@ -1476,7 +1487,8 @@ function bossAI(c, sp, dt, dx, dy, d, night){      // returns the move [x, y, sp
         if (!c.summoned){ c.summoned = true; toast('좀비 군주가 부하를 불러냈어요!'); }
       }
     }
-  } else if (c.k === 'batqueen'){ const r = bossBatQueen(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
+  } else if (BOSS_AI[c.k]){ const r = BOSS_AI[c.k](c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
+  else if (c.k === 'batqueen'){ const r = bossBatQueen(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
   else if (c.k === 'plaguegiant'){ const r = bossPlague(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
   else if (c.k === 'frostgiant'){ const r = bossFrost(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
   else {                                          // mountain king: heavy slams that light up red first, faster when hurt
@@ -1516,12 +1528,13 @@ function updatePickups(dt){
   }
 }
 function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
-  if (!creatures.includes(c)) return;
+  if (!creatures.includes(c) || c.under) return;                                // (a burrowed boss is out of reach)
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y, 34, '방어', '#8fc4ff'); dmg = red; }
   if (c.frozen > 0 && !dot) dmg *= 2;                                           // frozen solid: it shatters
+  if (c.vuln && !dot) dmg = Math.round(dmg * 1.5);                              // the ancient turtle, dizzy after a roll
   c.hp -= dmg; c.sinceHit = 0;
-  if (byPlayer && !byTower && !dot && c.hp > 0){ if (isJob('phoenix')) c.flame = Math.max(c.flame || 0, 3); if (isJob('frost')) c.slow = Math.max(c.slow || 0, 2); }
+  if (byPlayer && !byTower && !dot && c.hp > 0){ if (isJob('phoenix') || relic('heart')) c.flame = Math.max(c.flame || 0, 3); if (isJob('frost')) c.slow = Math.max(c.slow || 0, 2); }
   if (dot && c.hp > 0){ if (sp.rage){ c.state = 'angry'; c.angry = 8; } return; }        // bleeding or burning: no flash, no knockback, no noise until it drops
   c.hit = .18; SND.hit(c, c.hp <= 0);
   const d = Math.hypot(kx, ky) || 1, kb = (c.k === 'brute' || c.k === 'golem' ? .25 : 1) * (c.elite ? .6 : 1) * (c.boss ? .15 : 1); c.kvx = kx / d * 170 * kb; c.kvy = ky / d * 170 * kb;
@@ -1530,14 +1543,14 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   bloodAt(c.x, c.y, c.k, c.hp <= 0);
   if (sp.rage && c.hp > 0){ c.state = 'angry'; c.angry = 8; }
   if (c.hp <= 0){
-    if (byPlayer) addXp((KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1) * (1 + .5 * (c.cycle || 0)));
+    if (byPlayer) addXp((c.decoy ? 2 : KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1) * (1 + .5 * (c.cycle || 0)));
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0) + (isJob('hunter') && (k === 'meat' || k === 'hide') ? 1 : 0); if (n > 0) gain(k, n); }
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     if (c.boss && (byPlayer || byTower)) bossLoot(c);
     if (c.boss) onBossDown(c, byPlayer, byTower);
     if (dot && c.venom > 0 && P.tools.sickle && P.hp > 0){ P.hp = Math.min(100, P.hp + 4); floater(P.x, P.y, 34, '+4', '#9be36b'); }      // the sickle's poison feeds you
     if (byPlayer && isJob('lich') && P.hp > 0){ P.hp = Math.min(100, P.hp + 5); floater(P.x, P.y, 34, '+5', '#c9a8ff'); }
-    if (SHEET[c.k] && SHEET[c.k].m.cols.die) corpses.push({ k: c.k, x: c.x, y: c.y, hd: c.hd == null ? Math.PI / 4 : c.hd, t: 0, vx: c.kvx * .5, vy: c.kvy * .5, en: !!c.enraged });
+    if (SHEET[c.k] && SHEET[c.k].m.cols.die && !c.decoy) corpses.push({ k: c.k, x: c.x, y: c.y, hd: c.hd == null ? Math.PI / 4 : c.hd, t: 0, vx: c.kvx * .5, vy: c.kvy * .5, en: !!c.enraged });
     creatures.splice(creatures.indexOf(c), 1);
   }
 }
@@ -1552,7 +1565,7 @@ function attack(c){
 }
 
 /* ================= guns, arrows, towers ================= */
-const isHostile = c => !c.ally && ((SPECS[c.k].boss > 0) || c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || (SPECS[c.k].rage && c.state === 'angry'));
+const isHostile = c => !c.ally && !c.under && ((SPECS[c.k].boss > 0) || c.k === 'wolf' || c.k === 'zombie' || c.k === 'brute' || c.k === 'bat' || c.k === 'golem' || !!SPECS[c.k].ai || (SPECS[c.k].rage && c.state === 'angry'));
 function nearestHostile(maxD){
   let best = null, bd = maxD;
   for (const c of creatures){ if (!isHostile(c)) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d < bd){ bd = d; best = c; } }
@@ -1561,7 +1574,7 @@ function nearestHostile(maxD){
 function aimTarget(){           // what the rifle would shoot at: hostile animals first, then the nearest animal
   let best = null, bs = 1e9;
   for (const c of creatures){
-    if (c.ally) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > stat(RANGED[P.equip] ? P.equip : 'gun').range) continue;
+    if (c.ally || c.under) continue; const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > stat(RANGED[P.equip] ? P.equip : 'gun').range) continue;
     const sc = d - (isHostile(c) ? 1000 : 0); if (sc < bs){ bs = sc; best = c; }
   }
   return best;
@@ -1603,7 +1616,7 @@ function updateBullets(dt){
     let hit = false;
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
-      if (c.ally || b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
+      if (c.ally || c.under || b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
       if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.beast && BEAST[c.k] ? b.dmg * 2 : b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); fx('spark', b.x, b.y, 12, 4); if (b.knock && creatures.includes(c)){ c.kvx *= b.knock; c.kvy *= b.knock; } if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
@@ -1620,7 +1633,7 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
 }
 function hurt(n, raw){
   if (!raw && hitSrc && hitSrc.bmul) n *= hitSrc.bmul;                          // a boss's later rounds hit harder
-  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1)));
+  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1) * (relic('scale') ? .85 : 1)));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1) * (perk('immune') && (k === 'infect' || k === 'poison') ? .5 : 1)) afflict(k); }
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
@@ -1688,7 +1701,7 @@ function transition(fn, msg){        // fade out, change the map, fade back in
   setTimeout(() => { $('fade').classList.remove('on'); sleeping = false; if (msg) toast(msg); save(); }, 1100);
 }
 function sleep(){
-  if (creatures.some(c => c.boss)){ toast('보스가 노리고 있어서 잠들 수 없어요!'); return; }
+  if (creatures.some(c => c.boss && !c.sleepy)){ toast('보스가 노리고 있어서 잠들 수 없어요!'); return; }
   if (P.hunger < 20 || P.thirst < 20){ toast('너무 배고프거나 목말라서 잠들 수 없어요'); return; }
   sleeping = true; $('fade').classList.add('on'); SND.play('sleep');
   setTimeout(() => {
@@ -1872,21 +1885,25 @@ function closeSail(){ $('sail').hidden = true; paused = false; }
 function upgradeBoat(){
   if (!Object.keys(BOAT_UPG).every(k => P.inv[k] >= BOAT_UPG[k])) return;
   for (const k in BOAT_UPG) P.inv[k] -= BOAT_UPG[k];
-  P.boatLv = 2; toast('범선으로 개조했어요! 이제 설원섬까지 갈 수 있어요.'); renderSail();
+  P.boatLv = 2; toast('범선으로 개조했어요! 이제 설원섬과 밀림섬까지 갈 수 있어요.'); renderSail();
 }
 function renderSail(){
   const list = $('sailList'); list.innerHTML = '';
   $('sailSub').textContent = '지금은 ' + Z.name + '. 항해에는 약 ' + SAIL_T + '초가 걸리고, 그동안 배고픔과 갈증이 줄어요.';
-  for (const id of ['home', 'mine', 'snow']){
+  for (const id of Object.keys(DEST)){
     if (id === Z.id) continue;
     const d = DEST[id], ok = (P.boatLv || 0) >= d.need, div = document.createElement('div'); div.className = 'recipe';
-    div.innerHTML = `<div><b>${ZONES[id].name}${P.visited[id] ? '<span class="lvtag max">가 봄</span>' : ''}</b><p>${d.desc}</p>${ok ? '' : '<span class="note">범선으로 개조하면 갈 수 있어요</span>'}</div>`;
+    div.innerHTML = `<div><b>${ZONES[id].name}${P.visited[id] ? '<span class="lvtag max">가 봄</span>' : ''}</b><p>${d.desc}</p>${ok ? '' : '<span class="note">' + (d.need > 2 ? '철갑선' : '범선') + '으로 개조하면 갈 수 있어요</span>'}</div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = '출항'; b.disabled = !ok; b.addEventListener('click', () => sail(id)); div.appendChild(b); list.appendChild(div);
   }
   if ((P.boatLv || 0) < 2){
     const can = Object.keys(BOAT_UPG).every(k => P.inv[k] >= BOAT_UPG[k]), div = document.createElement('div'); div.className = 'recipe';
-    div.innerHTML = `<div><b>범선으로 개조<span class="lvtag">Lv.1 → 2</span></b><p>철 주괴로 선체를 보강하면 더 먼 바다로 나갈 수 있어요. (설원섬)</p><div class="cost">${costChips(BOAT_UPG)}</div></div>`;
+    div.innerHTML = `<div><b>범선으로 개조<span class="lvtag">Lv.1 → 2</span></b><p>철 주괴로 선체를 보강하면 더 먼 바다로 나갈 수 있어요. (설원섬 · 밀림섬)</p><div class="cost">${costChips(BOAT_UPG)}</div></div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = '개조'; b.disabled = !can; b.addEventListener('click', upgradeBoat); div.appendChild(b); list.appendChild(div);
+  } else if (P.boatLv === 2){
+    const can = Object.keys(BOAT_UPG3).every(k => P.inv[k] >= BOAT_UPG3[k]), div = document.createElement('div'); div.className = 'recipe';
+    div.innerHTML = `<div><b>철갑선으로 개조<span class="lvtag">Lv.2 → 3</span></b><p>철판과 금으로 덧대면 불타는 바다를 건너 화산섬까지 갈 수 있어요.</p><div class="cost">${costChips(BOAT_UPG3)}</div></div>`;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = '개조'; b.disabled = !can; b.addEventListener('click', upgradeBoat3); div.appendChild(b); list.appendChild(div);
   }
 }
 function sail(id){
@@ -1905,6 +1922,8 @@ function arrive(id){
   toast(ZONES[id].name + '에 도착했어요');
   if (first && id === 'mine'){ setTimeout(() => toast('곡괭이로 광석을 캘 수 있어요. 북쪽 바위산에 광산 입구가 있어요.'), 2400); }
   if (first && id === 'snow'){ setTimeout(() => toast('몹시 추워요! 모닥불이나 움막 곁에서 몸을 녹이세요. 낮에도 늑대가 있어요.'), 2400); }
+  if (first && id === 'jungle'){ setTimeout(() => toast('수풀 속에 독사가 숨어 있어요. 가까이 가면 덤벼들어요! 늪의 물도 마실 수 있어요.'), 2400); }
+  if (first && id === 'volcano'){ setTimeout(() => toast('뜨거워요! 목이 빨리 마르니 온천(물)을 찾으세요. 용암 가장자리는 데어요.'), 2400); }
   save();
 }
 
@@ -1956,7 +1975,8 @@ function drawMini(force){
   const dot = (x, y, w, col) => { const px = tx(x, y), py = ty(x, y); if (px < -3 || py < -3 || px > sz + 3 || py > sz + 3) return; mx.fillStyle = col; mx.fillRect(Math.round(px - w / 2), Math.round(py - w / 2), w, w); };
   const see = Z.cave ? MINI_CAVE_SEE : 1e9, wat = Z.lake.water;
   mx.fillStyle = wat; for (const o of objs) if (o.t === 'water'){ const px = tx(o.x, o.y), py = ty(o.x, o.y), r = Math.max(1.5, o.r * k); if (px > -r && py > -r && px < sz + r && py < sz + r){ mx.beginPath(); mx.arc(px, py, r, 0, TAU); mx.fill(); } }
-  const dn = o => Math.hypot(o.x - P.x, o.y - P.y);
+  mx.fillStyle = '#e8541a'; for (const o of objs) if (o.t === 'lava'){ const px = tx(o.x, o.y), py = ty(o.x, o.y), r = Math.max(1.5, o.r * k); if (px > -r && py > -r && px < sz + r && py < sz + r){ mx.beginPath(); mx.arc(px, py, r, 0, TAU); mx.fill(); } }
+  const dn = o => Math.hypot(o.x - P.x, o.y - P.y), lairUp = creatures.some(c => c.lair);
   for (const o of objs){                                   // the lay of the land first, then the things worth walking to
     switch (o.t){
       case 'tree': dot(o.x, o.y, near ? 2 : 1, Z.ground === 'snow' ? '#7f9aa4' : '#2c4a30'); break;
@@ -1974,6 +1994,7 @@ function drawMini(force){
       case 'mine': dot(o.x, o.y, 4, '#c0a8ff'); break;
       case 'exit': dot(o.x, o.y, 4, '#8ff08f'); break;
       case 'crate': dot(o.x, o.y, 4, '#ffd34a'); break;
+      case 'lair': dot(o.x + 62, o.y + 62, 5, lairUp ? '#ff4a4a' : '#7d8186'); break;
     }
   }
   for (const p of pickups) dot(p.x, p.y, 2, 'rgb(' + (PICK_COL[p.k] || '255,220,120') + ')');
@@ -1981,7 +2002,8 @@ function drawMini(force){
   for (const c of creatures){
     const d = dn(c), boss = !!c.boss, elite = !!c.elite, trk = P.jobFx.track > 0 && d < 1600; if (!boss && !elite && d > MINI_SEE && !trk) continue;
     if (trk) dot(c.x, c.y, pulse ? 7 : 6, 'rgba(255,224,120,.8)');              // the hunter's tracking: every animal around, ringed
-    const hostile = c.k in NIGHT_KINDS || c.k === 'bat' || c.k === 'golem' && c.state === 'awake' || (c.k === 'bear' || c.k === 'boar') && c.state === 'angry';
+    if (c.under || c.sleepy) continue;                       // (a zone boss asleep shows as its red lair dot)
+    const hostile = c.k in NIGHT_KINDS || c.k === 'bat' || (c.k === 'golem' || SPECS[c.k].ai === 'golem') && c.state === 'awake' || SPECS[c.k].ai && SPECS[c.k].ai !== 'golem' || (c.k === 'bear' || c.k === 'boar') && c.state === 'angry';
     if (c.ally) dot(c.x, c.y, 3, '#b48cff'); else if (boss) dot(c.x, c.y, pulse ? 6 : 5, '#ffd34a'); else if (elite) dot(c.x, c.y, 4, '#ff9a3c'); else if (hostile) dot(c.x, c.y, 3, '#ff5a4a'); else dot(c.x, c.y, 2, c.k === 'rabbit' ? '#efe6d0' : '#cfa070');
   }
   const px = tx(P.x, P.y), py = ty(P.x, P.y), a = Math.atan2(P.fx + P.fy, P.fx - P.fy);      // which way the player faces on the map
@@ -1990,7 +2012,7 @@ function drawMini(force){
 }
 function updateEliteArrow(){            // red arrow at the screen edge pointing at the nearest elite that is off screen
   const el = $('eliteArrow'); let best = null, bd = 1e9;
-  for (const c of creatures) if (c.elite || c.boss){ const d = Math.hypot(c.x - P.x, c.y - P.y) - (c.boss ? 1e6 : 0); if (d < bd){ bd = d; best = c; } }      // a boss outranks any elite
+  for (const c of creatures) if (c.elite || (c.boss && !c.sleepy && !c.under)){ const d = Math.hypot(c.x - P.x, c.y - P.y) - (c.boss ? 1e6 : 0); if (d < bd){ bd = d; best = c; } }      // a boss outranks any elite
   if (best && best.boss) bd += 1e6;
   if (!best){ if (!el.hidden) el.hidden = true; return; }
   const sx = w2sx(best.x, best.y), sy = w2sy(best.x, best.y), land = H < 520;
@@ -2027,7 +2049,7 @@ function updateHUD(){
   const stOn = updateStatusHUD(), anyBuff = P.buffs.swift > 0 || P.buffs.power > 0 || P.buffs.warm > 0 || P.buffs.full > 0 || P.buffs.vigor > 0 || stOn, row2 = [...inv2El.querySelectorAll('.slot')].some(s => !s.hidden) || anyBuff;
   const row3 = [...inv3El.querySelectorAll('.slot')].some(s => !s.hidden); if (inv3El.hidden === row3) inv3El.hidden = !row3;
   if (inv2El.hidden === row2) inv2El.hidden = !row2; document.body.classList.toggle('row2', row2); document.body.classList.toggle('chips', anyBuff);
-  const boss = creatures.find(c => c.boss), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
+  const boss = creatures.find(c => c.boss && !c.sleepy), bb = $('bossBar'); if (bb.hidden === !!boss) bb.hidden = !boss;
   if (boss){ setText($('bossName'), '👑 ' + boss.name); setText($('bossHp'), Math.ceil(boss.hp) + ' / ' + boss.max); const w = (Math.max(0, boss.hp / boss.max) * 100).toFixed(1) + '%'; if ($('bossFill')._w !== w){ $('bossFill')._w = w; $('bossFill').style.width = w; } }
   updateEliteArrow(); layoutHud();
   setText($('armorBadge'), P.armor ? '🛡' + P.armor : ''); updatePerkHUD(); updateSkillHUD();
@@ -2035,7 +2057,7 @@ function updateHUD(){
   const lab = buildMode ? '표시' : (RANGED[P.equip] && (aim || !target)) ? '발사' : labelFor(target); if (lab !== lastLabel){ lastLabel = lab; $('actLabel').textContent = lab; }
 }
 function objective(){
-  const day = dayOf(), boss = creatures.find(c => c.boss);
+  const day = dayOf(), boss = creatures.find(c => c.boss && !c.sleepy);
   if (boss) return '<b>목표</b> 보스 <b>' + boss.name + '</b>' + josa(boss.name, '을/를').slice(boss.name.length) + ' 쓰러뜨리세요!';
   if (isBossDay(day) && !P.bossKills[day] && dayT() > .3 && !Z.cave) return '<b>목표</b> 오늘 밤 나타나는 <b>' + bossTitle(day) + '</b> 대비 (벽 · 탑 · 함정 · 탄약)';
   if (isJob('owner')) return '<b>목표</b> ' + OWNER_DAY + '일차 아침까지 섬을 지키기 (<b>섬의 주인</b> 엔딩)';
@@ -2050,6 +2072,7 @@ function objective(){
     if (!P.built.furnace && (P.seen.copper || P.seen.iron)) return '<b>목표</b> <b>용광로</b>(돌 20 · 나무 6)를 지어 광석을 녹이기';
     if (!P.visited.cave) return '<b>목표</b> 광산섬 북쪽 바위산의 <b>광산 입구</b>로 들어가 보기';
   }
+  const lg = day < RAFT_DAY && lairGoal(); if (lg) return lg;
   if (day < RAFT_DAY) return `<b>목표</b> ${RAFT_DAY}일차까지 생존 (뗏목 재료: 나무 30 · 돌 10 · 구운고기 3)`;
   return '<b>목표</b> 해안에서 <b>탈출 뗏목</b>을 만드세요!';
 }
@@ -2087,13 +2110,15 @@ function updateCreatures(dt){
       } else { wander(c); sx = c.dx; sy = c.dy; spd = sp.speed; }
     } else if (sp.boss){
       const r = bossAI(c, sp, dt, dx, dy, d, night); sx = r[0]; sy = r[1]; spd = r[2];
-    } else if (c.k === 'bat'){              // flutters erratically; swoops at the player in the dark
+    } else if (sp.ai === 'snake' || sp.ai === 'hunt'){
+      const r = (sp.ai === 'snake' ? snakeAI : huntAI)(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; c.hop += dt * (spd ? 5 : 0);
+    } else if (c.k === 'bat' || sp.ai === 'bat'){              // flutters erratically; swoops at the player in the dark
       c.hop += dt * 18;
       if (d < 240 && !tamed(c)){
         const a = Math.atan2(dy, dx) + Math.sin(anim * 5 + c.hop * .3) * 1.1; sx = Math.cos(a); sy = Math.sin(a); spd = sp.speed;
         if (d < c.r + PLAYER_R + 4 && c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; c.kvx = -dx / d * 150; c.kvy = -dy / d * 150; }
       } else { if (c.timer <= 0){ c.ang = rand(0, TAU); c.timer = rand(.5, 1.3); } sx = Math.cos(c.ang || 0); sy = Math.sin(c.ang || 0); spd = sp.speed * .5; }
-    } else if (c.k === 'golem'){            // dormant until you come close, then a slow, heavy chase that smashes walls
+    } else if (c.k === 'golem' || sp.ai === 'golem'){            // dormant until you come close, then a slow, heavy chase that smashes walls
       if (c.state !== 'awake' && d < 150 && !tamed(c)){ c.state = 'awake'; c.atk = .8; }
       if (c.state === 'awake'){
         sx = dx / d; sy = dy / d; spd = sp.speed; c.hop += dt * 5;
@@ -2126,13 +2151,14 @@ function updateCreatures(dt){
     }
     spd *= (c.spdMul || 1) * creatureStatus(c, dt) * (c.k === 'wolf' && evOn('moon') ? 1.25 : 1);
     if (c.atk > atk0 + .05){ c.swing = .4; SND.attack(c); }       // it just attacked: play the attack frames (and the sound)
+    if (c.vanish){ creatures.splice(i, 1); continue; }
     if (c.gone){ creatures.splice(i, 1); toast(josa(c.name, '이/가') + ' 물러갔어요…'); continue; }
     const sa = sx - sy; if (sa > .1) c.fx = 1; else if (sa < -.1) c.fx = -1;       // faces left or right on screen
     if (sx || sy) c.hd = Math.atan2(sy, sx);
     c.mv = (sx || sy) && spd > 0; if (c.mv) c.ph = (c.ph || 0) + spd * dt / (STRIDE[c.k] || 40);
     c.x += (sx * spd + c.kvx) * dt; c.y += (sy * spd + c.kvy) * dt;
     c.kvx *= Math.max(0, 1 - 7 * dt); c.kvy *= Math.max(0, 1 - 7 * dt);
-    if (!FLYING[c.k]) collide(c, c.cr || c.r);
+    if (!FLYING[c.k] && !c.under) collide(c, c.cr || c.r);
     clampIsland(c, c.r + 30);
     if (c.k === 'wolf'){
       for (const s of structs){
@@ -2184,7 +2210,7 @@ function update(dt){
   // survival stats
   const dark = darkness(t);
   P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1) * [1, .8, .65][perk('hardy')] * (isJob('miner') ? 1.1 : 1));
-  P.thirst = Math.max(0, P.thirst - .28 * dt * [1, .85, .75][perk('hardy')]);
+  P.thirst = Math.max(0, P.thirst - .28 * dt * [1, .85, .75][perk('hardy')] * (Z.heat ? 1.45 : 1));
   let warm = false;
   for (const s of structs){
     const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
@@ -2193,7 +2219,7 @@ function update(dt){
   if (P.hx.frost && (warm || Z.id !== 'snow')) P.hx.frost = 0;                 // the frost's night is lost by a fire or a roof
   const chill = (Z.chill || 0) * (Z.cave && isJob('miner') ? .5 : 1);                                   // caves and the snow island keep draining warmth
   if (warm) P.warmth += 8 * dt;
-  else if (chill || dark > .3) P.warmth -= (chill + (dark > .3 && !Z.cave ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1) * coldMul();
+  else if (chill || dark > .3 && !Z.heat) P.warmth -= (chill + (dark > .3 && !Z.cave && !Z.heat ? (.7 + .12 * day) * dark : 0)) * dt * (P.buffs.warm > 0 ? .35 : 1) * (perk('warm') ? .75 : 1) * coldMul();
   else P.warmth += 1.6 * dt;
   if (chill && !warm && P.warmth < 30 && T - lastChillT > 40){ lastChillT = T; toast('몸이 얼어붙어요! 모닥불이나 움막 곁에서 몸을 녹이세요.'); }
   P.warmth = isJob('frost') ? 100 : clamp(P.warmth, 0, 100);
@@ -2220,7 +2246,7 @@ function update(dt){
   if (P.auto){ const b = autoRanged() || bestFor(target); if (b) setEquip(b); }
   aim = RANGED[P.equip] ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateHidden(dt); updateWeapons(dt); updateBossFx(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateHidden(dt); updateWeapons(dt); updateBossFx(dt); updateLands(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
   for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
   for (let i = corpses.length - 1; i >= 0; i--){ const o = corpses[i]; o.t += dt; if (o.t < .5){ o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy *= .9; } if (o.t > 9) corpses.splice(i, 1); }
   const da = scrAng(P.fx, P.fy) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
@@ -2242,7 +2268,7 @@ function update(dt){
       }
     }
   }
-  if (isBossDay(day) && isNight() && !Z.cave && !P.bossKills[day] && !creatures.some(c => c.boss)){
+  if (isBossDay(day) && isNight() && !Z.cave && !P.bossKills[day] && !creatures.some(c => c.boss && !c.lair)){
     bossTimer -= dt; if (bossTimer <= 0){ bossTimer = 4; spawnBoss(bossOf(day), day); }          // it comes back if you leave and return, until it is dead or dawn breaks
   } else bossTimer = 4;
   respawnTimer -= dt;
@@ -2270,8 +2296,8 @@ function save(){
   if (!running || !P) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx },
+      v: 2, wv: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx, lairs: P.lairs, relic: P.relic, fill: P.fill },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
     }));
   } catch (_) {}
@@ -2279,6 +2305,7 @@ function save(){
 function readSave(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
 function loadGame(s){
+  if (!s.wv) migrateWorld(s);                                                                                   // saved before the islands grew
   for (const k in zoneSave) delete zoneSave[k]; for (const k in zoneLeft) delete zoneLeft[k];
   Object.assign(zoneSave, s.zones || { home: s.objs }); Object.assign(zoneLeft, s.left || {});            // v1 saves held just the home island
   const id = ZONES[s.zone] && zoneSave[s.zone] ? s.zone : 'home';
@@ -2292,7 +2319,7 @@ function loadGame(s){
   for (const w of wallMap.values()){ w.max = wallMax(w.kind); w.hp = Math.min(w.hp, w.max); }                                                    // (walls were unpacked before the player, and the job sets their strength)
   for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
   if (!hasTool(P.equip)) P.equip = 'hand';
-  spawnFauna();
+  landsLoaded(); spawnFauna();
 }
 
 /* ================= game flow ================= */
@@ -2428,6 +2455,24 @@ function makeSnowBase(){
   g.lineCap = 'round'; for (let i = 0; i < 26; i++){ const x = r() * 256, y = r() * 256, s = 2 + r() * 3; g.strokeStyle = 'rgba(138,150,102,.75)'; g.lineWidth = 1.1; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox - 1.5, y + oy); g.lineTo(x + ox - 2.5, y + oy - s); g.moveTo(x + ox + 1.5, y + oy); g.lineTo(x + ox + 2.5, y + oy - s - 1); g.stroke(); }); }
   return c;
 }
+function makeJungleBase(){             // deep green, leaf litter, moss and ferns
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(71);
+  g.fillStyle = '#35522a'; g.fillRect(0, 0, 256, 256);
+  const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 30; i++){ const x = r() * 256, y = r() * 256, rx = 20 + r() * 34, ry = rx * (.5 + r() * .4); g.fillStyle = r() < .5 ? 'rgba(90,120,40,.3)' : 'rgba(20,44,22,.34)'; wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); }); }
+  for (let i = 0; i < 140; i++){ const x = r() * 256, y = r() * 256, rx = 1.6 + r() * 2.6, a = r() * 3; g.fillStyle = PICK(['rgba(120,92,40,.7)', 'rgba(150,120,50,.6)', 'rgba(70,110,40,.7)', 'rgba(40,70,30,.8)']); wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, rx * .45, a, 0, TAU); g.fill(); }); }
+  g.lineCap = 'round'; for (let i = 0; i < 40; i++){ const x = r() * 256, y = r() * 256, s = 3 + r() * 4; g.strokeStyle = r() < .5 ? 'rgba(90,150,60,.75)' : 'rgba(60,120,50,.7)'; g.lineWidth = 1.3; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox - 2, y + oy); g.lineTo(x + ox - 4, y + oy - s); g.moveTo(x + ox, y + oy); g.lineTo(x + ox, y + oy - s - 1); g.moveTo(x + ox + 2, y + oy); g.lineTo(x + ox + 4, y + oy - s); g.stroke(); }); }
+  return c;
+}
+function makeAshBase(){                // dark ash and cinders, with faint glowing cracks
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(97);
+  g.fillStyle = '#3a3633'; g.fillRect(0, 0, 256, 256);
+  const wrap = fn => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 34; i++){ const x = r() * 256, y = r() * 256, rx = 18 + r() * 30, ry = rx * (.55 + r() * .4); g.fillStyle = r() < .5 ? 'rgba(80,74,70,.32)' : 'rgba(20,18,18,.32)'; wrap((ox, oy) => { g.beginPath(); g.ellipse(x + ox, y + oy, rx, ry, 0, 0, TAU); g.fill(); }); }
+  for (let i = 0; i < 110; i++){ const x = r() * 256, y = r() * 256, rx = 1.2 + r() * 2.6; wrap((ox, oy) => { g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(x + ox + 1, y + oy + 1, rx, rx * .7, 0, 0, TAU); g.fill(); g.fillStyle = r() < .5 ? '#55504b' : '#2a2725'; g.beginPath(); g.ellipse(x + ox, y + oy, rx, rx * .7, 0, 0, TAU); g.fill(); }); }
+  g.lineWidth = 1.2; for (let i = 0; i < 9; i++){ const x = r() * 256, y = r() * 256, a = r() * 3, b = r() * 3; g.strokeStyle = 'rgba(255,110,40,.32)'; wrap((ox, oy) => { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * 12, y + oy + Math.sin(a) * 6); g.lineTo(x + ox + Math.cos(a) * 12 + Math.cos(b) * 10, y + oy + Math.sin(a) * 6 + Math.sin(b) * 5); g.stroke(); }); }
+  return c;
+}
 function makeCaveBase(){
   const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(71);
   g.fillStyle = '#2b2d33'; g.fillRect(0, 0, 256, 256);
@@ -2441,11 +2486,13 @@ function makeCaveBase(){
 }
 function makeGroundTile(kind){
   const c = document.createElement('canvas'); c.width = c.height = 768; const g = c.getContext('2d');
-  const base = kind === 'rock' ? makeRockBase() : kind === 'snow' ? makeSnowBase() : kind === 'cave' ? makeCaveBase() : makeGrassTile();
+  const base = kind === 'rock' ? makeRockBase() : kind === 'snow' ? makeSnowBase() : kind === 'cave' ? makeCaveBase() : kind === 'jungle' ? makeJungleBase() : kind === 'ash' ? makeAshBase() : makeGrassTile();
   g.fillStyle = g.createPattern(base, 'repeat'); g.fillRect(0, 0, 768, 768);
   const soft = kind === 'rock' ? [['rgba(255,246,214,.08)', 'rgba(255,246,214,0)'], ['rgba(30,26,20,.13)', 'rgba(30,26,20,0)']]
     : kind === 'snow' ? [['rgba(255,255,255,.3)', 'rgba(255,255,255,0)'], ['rgba(120,150,190,.14)', 'rgba(120,150,190,0)']]
     : kind === 'cave' ? [['rgba(110,120,140,.12)', 'rgba(110,120,140,0)'], ['rgba(0,0,0,.22)', 'rgba(0,0,0,0)']]
+    : kind === 'jungle' ? [['rgba(200,230,120,.08)', 'rgba(200,230,120,0)'], ['rgba(4,24,10,.2)', 'rgba(4,24,10,0)']]
+    : kind === 'ash' ? [['rgba(255,140,60,.06)', 'rgba(255,140,60,0)'], ['rgba(0,0,0,.25)', 'rgba(0,0,0,0)']]
     : [['rgba(255,246,170,.11)', 'rgba(255,246,170,0)'], ['rgba(8,38,18,.13)', 'rgba(8,38,18,0)']];
   paintSoft(g, 768, 46, 70, 190, 11, soft);
   return c;
@@ -2623,14 +2670,15 @@ function objDraw(name, x, y, alpha, flash, dx, dy){
 const jit = o => o.shake > 0 ? Math.sin(o.shake * 70) * 1.5 : 0;
 function drawTreePix(o){
   if (!OBJ.img) return false;
-  const snow = Z.ground === 'snow', i = snow ? Math.min(2, (o.v * 3) | 0) : Math.min(8, (o.v * 9) | 0), name = snow ? 'snowpine' + i + (o.amt >= 4 ? '' : '_s') : o.amt >= 4 ? 'tree' + i : o.amt >= 2 ? 'tree' + i + '_s' : 'stump' + i;
+  const snow = Z.ground === 'snow', i = snow ? Math.min(2, (o.v * 3) | 0) : Math.min(8, (o.v * 9) | 0), sm = o.amt >= 4 ? '' : '_s';
+  const name = snow ? 'snowpine' + i + sm : o.amt < 2 ? 'stump' + i : Z.heat ? 'burnt' + (i % 3) + sm : Z.ground === 'jungle' && i % 3 === 2 ? 'palm' + ((i / 3) | 0) + sm : 'tree' + i + sm;
   const s = o.amt >= 4 ? 1 : .78; ell(o.x, o.y + 3, 12 * s, 4.5 * s, 'rgba(0,0,0,.26)');
   return objDraw(name, o.x, o.y, 1, false, jit(o));
 }
 function drawRockPix(o){
   if (!OBJ.img) return false;
   const i = Math.min(5, (frac(o.v * 31.7) * 6) | 0), t = o.amt > 5 ? '' : o.amt > 2 ? '_m' : '_s', s = t === '' ? 1 : t === '_m' ? .72 : .5;
-  ell(o.x, o.y + 3, 15 * s, 4.5 * s, 'rgba(0,0,0,.24)'); return objDraw('rock' + i + t, o.x, o.y, 1, false, jit(o));
+  ell(o.x, o.y + 3, 15 * s, 4.5 * s, 'rgba(0,0,0,.24)'); return objDraw((Z.heat ? 'basalt' + (i % 3) : 'rock' + i) + t, o.x, o.y, 1, false, jit(o));
 }
 function drawBushPix(o){
   if (!OBJ.img) return false;
@@ -2825,7 +2873,7 @@ const groundTiles = {};
 function makePixelGround(kind){        // the painted ground, squashed flat and cut down to a few colours (ordered dither), so its pixels are the same size as the sprites'
   const W2 = 768, H2 = 460, c = document.createElement('canvas'); c.width = W2; c.height = H2; const g = c.getContext('2d');
   g.drawImage(makeGroundTile(kind), 0, 0, W2, H2);
-  const id = g.getImageData(0, 0, W2, H2), d = id.data, L = kind === 'cave' ? 14 : 8, st = 255 / (L - 1), B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const id = g.getImageData(0, 0, W2, H2), d = id.data, L = kind === 'cave' ? 14 : kind === 'ash' ? 10 : 8, st = 255 / (L - 1), B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++){
     const i = (y * W2 + x) * 4, t = (B[(y & 3) * 4 + (x & 3)] / 16 - .47) * st * .6;
     for (let k = 0; k < 3; k++){ const v = Math.round((d[i + k] + t) / st) * st; d[i + k] = v < 0 ? 0 : v > 255 ? 255 : v; }
@@ -2895,7 +2943,7 @@ const SHADOW_H = { rabbit: 12, boar: 20, wolf: 19, zombie: 34, brute: 54, bear: 
 function casterSpec(d){          // [height, half width] of the thing standing there
   if (d.corpse) return null;
   if (d.p) return [50, 9];
-  if (d.c) return [SHADOW_H[d.c.k] * (d.c.scale || 1), d.c.r * .85];
+  if (d.c) return d.c.under ? null : [SHADOW_H[d.c.k] * (d.c.scale || 1), d.c.r * .85];
   const o = d.o;
   switch (o.t){
     case 'tree': { const sp = Z.ground === 'snow' ? snowTreeCache[0] : treeCache[Math.min(8, (o.v * 9) | 0)], s = treeScale(o) * (.75 + .25 * o.amt / 6); return [sp.hgt * s, 15 * s]; }
@@ -2908,6 +2956,7 @@ function casterSpec(d){          // [height, half width] of the thing standing t
     case 'bush': return null;                 // too small to matter, contact shadow is enough
     case 'shelter': return [40, 22];
     case 'wreck': return [16, 12];
+    case 'lair': return [56, 8];
     case 'wall': return o.kind === 'tower' ? [50, 13] : [20, o.kind === 'stone' || o.kind === 'iron' ? 13 : 8];
   }
   return null;
@@ -3112,8 +3161,8 @@ function drawWreck(o){
 }
 function drawAuras(draws){           // glowing ground ring under every elite, colored by its affix
   for (const d of draws){
-    const c = d.c; if (!c || !(c.elite || c.boss)) continue;
-    const col = c.boss ? BOSSES[c.boss - 1].col : AFFIX[c.affix].col, R = c.r * (c.boss ? 3.8 : 3.3), pulse = .55 + .25 * Math.sin(anim * 4 + c.x);
+    const c = d.c; if (!c || !(c.elite || c.boss || c.mimic) || c.under) continue;
+    const bi = c.boss || c.mimic, col = bi ? BOSSES[bi - 1].col : AFFIX[c.affix].col, R = c.r * (bi ? 3.8 : 3.3), pulse = .55 + .25 * Math.sin(anim * 4 + c.x);
     const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, R); g.addColorStop(0, 'rgba(' + col + ',' + (.55 * pulse).toFixed(2) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.fill();
     ctx.strokeStyle = 'rgba(' + col + ',.75)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.lineDashOffset = -anim * 18; ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 1.9, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
@@ -3255,6 +3304,7 @@ function drawCreatureBody(c){
   ctx.restore();
 }
 function drawCreature(c){
+  if (c.under) return drawUnder(c);
   const sc = c.scale || 1;
   const S = SHEET[c.k], top = S ? S.top * Math.max(1, Math.round(fSC)) / fSC : SHADOW_H[c.k] * sc;      // how tall it stands, for the name tags
   if (!(S && drawPixelCreature(c))) drawCreatureBody(c);
@@ -3262,10 +3312,10 @@ function drawCreature(c){
     const col = AFFIX[c.affix].col, w = 34, hk = Math.max(0, c.hp / c.max), by = c.y - top - 14;
     ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(c.x - w / 2, by, w, 5); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 3);
     ctx.font = '700 11px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText('★ ' + c.name, c.x, by - 4); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillText('★ ' + c.name, c.x, by - 4);
-  } else if (c.boss){
-    const col = BOSSES[c.boss - 1].col, w = 60, hk = Math.max(0, c.hp / c.max), by = c.y - top - 18;
+  } else if (c.boss || c.mimic){
+    const col = BOSSES[(c.boss || c.mimic) - 1].col, w = 60, hk = Math.max(0, c.hp / c.max), by = c.y - top - 18;
     ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(c.x - w / 2, by, w, 6); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 4);
-    ctx.font = '700 12px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText('👑 ' + c.name, c.x, by - 4); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillText('👑 ' + c.name, c.x, by - 4);
+    ctx.font = '700 12px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(bossTag(c), c.x, by - 4); ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillText(bossTag(c), c.x, by - 4);
   } else if (c.max > 10 && c.hp < c.max){
     const w = 22, hk = Math.max(0, c.hp / c.max), by = c.y - (S ? top : c.r + 16) - 12;
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(c.x - w / 2, by, w, 4);
@@ -3320,16 +3370,18 @@ function sheetImg(S, k, tint){
 function drawPixelCreature(c){
   const S = SHEET[c.k]; if (!S) return false;
   const m = S.m, cols = m.cols, hit = c.hit > 0; let an, f;
-  if (cols.fly){ an = hit ? 'hurt' : 'fly'; f = hit ? 0 : Math.floor(anim * 13 + c.x) % cols.fly[1]; }
+  if (c.sleepy && cols.idle){ an = 'idle'; f = 0; }
+  else if (c.shell && cols.shell){ an = 'shell'; f = 0; }
+  else if (cols.fly){ an = hit ? 'hurt' : 'fly'; f = hit ? 0 : Math.floor(anim * 13 + c.x) % cols.fly[1]; }
   else if (hit){ an = 'hurt'; f = 0; }
   else if (c.swing > 0 && cols.attack){ an = 'attack'; f = Math.min(3, Math.floor((1 - c.swing / .4) * 4)); }
   else if (c.cast > 0 && cols.attack){ an = 'attack'; f = c.k === 'mountainking' ? 1 : 0; }         // winding up a boss attack: hold the rearing / crouching pose
-  else if (c.k === 'golem' && c.state !== 'awake'){ an = 'idle'; f = 0; }
+  else if ((c.k === 'golem' || SPECS[c.k].ai === 'golem') && c.state !== 'awake'){ an = 'idle'; f = 0; }
   else if (c.mv && cols.walk){ an = 'walk'; f = Math.floor((((c.ph || 0) % 1) + 1) % 1 * cols.walk[1]) % cols.walk[1]; }
   else { an = 'idle'; f = Math.floor(anim * 2 + c.x) % cols.idle[1]; }
   const rr = c.r * 1.2 + 4; ctx.globalAlpha = FLYING[c.k] ? .6 : 1; ell(c.x, c.y + 2, rr, rr * .45, 'rgba(0,0,0,.28)'); ctx.globalAlpha = 1;
   const tint = c.k === 'mountainking' ? (c.enraged ? 1 : 0) : null;
-  pixDraw(S, hit && c.hit > .09 ? whiteOf(S) : sheetImg(S, c.k, tint), cols[an][0] + f, headRow(c.hd == null ? Math.PI / 4 : c.hd), c.x, c.y);
+  pixDraw(S, hit && c.hit > .09 ? whiteOf(S) : sheetImg(S, c.k, tint), cols[an][0] + f, headRow(c.hd == null ? Math.PI / 4 : c.hd), c.x, c.y, c.ghost || c.k === 'ghostcaptain' ? .72 : undefined);
   return true;
 }
 function drawCorpse(o){
@@ -3436,9 +3488,9 @@ let fxCache = {};
 function fxStyle(id, prop, v){ const key = id + prop; if (fxCache[key] !== v){ fxCache[key] = v; $(id).style[prop] = v; } }
 const hash01 = n => mulberry32(Math.imul(n, 2654435761))();
 function rainAmt(){            // 0..1. Some days (from day 2) get a rain shower; it depends only on the day number, so a reload gives the same weather
-  if (Z.cave || Z.ground === 'snow') return 0;
+  if (Z.cave || Z.ground === 'snow' || Z.heat) return 0;
   if (evOn('storm')) return 1;
-  const day = dayOf(); if (day < 2 || hash01(day * 7 + 1) > .4) return 0;
+  const day = dayOf(); if (day < 2 || hash01(day * 7 + 1) > (Z.humid ? .85 : .4)) return 0;
   const s0 = .1 + hash01(day * 7 + 2) * .4, e0 = s0 + .2 + hash01(day * 7 + 3) * .25, t = dayT();
   return clamp(Math.min((t - s0) / .04, (e0 - t) / .04), 0, 1);
 }
@@ -3466,9 +3518,9 @@ function render(){
   const t = dayT(), dk = Z.cave ? .94 : darkness(t) * (evOn('moon') ? .72 : 1);
   drawGround(vx0, vy0, vx1, vy1);
 
-  const lakes = [], list = [], seen = (x, y) => { const sx = w2sx(x, y), sy = w2sy(x, y); return sx > -130 && sx < W + 130 && sy > -50 && sy < H + 250; };
-  gridQuery(vx0 - 110, vy0 - 110, vx1 + 110, vy1 + 110, o => { if (o.t === 'water') lakes.push(o); else if (seen(o.x, o.y)) list.push(o); });
-  drawLakes(lakes);
+  const lakes = [], lavas = [], list = [], seen = (x, y) => { const sx = w2sx(x, y), sy = w2sy(x, y); return sx > -130 && sx < W + 130 && sy > -50 && sy < H + 250; };
+  gridQuery(vx0 - 110, vy0 - 110, vx1 + 110, vy1 + 110, o => { if (o.t === 'water') lakes.push(o); else if (o.t === 'lava') lavas.push(o); else if (seen(o.x, o.y)) list.push(o); });
+  drawLakes(lakes); drawLava(lavas); drawLairGround();
   drawDecals(vx0, vy0, vx1, vy1); drawTraps(vx0, vy0, vx1, vy1);
 
   // ground markers: safe zones, target ring
@@ -3499,11 +3551,11 @@ function render(){
     if (d.p) drawPlayer();
     else if (d.corpse) drawCorpse(d.corpse);
     else if (d.c) drawCreature(d.c);
-    else switch (d.o.t){ case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'ore': drawOre(d.o); break; case 'furnace': drawFurnace(d.o); break; case 'boat': drawBoat(d.o); break; case 'mine': drawMineDoor(d.o); break; case 'exit': drawCaveExit(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; case 'crate': drawCrate(d.o); break; }
+    else switch (d.o.t){ case 'lair': objDraw('lairtotem', d.o.x, d.o.y); break; case 'tree': drawTree(d.o); break; case 'rock': drawRock(d.o); break; case 'ore': drawOre(d.o); break; case 'furnace': drawFurnace(d.o); break; case 'boat': drawBoat(d.o); break; case 'mine': drawMineDoor(d.o); break; case 'exit': drawCaveExit(d.o); break; case 'bush': drawBush(d.o); break; case 'fire': drawFire(d.o); break; case 'shelter': drawShelter(d.o); break; case 'wall': drawWall(d.o); break; case 'wreck': drawWreck(d.o); break; case 'crate': drawCrate(d.o); break; }
     ctx.restore();
   }
   if (buildMode && running){ drawPlan(); drawGhost(); }
-  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawWeaponFx();
+  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawWeaponFx(); drawLandFx();
 
   uprightT();
   drawParts(); drawBullets();
@@ -3527,6 +3579,7 @@ function render(){
     lx.globalCompositeOperation = 'destination-out';
     if (running){ punch(P.x, P.y, lightR(), 8); punchCone(P.x, P.y, lightAng, lightR() * 2, .55, 10); }
     for (const o of list) if (o.t === 'furnace' && o.glow > 0) punch(o.x, o.y, 120, 6); else if (o.t === 'trap' && o.fire > 0) punch(o.x, o.y, 150, 4);
+    for (const o of lavas) punch(o.x, o.y, o.r + 110, 5);
     for (const s of structs){
       if (s.x < vx0 - 300 || s.x > vx1 + 300 || s.y < vy0 - 300 || s.y > vy1 + 300) continue;
       if (s.t === 'fire' && s.fuel > 0) punch(s.x, s.y, 250 + Math.sin(anim * 11 + s.x) * 8, 6);
@@ -3557,7 +3610,7 @@ const CRATE_LOOT = [['tonic', 1, 2], ['ammo', 6, 12], ['scrap', 2, 4], ['bandage
 let flashT = 0, boltT = 6;
 const evOn = k => !!(P && P.ev && P.ev.k === k && T < P.ev.until && !Z.cave);
 function pickEvent(when, day){
-  const pool = Object.keys(EVENTS).filter(k => EVENTS[k].when === when && day >= (EVENTS[k].min || 1) && !(k === 'storm' && Z.ground === 'snow'));
+  const pool = Object.keys(EVENTS).filter(k => EVENTS[k].when === when && day >= (EVENTS[k].min || 1) && !(k === 'storm' && (Z.ground === 'snow' || Z.heat)) && !(k === 'cold' && Z.heat));
   let r = Math.random() * pool.reduce((a, k) => a + EVENTS[k].w, 0);
   for (const k of pool){ r -= EVENTS[k].w; if (r <= 0) return k; } return pool[0];
 }
@@ -3747,18 +3800,20 @@ function frostNova(c, R){
 function updateBossFx(dt){
   for (let i = pools.length - 1; i >= 0; i--){
     const p = pools[i]; p.t -= dt; if (p.t <= 0){ pools.splice(i, 1); continue; }
-    if (Math.hypot(P.x - p.x, P.y - p.y) < p.r){ P.st.poison = Math.max(P.st.poison, 2.5); if (Math.random() < dt * 2) floater(P.x, P.y, 36, '독!', '#b7f06a'); }
-    if (Math.random() < dt * 4) fx('glow', p.x + rand(-p.r, p.r) * .7, p.y + rand(-p.r, p.r) * .4, 2, 1, '160,230,80');
+    if (!p.kind && Math.hypot(P.x - p.x, P.y - p.y) < p.r){ P.st.poison = Math.max(P.st.poison, 2.5); if (Math.random() < dt * 2) floater(P.x, P.y, 36, '독!', '#b7f06a'); }
+    if (Math.random() < dt * 4) fx(p.kind === 'lava' ? 'ember' : 'glow', p.x + rand(-p.r, p.r) * .7, p.y + rand(-p.r, p.r) * .4, 2, 1, p.kind === 'web' ? '235,230,245' : '160,230,80');
   }
   for (let i = boulders.length - 1; i >= 0; i--){
     const b = boulders[i]; b.t += dt; if (b.t < b.T) continue;
     boulders.splice(i, 1); shakeT = Math.max(shakeT, .25); SND.play('stomp', { x: b.tx, y: b.ty, key: 1 }); fx('rock', b.tx, b.ty, 10, 12); fx('glow', b.tx, b.ty, 6, 10, '170,225,255');
-    if (Math.hypot(P.x - b.tx, P.y - b.ty) < 50 + PLAYER_R){ const h = hitSrc; hitSrc = b.c; hurt(22); hitSrc = h; }
+    if (Math.hypot(P.x - b.tx, P.y - b.ty) < 50 + PLAYER_R){ const h = hitSrc; hitSrc = b.c; hurt(22); hitSrc = h; if (b.kind === 'snow') afflict('chill', 2); }
     for (const w of [...wallMap.values()]) if (Math.hypot(w.x - b.tx, w.y - b.ty) < 44) damageWall(w, 60);
   }
 }
 function drawBossGround(){                   // poison pools and where the ice will land (on the ground, under everything)
+  drawLandGround();
   for (const p of pools){
+    if (p.kind) continue;
     const a = Math.min(1, p.t / 1.2, (p.T - p.t) / .3 + .2);
     ctx.fillStyle = 'rgba(120,200,40,' + (.32 * a).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
     ctx.fillStyle = 'rgba(200,255,120,' + (.25 * a).toFixed(2) + ')'; for (let i = 0; i < 5; i++){ const q = (anim * .8 + i * .37) % 1, aa = i * 2.4; ctx.beginPath(); ctx.arc(p.x + Math.cos(aa) * p.r * .5, p.y + Math.sin(aa) * p.r * .5, 3 + q * 7, 0, TAU); ctx.fill(); }
@@ -3773,7 +3828,7 @@ function drawBoulders(){                     // the flying ice, upright, on an a
   for (const b of boulders){
     const k = b.t / b.T, x = b.sx + (b.tx - b.sx) * k, y = b.sy + (b.ty - b.sy) * k, z = 4 * 120 * k * (1 - k) + 30 * (1 - k);
     ctx.save(); standT(x, y);
-    ctx.fillStyle = '#9fd8ff'; ctx.strokeStyle = '#2b4a66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 10, y - z); ctx.lineTo(x - 3, y - z - 11); ctx.lineTo(x + 9, y - z - 6); ctx.lineTo(x + 8, y - z + 6); ctx.lineTo(x - 4, y - z + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = b.kind === 'rock' ? '#7a6e62' : b.kind === 'snow' ? '#eef6fb' : '#9fd8ff'; ctx.strokeStyle = b.kind === 'rock' ? '#3a322a' : '#2b4a66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 10, y - z); ctx.lineTo(x - 3, y - z - 11); ctx.lineTo(x + 9, y - z - 6); ctx.lineTo(x + 8, y - z + 6); ctx.lineTo(x - 4, y - z + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#e8f7ff'; ctx.fillRect(x - 4, y - z - 7, 4, 3);
     ctx.restore();
   }
@@ -3789,7 +3844,8 @@ function drawBossTelegraph2(c, p){          // warnings for the new bosses' atta
   } else if (c.castKind === 'nova'){
     const R = c.enraged ? 170 : 140; ctx.fillStyle = 'rgba(120,190,255,' + (.1 + .22 * p).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.fill();
     ctx.fillStyle = 'rgba(220,245,255,.35)'; ctx.beginPath(); ctx.arc(c.x, c.y, R * p, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(170,225,255,.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, TAU); ctx.stroke();
-  } else if (c.castKind === 'throw'){
+  } else if (c.castKind === 'tl') drawTele(c, p);
+  else if (c.castKind === 'throw'){
     ctx.strokeStyle = 'rgba(170,225,255,' + (.4 + .5 * p).toFixed(2) + ')'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.arc(c.tx, c.ty, 50, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
   }
 }
@@ -3797,7 +3853,7 @@ function drawBossTelegraph2(c, p){          // warnings for the new bosses' atta
 /* ================= traps: flat things on the build grid that hurt what walks over them (you can step on your own) ================= */
 const TRAP_RANGE = 15;
 function addTrap(i, j, kind, uses){ return addObj({ t: 'trap', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 13, amt: uses == null ? WALLS[kind].uses : uses, cd: 0, fire: 0, v: Math.random() }); }
-const trapsIgnore = c => c.k === 'rabbit' || c.k === 'bat' || FLYING[c.k] || c.ally;
+const trapsIgnore = c => c.k === 'rabbit' || c.k === 'bat' || FLYING[c.k] || c.ally || c.under;
 function creatureDot(c, dps, dt){          // damage over time (bleeding, burning) without the knockback and the noise of a hit
   c.dot = (c.dot || 0) + dps * dt;
   if (c.dot >= 1){ const n = Math.floor(c.dot); c.dot -= n; hitCreature(c, n, 0, 0, true, false, true); }
@@ -3893,7 +3949,7 @@ let hitSrc = null, dripT = 0, lastFat = 0;
 const statusTip = {};
 function afflict(k, secs){
   const s = STATUS[k]; if (!s || !P || window.__noStatus) return;
-  if (isJob('lich') && (k === 'infect' || k === 'poison') || isJob('frost') && k === 'chill') return;          // (__noStatus: tests of other things)
+  if ((isJob('lich') || relic('silk')) && (k === 'infect' || k === 'poison') || isJob('frost') && k === 'chill') return;          // (__noStatus: tests of other things)
   const had = P.st[k] > 0;
   const dur = (secs || s.dur) * (isJob('herbalist') ? .5 : 1);                 // the herbalist shakes things off in half the time
   P.st[k] = k === 'infect' ? Math.max(P.st[k], dur) : Math.min(s.max, P.st[k] + dur);
@@ -3902,7 +3958,7 @@ function afflict(k, secs){
 function cure(ks){ let n = 0; for (const k of ks) if (P.st[k] > 0){ P.st[k] = 0; n++; } return n; }
 const anyStatus = () => Object.keys(STATUS).some(k => P.st[k] > 0);
 const fatigueLv = () => P.fatigue >= 85 ? 2 : P.fatigue >= 60 ? 1 : 0;
-const statusSpeed = () => [1, .9, .8][fatigueLv()] * (P.st.chill > 0 ? .65 : 1);
+const statusSpeed = () => [1, .9, .8][fatigueLv()] * (P.st.chill > 0 ? .65 : 1) * (P.webT > 0 ? .45 : 1);
 function nearRest(){ for (const s of structs){ const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE; if (lim && Math.hypot(s.x - P.x, s.y - P.y) < lim) return true; } return false; }
 function updateStatus(dt){        // true when it killed you
   const S = P.st; let dps = 0;
@@ -4013,6 +4069,7 @@ function renderPerk(){
     for (const k of own){ const d = PERKS[k], r = document.createElement('div'); r.innerHTML = `<span>${d.icon}</span><div><b>${d.name}${d.max > 1 ? ' ' + P.perk[k] + '단계' : ''}</b><p>${d.desc}</p></div>`; ul.appendChild(r); }
     box.appendChild(ul);
   }
+  renderRelics(box);
 }
 function openPerk(){ if (!running || sleeping) return; paused = true; actHeld = false; resetJoy(); if (P.perkPts > 0 && !P.offer) rollOffer(); renderPerk(); $('perk').hidden = false; updatePerkHUD(); }
 function closePerk(){ $('perk').hidden = true; paused = !$('menu').hidden; updatePerkHUD(); }
@@ -4068,10 +4125,10 @@ const jobDef = () => (P && JOBS[P.job]) || JOBS.survivor;
 const gatherAdj = () => (isJob('soldier') ? -1 : 0);                   // added to what one swing gathers (never below 1)
 const gunMul = () => (isJob('carpenter') ? .8 : isJob('soldier') ? 1.25 : 1);
 const gunCdMul = () => (isJob('soldier') ? .85 * (perk('rapidfire') ? .8 : 1) : 1) * (P.jobFx.rapid > 0 ? .5 : 1);
-const meleeMul = () => (isJob('engineer') ? .85 : 1);
+const meleeMul = () => (isJob('engineer') ? .85 : 1) * (relic('tusk') ? 1.2 : 1);
 const potionMul = () => (isJob('herbalist') ? 1.5 : 1);
 const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1) * (isJob('phoenix') && P.jobFx.blaze > 0 ? 1.3 : 1);
-const coldMul = () => (isJob('hunter') ? 1.15 : 1);
+const coldMul = () => (isJob('hunter') ? 1.15 : 1) * (relic('pelt') ? .25 : 1);
 function wallMax(kind){ const d = WALLS[kind]; return Math.round(d.hp * (isJob('carpenter') && !d.trap ? 1.3 : 1)); }
 function buildCost(k){           // what one piece costs you, after your job's discount
   const base = WALLS[k].cost, out = {};
@@ -4467,6 +4524,611 @@ function drawWeaponFx(){           // upright: the wrench's sparks between foes,
   }
   ctx.restore();
 }
+/* ================= new lands and their masters: the islands grew, two new islands (jungle, volcano), a boss asleep in a lair on every island and in the mine, a relic for each, and three more night bosses ================= */
+const SWAMP_PAL = { rim: ['#5d5a3a', '#474629'], foam: '#8f9a6a', water: '#4d6b4a', deep: '#3a5539', core: '#2d4430' };
+const SPRING_PAL = { rim: ['#5a524a', '#3f3a35'], foam: '#d8f0ea', water: '#5fb8b0', deep: '#3f9a96', core: '#2d7d80' };
+const LAVA_PAL = { rim: ['#140d0b', '#3b1a0e'], foam: '#ff4a0a', water: '#a82606', deep: '#c53a10', core: '#ffcf4a' };
+Object.assign(ZONES, {
+  jungle: { id: 'jungle', name: '밀림섬', world: 2700, margin: 24, rad: 240, ground: 'jungle', bg: '#246a6e', shallow: ['#2f7f80', '#58a7a0'], shore: '#a99a6c', humid: true, eliteBonus: .05,
+    cliff: ['#2a3420', '#36422a', '#465436', '#586844', '#6c7c52'], lake: SWAMP_PAL, cap: { rabbit: 14, boar: 10, snake: 12 }, fauna: { rabbit: 16, boar: 10, snake: 12 } },
+  volcano: { id: 'volcano', name: '화산섬', world: 2500, margin: 24, rad: 210, ground: 'ash', bg: '#2a4f63', shallow: ['#36606f', '#5d8a94'], shore: '#4a4440', heat: true, eliteBonus: .1,
+    cliff: ['#1a1716', '#24201e', '#2f2a27', '#3b3531', '#48413c'], lake: SPRING_PAL, cap: { magma: 8, firebat: 10 }, fauna: { magma: 8, firebat: 10 } }
+});
+MINI_GROUND.jungle = '#355a2c'; MINI_GROUND.ash = '#3e3a37';
+Object.assign(DEST, {
+  jungle: { need: 2, desc: '빽빽한 밀림과 늪이 있는 섬이에요. 비가 자주 오고 독사가 숨어 있어요. 약초와 금이 나요.' },
+  volcano: { need: 3, desc: '불을 뿜는 화산섬이에요. 밤에도 춥지 않지만 몹시 목이 말라요. 용암을 조심하세요. 철과 금이 많이 나요.' }
+});
+const BOAT_UPG3 = { feBar: 6, auBar: 2, core: 2, wood: 40 };             // sailing ship -> ironclad (reaches the volcano)
+function upgradeBoat3(){
+  if ((P.boatLv || 0) !== 2 || !Object.keys(BOAT_UPG3).every(k => P.inv[k] >= BOAT_UPG3[k])) return;
+  for (const k in BOAT_UPG3) P.inv[k] -= BOAT_UPG3[k];
+  P.boatLv = 3; toast('철갑선으로 개조했어요! 이제 화산섬까지 갈 수 있어요.'); renderSail();
+}
+
+/* ---- the new creatures: a viper (jungle), spiderlings (the spider queen's brood), magma golems and fire bats (volcano) ---- */
+Object.assign(SPECS, {
+  snake:   { hp: 9,  r: 8,  speed: 40,  dmg: 9,  atkCd: 1.2, ai: 'snake', drop: { meat: 1, hide: 1 } },     // coiled in the undergrowth: lunges when you step close
+  spider:  { hp: 8,  r: 8,  speed: 92,  dmg: 5,  atkCd: 1,   ai: 'hunt', sense: 320, drop: {} },
+  magma:   { hp: 60, r: 16, speed: 30,  dmg: 18, atkCd: 1.6, wallDmg: 14, ai: 'golem', drop: { stone: [2, 4], iron: [1, 2], gold: [0, 2] } },
+  firebat: { hp: 6,  r: 8,  speed: 112, dmg: 6,  atkCd: .9,  ai: 'bat', drop: {} },
+  // zone bosses (asleep in their lairs) and the new night bosses
+  boarking:    { hp: 300, r: 22, speed: 70, dmg: 18, atkCd: 1.1, wallDmg: 30, boss: 7, drop: {} },
+  mole:        { hp: 420, r: 22, speed: 55, dmg: 20, atkCd: 1.2, wallDmg: 30, boss: 8, drop: {} },
+  spiderqueen: { hp: 460, r: 22, speed: 70, dmg: 16, atkCd: 1,   wallDmg: 24, boss: 9, drop: {} },
+  yeti:        { hp: 680, r: 24, speed: 52, dmg: 28, atkCd: 1.5, wallDmg: 40, boss: 10, drop: {} },
+  crocking:    { hp: 720, r: 24, speed: 60, dmg: 30, atkCd: 1.4, wallDmg: 36, boss: 11, drop: {} },
+  lavagiant:   { hp: 950, r: 26, speed: 42, dmg: 32, atkCd: 1.7, wallDmg: 44, boss: 12, drop: {} },
+  ninetail:    { hp: 210, r: 18, speed: 105, dmg: 13, atkCd: 1,  boss: 13, drop: {} },
+  ghostcaptain:{ hp: 370, r: 16, speed: 62, dmg: 22, atkCd: 1.1, boss: 14, drop: {} },
+  turtle:      { hp: 640, r: 26, speed: 34, dmg: 30, atkCd: 1.8, wallDmg: 50, boss: 15, drop: {} }
+});
+Object.assign(THREAT, { snake: 1, spider: 1, magma: 1, firebat: 1 }); Object.assign(THREAT_HIT, { snake: 1, spider: 1, magma: 1, firebat: 1 });
+Object.assign(KIND_NAME, { snake: '독사', spider: '새끼 거미', magma: '용암 골렘', firebat: '불박쥐', boarking: '멧돼지 대왕', mole: '대왕 두더지', spiderqueen: '거미 여왕', yeti: '설인', crocking: '늪 악어왕', lavagiant: '용암 거인', ninetail: '구미호', ghostcaptain: '유령 선장', turtle: '고대 거북' });
+Object.assign(STRIDE, { snake: 30, spider: 22, magma: 40, boarking: 60, mole: 48, spiderqueen: 44, yeti: 50, crocking: 56, lavagiant: 52, ninetail: 58, ghostcaptain: 36, turtle: 46 });
+Object.assign(SHADOW_H, { snake: 8, spider: 10, magma: 40, firebat: 14, boarking: 40, mole: 38, spiderqueen: 34, yeti: 80, crocking: 26, lavagiant: 82, ninetail: 34, ghostcaptain: 56, turtle: 40 });
+Object.assign(KILL_XP, { snake: 8, spider: 4, magma: 32, firebat: 6, boarking: 220, mole: 280, spiderqueen: 300, yeti: 420, crocking: 440, lavagiant: 600, ninetail: 170, ghostcaptain: 270, turtle: 430 });
+Object.assign(CATCH, { snake: { poison: .6 }, spider: { poison: .25 }, spiderqueen: { poison: .5 }, boarking: { bleed: .45 }, mole: { bleed: .35 }, crocking: { bleed: .6 }, yeti: { chill: .4 }, ninetail: { bleed: .3 }, ghostcaptain: { bleed: .35 } });
+Object.assign(BLOOD_COL, { magma: '', lavagiant: '', ghostcaptain: '', spider: '90,110,40', spiderqueen: '90,110,40' });
+Object.assign(FLYING, { firebat: 1, ghostcaptain: 1 });
+Object.assign(TAME, { snake: 1, magma: 1, firebat: 1, spider: 1 });
+Object.assign(BEAST, { snake: 1, spider: 1, firebat: 1, boarking: 1, mole: 1, spiderqueen: 1, yeti: 1, crocking: 1, ninetail: 1, turtle: 1 });
+BOSSES.push(
+  { k: 'boarking', tier: 0, zone: 'home', relic: 'tusk', name: '멧돼지 대왕', col: '255,140,70', desc: '멧돼지 대왕: 붉은 길이 나타난 뒤 세 번 연달아 돌진해요. 길 밖으로 피하세요!',
+    loot: { core: [1, 1], meat: [8, 10], hide: [6, 8], heal: [1, 2], tonic: [1, 1] } },
+  { k: 'mole', tier: 0, zone: 'mine', relic: 'claw', name: '대왕 두더지', col: '230,170,120', desc: '대왕 두더지: 땅속으로 파고들어 다가와요. 흙더미가 멈추고 원이 나타나면 그 자리에서 솟아올라요!',
+    loot: { core: [2, 2], copper: [6, 8], iron: [5, 7], gold: [1, 2], heal: [2, 2] } },
+  { k: 'spiderqueen', tier: 0, zone: 'cave', relic: 'silk', name: '거미 여왕', col: '200,90,255', desc: '거미 여왕: 보라 원 자리에 거미줄을 뱉어 발을 묶고, 새끼 거미를 풀어요!',
+    loot: { core: [2, 2], herb: [4, 6], bandage: [4, 5], heal: [2, 3], gold: [2, 3] } },
+  { k: 'yeti', tier: 0, zone: 'snow', relic: 'pelt', name: '설인', col: '170,220,255', desc: '설인: 거대한 눈덩이를 던지고, 가까이 가면 포효해서 몸을 얼려요. 파란 원을 벗어나세요!',
+    loot: { core: [3, 3], hide: [10, 12], meat: [8, 10], feBar: [2, 3], heal: [2, 3] } },
+  { k: 'crocking', tier: 0, zone: 'jungle', relic: 'scale', name: '늪 악어왕', col: '150,200,80', desc: '늪 악어왕: 물결만 남기고 잠수해 다가와 덥석 물어요. 가까이 있으면 꼬리를 휘둘러요!',
+    loot: { core: [3, 3], hide: [10, 14], meat: [8, 12], auBar: [1, 2], heal: [3, 3] } },
+  { k: 'lavagiant', tier: 0, zone: 'volcano', relic: 'heart', name: '용암 거인', col: '255,110,40', desc: '용암 거인: 주황 원 자리에 불덩이를 떨어뜨리고 용암 웅덩이를 남겨요. 가까이 가면 불길을 터뜨려요!',
+    loot: { core: [4, 4], feBar: [3, 4], auBar: [3, 4], gold: [4, 6], heal: [3, 3], power: [1, 2] } },
+  { k: 'ninetail', tier: 1, name: '구미호', col: '170,150,255', desc: '구미호: 쫓아오는 여우불을 쏘고, 분신을 만들고, 등 뒤의 보라 원으로 순간이동해요!',
+    loot: { core: [1, 1], hide: [3, 5], heal: [2, 3], swift: [1, 2], ammo: [15, 25] } },
+  { k: 'ghostcaptain', tier: 2, name: '유령 선장', col: '140,230,220', desc: '유령 선장: 벽을 그냥 지나와요! 노란 원에 포탄이 떨어지고, 청록 선의 닻에 맞으면 끌려가요.',
+    loot: { core: [2, 2], scrap: [12, 16], auBar: [1, 2], heal: [2, 3], ammo: [20, 30] } },
+  { k: 'turtle', tier: 3, name: '고대 거북', col: '230,190,90', desc: '고대 거북: 껍질에 숨으면 거의 다치지 않아요. 노란 길로 굴러온 뒤 어지러워할 때가 기회예요!',
+    loot: { core: [3, 3], stone: [20, 30], iron: [5, 7], gold: [2, 3], heal: [3, 3], power: [1, 1], swift: [1, 1] } }
+);
+const LAIR = { home: 's', mine: 'e', cave: 'n', snow: 's', jungle: 'e', volcano: 'n' };       // which side of each map the lair sits on
+const LAIR_BACK = 5;                                                                         // days until a beaten zone boss is back (stronger)
+const lairDef = id => BOSSES.find(b => b.zone === id);
+const RELICS = {
+  tusk:  { name: '대왕의 엄니', icon: '🦷', desc: '근접 공격 피해 +20%' },
+  claw:  { name: '두더지 발톱', icon: '⛏', desc: '나무를 베고 돌·광석을 캐는 속도 +33%' },
+  silk:  { name: '거미 비단', icon: '🕸', desc: '중독과 감염에 걸리지 않아요' },
+  pelt:  { name: '설인 털가죽', icon: '🧥', desc: '체온이 1/4 속도로만 떨어져요' },
+  scale: { name: '악어 비늘', icon: '🐊', desc: '받는 피해 -15%' },
+  heart: { name: '용암 심장', icon: '🔥', desc: '내 공격에 맞은 적이 불타요' }
+};
+const relic = k => !!(P && P.relic && P.relic[k]);
+const relicGather = () => relic('claw') ? .75 : 1;
+
+/* ---- the map: lava, the lair clearing, the new grounds ---- */
+function lairSpot(id){
+  const C = WORLD / 2, d = ISL_M + 230, s = LAIR[id];
+  return s === 'n' ? { x: C, y: d } : s === 's' ? { x: C, y: WORLD - d } : s === 'e' ? { x: WORLD - d, y: C } : { x: d, y: C };
+}
+function placeLair(){                 // a trampled clearing with a bone totem at its edge; the zone boss sleeps in the middle
+  if (!LAIR[Z.id] || objs.some(o => o.t === 'lair')) return;
+  const p = lairSpot(Z.id);
+  for (const o of objs.filter(o => Math.hypot(o.x - p.x, o.y - p.y) < 175 && (o.t === 'tree' || o.t === 'rock' || o.t === 'bush' || o.t === 'ore' || o.t === 'water' || o.t === 'lava' || o.t === 'wreck'))) removeObj(o);
+  addObj({ t: 'lair', x: p.x - 62, y: p.y - 62, r: 12, v: Math.random() });
+}
+const lairObj = () => objs.find(o => o.t === 'lair');
+const lairCenter = o => ({ x: o.x + 62, y: o.y + 62 });
+function lairCheck(){                 // the zone boss is in its lair unless it was beaten in the last few days
+  const def = lairDef(Z.id), o = def && lairObj(); if (!o || !P) return;
+  if (creatures.some(c => c.lair)) return;
+  const L = P.lairs[Z.id] || {}; if ((L.back || 0) > dayOf()) return;
+  const p = lairCenter(o), c = spawnAt(def.k, p.x, p.y);
+  c.boss = BOSSES.indexOf(def) + 1; c.name = def.name; c.skill = 3 + Math.random() * 2; c.cast = 0; c.cr = 13; c.lair = p; c.sleepy = true; c.hd = Math.PI * .75;
+  const cy = Math.min(2, L.kills || 0), grow = 1 + .025 * Math.max(0, dayOf() - 5);
+  c.cycle = cy; c.hp = c.max = Math.round(c.max * BOSS_HP[cy] * grow); if (cy){ c.bmul = BOSS_DMG[cy]; c.name = BOSS_PRE[cy] + def.name; }
+}
+function lairInfo(){
+  const def = lairDef(Z.id); if (!def) return;
+  const L = P.lairs[Z.id] || {}, here = creatures.some(c => c.lair);
+  SND.play('ui');
+  if (here) toast('💀 ' + def.name + '의 둥지예요. 가까이 가면 깨어나요. ' + (L.kills ? '' : '처음 쓰러뜨리면 유물을 얻어요'));
+  else toast('💀 ' + def.name + '의 둥지예요. ' + Math.max(1, (L.back || 0) - dayOf()) + '일 뒤에 더 강해져서 돌아와요');
+}
+function lairGoal(){
+  const def = lairDef(Z.id); if (!def || dayOf() < 4 || Object.keys(P.lairs).some(k => P.lairs[k].kills)) return '';     // a pointer to the first one; after that, they are yours to find
+  return '<b>목표</b> 둥지(미니맵의 붉은 점)에 사는 <b>' + def.name + '</b>' + josa(def.name, '을/를').slice(def.name.length) + ' 쓰러뜨려 유물 얻기';
+}
+function lairDown(c, def){            // first kill: the relic; it comes back after a few days
+  const L = P.lairs[Z.id] = P.lairs[Z.id] || {}; L.kills = (L.kills || 0) + 1; L.back = dayOf() + LAIR_BACK;
+  if (def.relic && !P.relic[def.relic]){
+    P.relic[def.relic] = true; const R = RELICS[def.relic];
+    setTimeout(() => { toast(R.icon + ' 유물 「' + R.name + '」을 얻었어요! ' + R.desc); SND.play('upgrade'); }, 2200);
+  }
+}
+function renderRelics(box){
+  const own = Object.keys(RELICS).filter(k => relic(k)); if (!own.length) return;
+  const h = document.createElement('p'); h.className = 'sub'; h.style.margin = '14px 0 6px'; h.textContent = '유물 (구역 보스)'; box.appendChild(h);
+  const ul = document.createElement('div'); ul.className = 'perkown';
+  for (const k of own){ const d = RELICS[k], r = document.createElement('div'); r.innerHTML = `<span>${d.icon}</span><div><b>${d.name}</b><p>${d.desc}</p></div>`; ul.appendChild(r); }
+  box.appendChild(ul);
+}
+
+/* ---- the two new islands ---- */
+GEN.jungle = function(){
+  const kit = genKit(), C = kit.C, noise = makeNoise();
+  const dock = { x: ISL_M + 30, y: C - 40 }, lair = lairSpot('jungle');
+  addObj({ t: 'boat', x: dock.x, y: dock.y, r: 22, v: Math.random() });
+  const keep = [[dock.x, dock.y, 120], [lair.x, lair.y, 230]];
+  for (let n = 0, tries = 0; n < 6 && tries < 300; tries++){                                   // swamps
+    const x = rand(300, WORLD - 300), y = rand(300, WORLD - 300);
+    if (inside(x, y) < 220 || keep.some(k => Math.hypot(x - k[0], y - k[1]) < k[2] + 140) || objs.some(o => o.t === 'water' && Math.hypot(o.x - x, o.y - y) < 380)) continue;
+    kit.lake(x, y, 4 + (n % 2)); n++;
+  }
+  const palmV = () => (PICK([2, 5, 8]) + .15 + Math.random() * .7) / 9;                       // the pine slots are drawn as palms here
+  kit.scatter(560, 21, (x, y) => treeObj(x, y, inside(x, y) < 170 || Math.random() < .3 ? palmV() : (PICK([0, 1, 3, 4, 6, 7]) + .15 + Math.random() * .7) / 9),
+    { test: (x, y) => { const f = noise(x / 230, y / 230); return Math.random() < (f > .42 ? .95 : f > .3 ? .45 : .12); }, keep });
+  kit.scatter(70, 26, bushObj, { keep }); kit.scatter(34, 26, rockObj, { keep });
+  oreClusters(kit, 'copper', 8, 2, [[dock.x, dock.y, 380], [lair.x, lair.y, 300]]); oreClusters(kit, 'gold', 8, 2, [[dock.x, dock.y, 380], [lair.x, lair.y, 300]]);
+  placeLair();
+};
+GEN.volcano = function(){
+  const kit = genKit(), C = kit.C;
+  const dock = { x: C + 60, y: WORLD - ISL_M - 30 }, lair = lairSpot('volcano');
+  addObj({ t: 'boat', x: dock.x, y: dock.y, r: 22, v: Math.random() });
+  addObj({ t: 'lava', x: C, y: C, r: 96, v: Math.random() });                                   // the crater
+  for (let i = 0; i < 7; i++){ const a = i / 7 * TAU + rand(-.2, .2), d = rand(95, 140); addObj({ t: 'lava', x: C + Math.cos(a) * d, y: C + Math.sin(a) * d, r: rand(40, 62), v: Math.random() }); }
+  const keep = [[dock.x, dock.y, 150], [lair.x, lair.y, 240], [C, C, 260]];
+  for (let n = 0, tries = 0; n < 12 && tries < 600; tries++){                                  // lava pools around the island
+    const x = rand(200, WORLD - 200), y = rand(200, WORLD - 200);
+    if (inside(x, y) < 150 || keep.some(k => Math.hypot(x - k[0], y - k[1]) < k[2]) || objs.some(o => o.t === 'lava' && Math.hypot(o.x - x, o.y - y) < 300)) continue;
+    addObj({ t: 'lava', x, y, r: rand(34, 62), v: Math.random() }); n++;
+  }
+  for (let n = 0, tries = 0; n < 3 && tries < 400; tries++){                                   // hot springs: the only water
+    const x = rand(300, WORLD - 300), y = rand(300, WORLD - 300);
+    if (inside(x, y) < 200 || keep.some(k => Math.hypot(x - k[0], y - k[1]) < k[2]) || objs.some(o => (o.t === 'lava' || o.t === 'water') && Math.hypot(o.x - x, o.y - y) < 260)) continue;
+    kit.lake(x, y, 2); n++;
+  }
+  if (!objs.some(o => o.t === 'water')) kit.lake(dock.x + 220, dock.y - 260, 2);
+  kit.scatter(130, 26, rockObj, { keep }); kit.scatter(46, 24, (x, y) => treeObj(x, y), { keep });
+  const avoid = [[dock.x, dock.y, 380], [lair.x, lair.y, 320], [C, C, 300]];
+  oreClusters(kit, 'iron', 16, 4, avoid); oreClusters(kit, 'gold', 14, 4, avoid);
+  placeLair();
+};
+for (const id of ['mine', 'cave', 'snow']){ const g = GEN[id]; GEN[id] = function(){ g(); placeLair(); }; }
+
+/* ---- old saves: the islands grew, so everything moves to the middle of the bigger map and the new outer ring is filled in ---- */
+const OLD_WORLD = { home: 2400, mine: 2000, cave: 1700, snow: 2200 };
+function migrateWorld(s){
+  const zs = s.zones || { home: s.objs }; s.zones = zs; const fill = {};
+  const edge = (v, old, off) => v < 300 ? v : v > old - 300 ? v + 2 * off : v + off;          // boats and wrecks stay on the beach
+  for (const id in zs){
+    const old = OLD_WORLD[id]; if (!old || !zs[id]) continue; const off = (ZONES[id].world - old) / 2;
+    for (const a of zs[id]){ if (a[0] === 'boat' || a[0] === 'wreck'){ a[1] = edge(a[1], old, off); a[2] = edge(a[2], old, off); } else { a[1] += off; a[2] += off; } }
+    fill[id] = 1;
+  }
+  const zid = ZONES[s.zone] && zs[s.zone] ? s.zone : 'home', off = OLD_WORLD[zid] ? (ZONES[zid].world - OLD_WORLD[zid]) / 2 : 0;     // (loadGame falls back to home the same way)
+  if (s.p && off){ s.p.x += off; s.p.y += off; }
+  for (const a of (s.drops || [])){ a[2] += off; a[3] += off; }
+  if (s.p) s.p.fill = fill;
+}
+function fillRing(id){                 // scatter trees, rocks and ore on the part of the island that was sea before it grew, then make the lair
+  const old = OLD_WORLD[id]; if (!old) return; const off = (WORLD - old) / 2, lo = ISL_M + ISL_R, hi = old - ISL_M - ISL_R;
+  const wasSea = (x, y) => { const ox = x - off, oy = y - off; return ISL_R - Math.hypot(ox - clamp(ox, lo, hi), oy - clamp(oy, lo, hi)) < 40; };
+  const kit = genKit(), noise = makeNoise(), ring = { test: wasSea };
+  const oreRing = (kind, n) => { for (let t = 0; t < 200; t++){ const x = rand(100, WORLD - 100), y = rand(100, WORLD - 100); if (!wasSea(x, y) || inside(x, y) < 110) continue; kit.scatter(n, 34, mkOre(kind), { cx: x, cy: y, rad: 110, test: wasSea }); return; } };
+  if (id === 'home'){ kit.scatter(230, 22, (x, y) => treeObj(x, y), { test: (x, y) => wasSea(x, y) && Math.random() < (noise(x / 240, y / 240) > .5 ? .95 : .3) }); kit.scatter(50, 26, rockObj, ring); kit.scatter(36, 28, bushObj, ring); }
+  else if (id === 'mine'){ kit.scatter(40, 26, rockObj, ring); kit.scatter(34, 22, (x, y) => treeObj(x, y, pineV()), ring); kit.scatter(6, 28, bushObj, ring); oreRing('copper', 6); oreRing('iron', 4); }
+  else if (id === 'cave'){ kit.scatter(46, 28, rockObj, ring); oreRing('copper', 8); oreRing('iron', 8); oreRing('gold', 4); }
+  else if (id === 'snow'){ kit.scatter(70, 22, (x, y) => treeObj(x, y), ring); kit.scatter(32, 26, rockObj, ring); kit.scatter(5, 28, bushObj, ring); oreRing('iron', 6); oreRing('gold', 5); }
+  placeLair();
+}
+function landsLoaded(){                // after loadGame: fill the grown ring of the zone you are in; the others are filled when you get there
+  P.lairs = P.lairs || {}; P.relic = P.relic || {}; P.fill = P.fill || {};
+  if (P.fill[Z.id]){ delete P.fill[Z.id]; fillRing(Z.id); }
+  if (!lairObj()) placeLair();
+}
+function landsEntered(){ if (P.fill && P.fill[Z.id]){ delete P.fill[Z.id]; fillRing(Z.id); } if (!lairObj()) placeLair(); }
+
+/* ---- the new creatures' ways ---- */
+function snakeAI(c, sp, dt, dx, dy, d){           // coiled and still; a lunge when you come close, then it follows you for a while
+  if (tamed(c)){ wander(c); return [c.dx, c.dy, sp.speed * .5]; }
+  if (c.lunge > 0){ c.lunge -= dt; if (!c.bit && d < c.r + PLAYER_R + 6){ c.bit = true; hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } return [c.lvx, c.lvy, 330]; }
+  if (d < 130 || (c.angry > 0 && d < 300)){
+    c.angry = Math.max(c.angry || 0, 5); c.angry -= dt;
+    if (c.atk <= 0 && d < 95){ c.lunge = .22; c.bit = false; c.lvx = dx / d; c.lvy = dy / d; c.atk = sp.atkCd; return [c.lvx, c.lvy, 330]; }
+    return [dx / d, dy / d, sp.speed * 1.6];
+  }
+  if (c.timer <= 0 || c.ang == null){ c.timer = rand(2, 5); c.coil = Math.random() < .6; c.ang = rand(0, TAU); }
+  return c.coil ? [0, 0, 0] : [Math.cos(c.ang), Math.sin(c.ang), sp.speed * .6];
+}
+function huntAI(c, sp, dt, dx, dy, d){             // spiderlings: skitter straight at you
+  if (tamed(c)){ wander(c); return [c.dx, c.dy, sp.speed * .5]; }
+  if (d < (sp.sense || 300) || c.angry){
+    if (d < c.r + PLAYER_R + 5){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * (c.dmgMul || 1))); c.atk = sp.atkCd; } return [0, 0, 0]; }
+    const a = Math.atan2(dy, dx) + Math.sin(anim * 7 + c.hop) * .5; c.hop += dt * 3; return [Math.cos(a), Math.sin(a), sp.speed];
+  }
+  wander(c); return [c.dx, c.dy, sp.speed * .5];
+}
+
+/* ---- the zone bosses: asleep until you come near, they go back to sleep if you run far away ---- */
+function lairAI(c, sp, dt, dx, dy, d){            // null = it is fighting (the boss's own moves take over)
+  const home = c.lair, hd = Math.hypot(c.x - home.x, c.y - home.y);
+  if (c.sleepy){
+    c.cast = 0; c.under = false; c.hp = Math.min(c.max, c.hp + c.max * .05 * dt);            // it heals in its sleep
+    if (Math.random() < dt * .8) floater(c.x, c.y, 50, 'z', '#cfd8ff');
+    if (d < 230 || c.sinceHit < .5){
+      c.sleepy = false; c.skill = 2.5; shakeT = .35; SND.play('bossRoar', { key: 1 });
+      toast('⚠ 구역 보스 ' + josa(c.name, '이/가') + ' 깨어났어요!'); setTimeout(() => toast(BOSSES[c.boss - 1].desc), 1900);
+    }
+    return [0, 0, 0];
+  }
+  if (c.homing || hd > 820 || Math.hypot(P.x - home.x, P.y - home.y) > 950){                 // you ran: it goes home and licks its wounds
+    if (!c.homing){ c.homing = true; c.cast = 0; c.dash = 0; c.spin = 0; c.under = false; c.shell = false; c.dr = 0; }
+    c.hp = Math.min(c.max, c.hp + c.max * .08 * dt);
+    if (hd < 26){ c.homing = false; c.sleepy = true; return [0, 0, 0]; }
+    if (d < 160 && c.hp < c.max){ c.homing = false; return null; }                             // unless you follow it
+    c.hop += dt * 6; return [(home.x - c.x) / hd, (home.y - c.y) / hd, sp.speed * 1.3];
+  }
+  return null;
+}
+function bTele(c, kind, t, o){ c.cast = c.castTot = t; c.castKind = 'tl'; c.tl = Object.assign({ kind }, o); }
+function bHitAt(c, x, y, R, n){ if (Math.hypot(P.x - x, P.y - y) >= R + PLAYER_R) return false; const h = hitSrc; hitSrc = c; hurt(Math.round(n)); hitSrc = h; return true; }
+function bWalls(x, y, R, n){ for (const w of [...wallMap.values()]) if (Math.hypot(w.x - x, w.y - y) < R + 10) damageWall(w, n); }
+function bPush(x, y, k){ const ex = P.x - x, ey = P.y - y, el = Math.hypot(ex, ey) || 1; P.x += ex / el * k; P.y += ey / el * k; }
+const foxOrbs = [], hookShots = [], skyFalls = [];
+const BOSS_AI = {
+  boarking(c, sp, dt, dx, dy, d){                 // three charges in a row along red lanes; calls the herd when hurt
+    if (!c.called && c.hp < c.max * .5){ c.called = true; for (let i = 0; i < 3; i++){ const z = spawnAt('boar', c.x + rand(-60, 60), c.y + rand(-50, 50)); z.state = 'angry'; z.angry = 30; } toast('멧돼지 대왕이 무리를 불렀어요!'); shakeT = .3; }
+    if (c.dash > 0){
+      c.dash -= dt;
+      if (!c.dashHit && d < c.r + PLAYER_R + 6){ c.dashHit = true; hurt(Math.round(sp.dmg * 1.6)); bPush(c.x, c.y, 36); }
+      const w = wallAhead(c, c.dvx, c.dvy); if (w){ damageWall(w, Math.round(sp.wallDmg * 1.5)); c.dash = 0; shakeT = .2; }
+      if (c.dash <= 0 && c.charges > 0){ c.charges--; bTele(c, 'lane', .4, { ang: Math.atan2(dy, dx), len: 330, w: 36, col: '255,120,60' }); }
+      return [c.dvx, c.dvy, 500];
+    }
+    if (c.cast > 0){
+      c.cast -= dt; if (c.cast > .15) c.tl.ang = Math.atan2(dy, dx);
+      if (c.cast <= 0){ c.dvx = Math.cos(c.tl.ang); c.dvy = Math.sin(c.tl.ang); c.dash = .62; c.dashHit = false; SND.play('stomp', { x: c.x, y: c.y, key: 1 }); }
+      return [0, 0, 0];
+    }
+    const sx = dx / d, sy = dy / d;
+    if (d < c.r + PLAYER_R + 6) bossStrike(c, sp, 1); else bossSmash(c, sp, sx, sy);
+    if (c.skill <= 0 && d > 80 && d < 400){ c.skill = c.hp < c.max * .5 ? 4.5 : 6.5; c.charges = 2; bTele(c, 'lane', .65, { ang: Math.atan2(dy, dx), len: 330, w: 36, col: '255,120,60' }); }
+    return [sx, sy, sp.speed];
+  },
+  mole(c, sp, dt, dx, dy, d){ return burrowAI(c, sp, dt, dx, dy, d, { speed: 150, R: 74, mul: 1.5, every: [7.5, 5], col: '230,150,90', rocks: true }); },
+  crocking(c, sp, dt, dx, dy, d){
+    if (!c.under){
+      if (c.cast > 0 && c.tl.kind === 'self'){ c.cast -= dt; if (c.cast <= 0){ shakeT = .25; SND.play('swing', { x: c.x, y: c.y, r: .5, key: 1 }); if (bHitAt(c, c.x, c.y, 115, sp.dmg * 1.2)) bPush(c.x, c.y, 60); bWalls(c.x, c.y, 100, 30); fx('splash', c.x, c.y, 4, 12); } return [0, 0, 0]; }
+      c.tail = (c.tail == null ? 3 : c.tail) - dt;
+      if (c.tail <= 0 && d < 120){ c.tail = c.hp < c.max * .5 ? 4 : 6; bTele(c, 'self', .6, { r: 115, col: '160,210,90' }); return [0, 0, 0]; }
+    }
+    return burrowAI(c, sp, dt, dx, dy, d, { speed: 165, R: 64, mul: 1.7, every: [7, 5], col: '120,200,220', water: true, bleed: true });
+  },
+  spiderqueen(c, sp, dt, dx, dy, d){              // spits webs that hold you, lets her brood loose
+    const rage = c.hp < c.max * .5;
+    if (c.cast > 0){ c.cast -= dt; if (c.cast <= 0){ for (const t of c.tl.pts) webLand(c, t[0], t[1]); SND.play('flame', { x: c.x, y: c.y, r: .7 }); } return [0, 0, 0]; }
+    const sx = dx / d, sy = dy / d;
+    if (d < c.r + PLAYER_R + 6) bossStrike(c, sp, 1); else bossSmash(c, sp, sx, sy);
+    if (c.skill <= 0 && d > 90 && d < 400){
+      c.skill = rage ? 3.6 : 5; const pts = [[P.x, P.y]];
+      if (rage) for (const a of [-1, 1]) pts.push([P.x - dy / d * a * 90, P.y + dx / d * a * 90]);
+      bTele(c, 'circles', .8, { pts, r: 58, col: '190,110,255' }); return [0, 0, 0];
+    }
+    c.summon = (c.summon == null ? 5 : c.summon) - dt;
+    if (c.summon <= 0){
+      c.summon = rage ? 7 : 10;
+      if (creatures.filter(z => z.owner).length < 8) for (let i = 0; i < 3; i++){ const a = rand(0, TAU), z = spawnAt('spider', c.x + Math.cos(a) * 36, c.y + Math.sin(a) * 26); z.owner = true; z.angry = 1; fx('splat', z.x, z.y, 6, 4, '90,110,40'); }
+      if (!c.summoned){ c.summoned = true; toast('거미 여왕이 새끼 거미를 풀었어요!'); }
+    }
+    return [sx, sy, sp.speed * (rage ? 1.2 : 1)];
+  },
+  yeti(c, sp, dt, dx, dy, d){                     // throws snowballs, roars to freeze you
+    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; c.spdMul = 1.2; toast('설인이 분노했어요! 눈덩이를 두 개씩 던져요'); shakeT = .3; }
+    if (c.cast > 0){
+      c.cast -= dt;
+      if (c.cast <= 0){
+        if (c.tl.kind === 'self'){ shakeT = .35; SND.play('bossRoar', { key: 1 }); for (let i = 0; i < 22; i++){ const a = i / 22 * TAU; fx('glow', c.x + Math.cos(a) * 130, c.y + Math.sin(a) * 90, 4, 1, '200,235,255'); }
+          if (bHitAt(c, c.x, c.y, 150, sp.dmg * .6)){ afflict('chill', 3); P.warmth = Math.max(0, P.warmth - 20); bPush(c.x, c.y, 50); } bWalls(c.x, c.y, 100, 25); }
+        else for (const t of c.tl.pts) boulders.push({ c, sx: c.x, sy: c.y, tx: t[0], ty: t[1], t: 0, T: .9, kind: 'snow' });
+      }
+      return [0, 0, 0];
+    }
+    const sx = dx / d, sy = dy / d;
+    if (d < c.r + PLAYER_R + 6) bossStrike(c, sp, 1); else bossSmash(c, sp, sx, sy);
+    c.roar = (c.roar == null ? 4 : c.roar) - dt;
+    if (c.roar <= 0 && d < 160){ c.roar = rage ? 6 : 8.5; bTele(c, 'self', .85, { r: 150, col: '150,210,255' }); return [0, 0, 0]; }
+    if (c.skill <= 0 && d > 120 && d < 440){
+      c.skill = rage ? 3.4 : 4.8; const pts = [[P.x, P.y]]; if (rage) pts.push([P.x + P.fx * 80, P.y + P.fy * 80]);
+      bTele(c, 'circles', .55, { pts, r: 50, col: '170,225,255', dash: 1 }); return [0, 0, 0];
+    }
+    return [sx, sy, sp.speed];
+  },
+  lavagiant(c, sp, dt, dx, dy, d){                // fire from the sky, lava left behind, a blast of flame up close
+    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('용암 거인이 분노했어요! 불덩이가 더 많이 떨어져요'); shakeT = .3; }
+    if (c.cast > 0){
+      c.cast -= dt;
+      if (c.cast <= 0){
+        if (c.tl.kind === 'self'){ shakeT = .3; SND.play('flame', { x: c.x, y: c.y, r: .5, key: 1 }); for (let i = 0; i < 26; i++){ const a = i / 26 * TAU; fx('ember', c.x + Math.cos(a) * 110, c.y + Math.sin(a) * 78, 6, 1); }
+          bHitAt(c, c.x, c.y, 130, sp.dmg * .8); bWalls(c.x, c.y, 120, 35); }
+        else for (const t of c.tl.pts) skyFalls.push({ c, x: t[0], y: t[1], t: 0, T: .55, r: 52, kind: 'lava' });
+      }
+      return [0, 0, 0];
+    }
+    const sx = dx / d, sy = dy / d;
+    if (d < c.r + PLAYER_R + 6) bossStrike(c, sp, 1); else bossSmash(c, sp, sx, sy);
+    c.trail = (c.trail == null ? 1.2 : c.trail) - dt;
+    if (c.trail <= 0){ c.trail = 1.4; pools.push({ x: c.x - sx * 20, y: c.y - sy * 20, r: 26, t: 4, T: 4, kind: 'lava' }); }
+    c.nova = (c.nova == null ? 3 : c.nova) - dt;
+    if (c.nova <= 0 && d < 140){ c.nova = rage ? 5 : 7; bTele(c, 'self', .8, { r: 130, col: '255,140,40' }); return [0, 0, 0]; }
+    if (c.skill <= 0 && d < 520){
+      c.skill = rage ? 4.2 : 6; const pts = [[P.x, P.y]];
+      for (let i = 0; i < (rage ? 5 : 3); i++){ const a = rand(0, TAU), r = rand(60, 150); pts.push([P.x + Math.cos(a) * r, P.y + Math.sin(a) * r]); }
+      bTele(c, 'circles', 1, { pts, r: 52, col: '255,120,40' }); return [0, 0, 0];
+    }
+    return [sx, sy, sp.speed];
+  },
+  ninetail(c, sp, dt, dx, dy, d){                 // fox fire that follows you, illusions, a blink to your back
+    if (c.decoy){
+      c.life -= dt; if (c.life <= 0 || c.sinceHit < .1){ fx('glow', c.x, c.y, 16, 14, '170,150,255'); fx('smoke', c.x, c.y, 10, 4); c.vanish = true; return [0, 0, 0]; }
+      if (d < c.r + PLAYER_R + 6){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * .4)); c.atk = sp.atkCd; } return [0, 0, 0]; }
+      c.hop += dt * 6; return [dx / d, dy / d, sp.speed * .9];
+    }
+    for (const [k, at] of [['ill1', .7], ['ill2', .35]]) if (!c[k] && c.hp < c.max * at){
+      c[k] = true; const spots = [];
+      for (let i = 0; i < 3; i++){ const a = Math.atan2(c.y - P.y, c.x - P.x) + (i - 1) * 1.1, r = 170; spots.push([P.x + Math.cos(a) * r, P.y + Math.sin(a) * r]); }
+      spots.sort(() => Math.random() - .5);
+      for (let i = 0; i < 3; i++){
+        const [x, y] = spots[i]; fx('glow', x, y, 16, 12, '170,150,255');
+        if (i === 0){ fx('smoke', c.x, c.y, 10, 5); c.x = x; c.y = y; continue; }
+        const z = spawnAt('ninetail', x, y); z.decoy = true; z.mimic = c.boss; z.name = c.name; z.max = c.max; z.hp = c.hp; z.life = 12; z.boss = 0;
+      }
+      toast('구미호가 분신을 만들었어요! 진짜는 하나뿐이에요'); SND.play('screech', { x: c.x, y: c.y, r: 1.3, key: 1 });
+    }
+    if (c.cast > 0){
+      c.cast -= dt;
+      if (c.cast <= 0){ fx('glow', c.x, c.y, 16, 12, '170,150,255'); c.x = c.tl.x; c.y = c.tl.y; fx('glow', c.x, c.y, 16, 12, '170,150,255'); if (bHitAt(c, c.x, c.y, 56, sp.dmg * 1.3)) afflict('bleed'); SND.play('swing', { x: c.x, y: c.y, key: 1 }); }
+      return [0, 0, 0];
+    }
+    const rage = c.hp < c.max * .5;
+    c.fire = (c.fire == null ? 3 : c.fire) - dt;
+    if (c.fire <= 0 && d > 100 && d < 420){
+      c.fire = rage ? 3 : 4.5;
+      for (let i = 0; i < 3; i++){ const a = Math.atan2(dy, dx) + (i - 1) * .9; foxOrbs.push({ c, x: c.x + Math.cos(a) * 20, y: c.y + Math.sin(a) * 20, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120, t: 4.2, sp: rage ? 150 : 128 }); }
+      SND.play('flame', { x: c.x, y: c.y, r: 1.4 });
+    }
+    if (c.skill <= 0 && d < 360){
+      c.skill = rage ? 4.5 : 7; const bx = P.x - P.fx * 64, by = P.y - P.fy * 64;
+      if (inside(bx, by) > 40 && !blocked(bx, by, c.r)){ bTele(c, 'circle', .7, { x: bx, y: by, r: 56, col: '170,150,255' }); return [0, 0, 0]; }
+    }
+    c.dart = (c.dart == null ? 2.5 : c.dart) - dt;                                     // circles you at a distance, darts in to bite now and then
+    if (c.dart <= 0){
+      if (d < c.r + PLAYER_R + 6){ bossStrike(c, sp, 1); c.dart = rage ? 2.2 : 3.4; return [0, 0, 0]; }
+      bossSmash(c, sp, dx / d, dy / d); return [dx / d, dy / d, sp.speed * 1.4];
+    }
+    c.orb = (c.orb == null ? Math.atan2(c.y - P.y, c.x - P.x) : c.orb) + dt * (rage ? .9 : .65);
+    const tx = P.x + Math.cos(c.orb) * 160, ty = P.y + Math.sin(c.orb) * 120, ex = tx - c.x, ey = ty - c.y, el = Math.hypot(ex, ey) || 1;
+    bossSmash(c, sp, ex / el, ey / el);
+    return [ex / el, ey / el, Math.min(sp.speed, el * 3)];
+  },
+  ghostcaptain(c, sp, dt, dx, dy, d){             // floats through walls; cannon fire, an anchor that drags you in, a ghostly crew
+    for (const [k, at] of [['crew1', .65], ['crew2', .3]]) if (!c[k] && c.hp < c.max * at){
+      c[k] = true; for (let i = 0; i < 3; i++){ const a = rand(0, TAU), z = spawnAt('zombie', c.x + Math.cos(a) * 50, c.y + Math.sin(a) * 34); z.owner = true; z.ghost = true; fx('glow', z.x, z.y, 14, 8, '140,230,220'); }
+      toast('유령 선장이 선원들을 불러냈어요!');
+    }
+    if (c.cast > 0){
+      c.cast -= dt;
+      if (c.tl.kind === 'lane' && c.cast > .15) c.tl.ang = Math.atan2(dy, dx);
+      if (c.cast <= 0){
+        if (c.tl.kind === 'lane'){ hookShots.push({ c, x: c.x, y: c.y, vx: Math.cos(c.tl.ang) * 540, vy: Math.sin(c.tl.ang) * 540, t: .68 }); SND.play('swing', { x: c.x, y: c.y, r: .7, key: 1 }); }
+        else { for (const t of c.tl.pts) skyFalls.push({ c, x: t[0], y: t[1], t: 0, T: .6, r: 46, kind: 'cannon' }); SND.play('gun', { x: c.x, y: c.y, r: .5, key: 1 }); }
+      }
+      return [0, 0, 0];
+    }
+    const rage = c.hp < c.max * .5;
+    c.hook = (c.hook == null ? 5 : c.hook) - dt;
+    if (c.hook <= 0 && d > 130 && d < 360){ c.hook = rage ? 6 : 8; bTele(c, 'lane', .7, { ang: Math.atan2(dy, dx), len: 370, w: 22, col: '140,230,220' }); return [0, 0, 0]; }
+    if (c.skill <= 0 && d < 540){
+      c.skill = rage ? 4.2 : 6; const pts = [[P.x, P.y]];
+      for (let i = 0; i < 4; i++){ const a = rand(0, TAU), r = rand(70, 170); pts.push([P.x + Math.cos(a) * r, P.y + Math.sin(a) * r]); }
+      bTele(c, 'circles', 1.15, { pts, r: 46, col: '255,200,120' }); return [0, 0, 0];
+    }
+    c.hop += dt * 4;
+    if (d < c.r + PLAYER_R + 6){ bossStrike(c, sp, 1); return [0, 0, 0]; }
+    return [dx / d, dy / d, sp.speed * (rage ? 1.2 : 1)];
+  },
+  turtle(c, sp, dt, dx, dy, d){                   // hides in its shell and rolls at you; dizzy (and soft) after a roll; the ground shakes
+    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('고대 거북이 분노했어요! 두 번 연달아 굴러요'); shakeT = .3; }
+    if (c.dizzy > 0){ c.dizzy -= dt; if (Math.random() < dt * 6) fx('spark', c.x, c.y, 40, 1); if (c.dizzy <= 0) c.vuln = false; return [0, 0, 0]; }
+    if (c.spin > 0){
+      c.spin -= dt; c.shell = true; c.dr = .85;
+      if (!c.spinHit && d < c.r + PLAYER_R + 6){ c.spinHit = true; hurt(Math.round(sp.dmg * 1.5)); bPush(c.x, c.y, 50); }
+      const w = wallAhead(c, c.dvx, c.dvy); if (w){ damageWall(w, 80); c.dvx = -c.dvx; c.dvy = -c.dvy; shakeT = .2; SND.play('slam', { x: c.x, y: c.y, r: 1.3 }); }
+      if (inside(c.x, c.y) < c.r + 50){ const ex = WORLD / 2 - c.x, ey = WORLD / 2 - c.y, el = Math.hypot(ex, ey) || 1; c.dvx = ex / el; c.dvy = ey / el; }
+      if (Math.random() < dt * 10) fx('dust', c.x, c.y, 0, 1);
+      if (c.spin <= 0){
+        if (c.spins > 0){ c.spins--; bTele(c, 'lane', .45, { ang: Math.atan2(dy, dx), len: 400, w: 52, col: '230,190,90' }); }
+        else { c.shell = false; c.dr = 0; c.dizzy = 1.8; c.vuln = true; floater(c.x, c.y, 60, '빈틈!', '#ffe08a'); }
+      }
+      return [c.dvx, c.dvy, 430];
+    }
+    if (c.cast > 0){
+      c.cast -= dt; const lane = c.tl.kind === 'lane'; c.shell = lane; c.dr = lane ? .85 : 0;
+      if (lane && c.cast > .15) c.tl.ang = Math.atan2(dy, dx);
+      if (c.cast <= 0){
+        if (lane){ c.spin = .95; c.dvx = Math.cos(c.tl.ang); c.dvy = Math.sin(c.tl.ang); c.spinHit = false; }
+        else { shakeT = .45; SND.play('slam', { x: c.x, y: c.y, r: .6, key: 1 }); for (let i = 0; i < 24; i++){ const a = i / 24 * TAU; fx('dust', c.x + Math.cos(a) * 180, c.y + Math.sin(a) * 125, 2, 1); } fx('rock', c.x, c.y, 10, 10);
+          bHitAt(c, c.x, c.y, 200, sp.dmg * .7); bWalls(c.x, c.y, 200, 30); }
+      }
+      return [0, 0, 0];
+    }
+    c.quake = (c.quake == null ? 4 : c.quake) - dt;
+    if (c.quake <= 0 && d < 240){ c.quake = rage ? 6 : 9; bTele(c, 'self', 1.1, { r: 200, col: '200,170,110' }); return [0, 0, 0]; }
+    if (c.skill <= 0 && d > 90 && d < 420){ c.skill = rage ? 5.5 : 7; c.spins = rage ? 1 : 0; bTele(c, 'lane', .8, { ang: Math.atan2(dy, dx), len: 400, w: 52, col: '230,190,90' }); return [0, 0, 0]; }
+    const sx = dx / d, sy = dy / d;
+    if (d < c.r + PLAYER_R + 6) bossStrike(c, sp, 1); else bossSmash(c, sp, sx, sy);
+    return [sx, sy, sp.speed];
+  }
+};
+function burrowAI(c, sp, dt, dx, dy, d, o){       // the mole and the crocodile: under the ground (or the water) toward you, then up out of it
+  const rage = c.hp < c.max * .5;
+  if (c.under){
+    if (c.cast > 0){
+      c.cast -= dt;
+      if (c.cast <= 0){
+        c.under = false; shakeT = .35; SND.play('slam', { x: c.x, y: c.y, r: o.water ? 1.2 : .8, key: 1 });
+        fx(o.water ? 'splash' : 'rock', c.x, c.y, 10, 14); fx('dust', c.x, c.y, 4, 10);
+        if (bHitAt(c, c.x, c.y, o.R, sp.dmg * o.mul)){ bPush(c.x, c.y, 40); if (o.bleed) afflict('bleed'); }
+        bWalls(c.x, c.y, o.R, 60);
+        if (o.rocks && rage) for (let i = 0; i < 6; i++){ const a = i / 6 * TAU + rand(-.2, .2), r = rand(90, 150); boulders.push({ c, sx: c.x, sy: c.y, tx: c.x + Math.cos(a) * r, ty: c.y + Math.sin(a) * r, t: 0, T: .8, kind: 'rock' }); }
+      }
+      return [0, 0, 0];
+    }
+    c.underT -= dt;
+    if (Math.random() < dt * 14) fx(o.water ? 'splash' : 'dust', c.x + rand(-8, 8), c.y + rand(-5, 5), 0, 1);
+    if (d < 26 || c.underT <= 0){ bTele(c, 'circle', rage ? .6 : .75, { x: c.x, y: c.y, r: o.R, col: o.col }); return [0, 0, 0]; }
+    return [dx / d, dy / d, o.speed * (rage ? 1.15 : 1)];
+  }
+  const sx = dx / d, sy = dy / d;
+  if (d < c.r + PLAYER_R + 6) bossStrike(c, sp, 1); else bossSmash(c, sp, sx, sy);
+  if (c.skill <= 0 && d > 60){
+    c.skill = o.every[rage ? 1 : 0]; c.under = true; c.underT = 3.2;
+    fx(o.water ? 'splash' : 'rock', c.x, c.y, 6, 10); fx('dust', c.x, c.y, 4, 8); SND.play(o.water ? 'plip' : 'slam', { x: c.x, y: c.y, r: .7 });
+  }
+  return [sx, sy, sp.speed];
+}
+function webLand(c, x, y){
+  pools.push({ x, y, r: 58, t: 7, T: 7, kind: 'web' }); fx('splat', x, y, 6, 10, '230,225,240');
+  if (bHitAt(c, x, y, 58, 10)) afflict('poison', 4);
+}
+
+/* ---- every frame: lava, webs, the bosses' missiles ---- */
+let lavaT = 0, lavaTip = false;
+function updateLands(dt){
+  P.webT = Math.max(0, (P.webT || 0) - dt);
+  if (P.pullT > 0){ P.pullT -= dt; const ex = P.pullX - P.x, ey = P.pullY - P.y, el = Math.hypot(ex, ey) || 1; if (el > 46){ const k = Math.min(el - 46, 560 * dt); P.x += ex / el * k; P.y += ey / el * k; } else P.pullT = 0; }
+  if (Z.id === 'volcano'){                                             // lava burns whoever stands at its edge
+    lavaT -= dt; let near = false;
+    gridQuery(P.x - 200, P.y - 200, P.x + 200, P.y + 200, o => { if (o.t === 'lava' && Math.hypot(o.x - P.x, o.y - P.y) < o.r + PLAYER_R + 10) near = true; });
+    if (near && lavaT <= 0){ lavaT = .5; hurt(5); fx('ember', P.x, P.y, 6, 4); if (!lavaTip){ lavaTip = true; toast('용암에 너무 가까워요! 데어요'); } }
+    if (Math.random() < dt * 6){ const o = PICK(objs); if (o && o.t === 'lava' && Math.abs(o.x - P.x) < 700 && Math.abs(o.y - P.y) < 700) fx('ember', o.x + rand(-o.r, o.r) * .6, o.y + rand(-o.r, o.r) * .4, 4, 1); }
+  }
+  for (const p of pools){
+    if (!p.kind || Math.hypot(P.x - p.x, P.y - p.y) > p.r) continue;
+    if (p.kind === 'web'){ if (!(P.webT > 0)) floater(P.x, P.y, 36, '거미줄!', '#e8e0ff'); P.webT = .25; }
+    else if (p.kind === 'lava'){ lavaT -= dt; if (lavaT <= 0){ lavaT = .5; hurt(6); fx('ember', P.x, P.y, 6, 3); } }
+  }
+  for (let i = foxOrbs.length - 1; i >= 0; i--){
+    const b = foxOrbs[i]; b.t -= dt;
+    const ex = P.x - b.x, ey = P.y - b.y, el = Math.hypot(ex, ey) || 1, va = Math.atan2(b.vy, b.vx), ta = Math.atan2(ey, ex);
+    let da = Math.atan2(Math.sin(ta - va), Math.cos(ta - va)); da = clamp(da, -1.7 * dt, 1.7 * dt);                // they turn after you, but not on a dime
+    const a = va + da; b.vx = Math.cos(a) * b.sp; b.vy = Math.sin(a) * b.sp; b.x += b.vx * dt; b.y += b.vy * dt;
+    if (Math.random() < dt * 12) fx('glow', b.x, b.y, 14, 1, '170,150,255');
+    if (el < 12 + PLAYER_R){ const h = hitSrc; hitSrc = b.c; hurt(9); hitSrc = h; fx('glow', b.x, b.y, 14, 8, '170,150,255'); foxOrbs.splice(i, 1); continue; }
+    if (b.t <= 0 || !running) foxOrbs.splice(i, 1);
+  }
+  for (let i = hookShots.length - 1; i >= 0; i--){
+    const b = hookShots[i]; b.t -= dt; b.x += b.vx * dt; b.y += b.vy * dt;
+    const w = wallMap.get(Math.floor(b.x / GRID) + ',' + Math.floor(b.y / GRID));
+    if (w && w.kind !== 'gate'){ damageWall(w, 20); fx('spark', b.x, b.y, 10, 5); hookShots.splice(i, 1); continue; }
+    if (Math.hypot(P.x - b.x, P.y - b.y) < 14 + PLAYER_R){
+      const h = hitSrc; hitSrc = b.c; hurt(10); hitSrc = h; P.pullT = .45; P.pullX = b.c.x; P.pullY = b.c.y; floater(P.x, P.y, 40, '끌려가요!', '#8fe6dc'); hookShots.splice(i, 1); continue;
+    }
+    if (b.t <= 0) hookShots.splice(i, 1);
+  }
+  for (let i = skyFalls.length - 1; i >= 0; i--){
+    const b = skyFalls[i]; b.t += dt; if (b.t < b.T) continue;
+    skyFalls.splice(i, 1); shakeT = Math.max(shakeT, .2); SND.play('stomp', { x: b.x, y: b.y, key: 1 });
+    if (b.kind === 'lava'){ fx('ember', b.x, b.y, 8, 14); fx('rock', b.x, b.y, 8, 6); pools.push({ x: b.x, y: b.y, r: 44, t: 5, T: 5, kind: 'lava' }); bHitAt(b.c, b.x, b.y, b.r, 18); bWalls(b.x, b.y, b.r - 8, 50); }
+    else { fx('smoke', b.x, b.y, 10, 6); fx('spark', b.x, b.y, 10, 8); bHitAt(b.c, b.x, b.y, b.r, 16); bWalls(b.x, b.y, b.r - 6, 50); }
+  }
+  lairTimer -= dt; if (lairTimer <= 0){ lairTimer = 5; lairCheck(); }
+}
+let lairTimer = 0;
+function clearLandFx(){ foxOrbs.length = 0; hookShots.length = 0; skyFalls.length = 0; if (P){ P.pullT = 0; P.webT = 0; } }
+
+/* ---- drawing ---- */
+function drawTele(c, p){                          // the new bosses' warnings (world coordinates)
+  const t = c.tl; if (!t) return; const col = t.col || '255,80,60';
+  if (t.kind === 'lane'){
+    ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(t.ang);
+    ctx.fillStyle = 'rgba(' + col + ',' + (.12 + .3 * p).toFixed(2) + ')'; ctx.fillRect(0, -t.w / 2, t.len, t.w);
+    ctx.strokeStyle = 'rgba(' + col + ',.9)'; ctx.lineWidth = 2; ctx.strokeRect(0, -t.w / 2, t.len, t.w);
+    ctx.fillStyle = 'rgba(255,240,225,.45)'; ctx.fillRect(0, -t.w / 2, t.len * p, t.w); ctx.restore(); return;
+  }
+  const pts = t.kind === 'circles' ? t.pts : t.kind === 'self' ? [[c.x, c.y]] : [[t.x, t.y]];
+  for (const q of pts){
+    ctx.fillStyle = 'rgba(' + col + ',' + (.1 + .24 * p).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(q[0], q[1], t.r, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(255,245,230,.3)'; ctx.beginPath(); ctx.arc(q[0], q[1], t.r * p, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(' + col + ',.95)'; ctx.lineWidth = 2.5; if (t.dash) ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.arc(q[0], q[1], t.r, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function drawLava(lavas){                          // a black crust, a glowing edge, a molten body that is hottest in the middle, drifting plates of slag
+  if (!lavas.length) return;
+  const L = LAVA_PAL, layer = (d, col) => { ctx.fillStyle = col; for (const o of lavas){ ctx.beginPath(); ctx.arc(o.x, o.y, Math.max(0, o.r + d), 0, TAU); ctx.fill(); } };
+  layer(11, L.rim[0]); layer(6, L.rim[1]); layer(2, L.foam); layer(0, L.water);
+  for (const o of lavas){
+    const pulse = .8 + .2 * Math.sin(anim * 2 + o.x * .02), g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r * .95);
+    g.addColorStop(0, 'rgba(255,190,60,' + (.85 * pulse).toFixed(2) + ')'); g.addColorStop(.5, 'rgba(255,90,10,.55)'); g.addColorStop(1, 'rgba(255,60,0,0)');
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, o.r * .95, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(60,20,10,.55)';
+    for (let i = 0; i < 4; i++){ const a = anim * .05 * (i % 2 ? 1 : -1) + i * 1.6 + o.v * 6, rr = o.r * (.35 + .4 * frac(i * .29 + o.v)), x = o.x + Math.cos(a) * rr, y = o.y + Math.sin(a) * rr, w = 5 + 6 * frac(i * .53 + o.v);
+      ctx.beginPath(); ctx.moveTo(x - w, y - w * .3); ctx.lineTo(x + w * .2, y - w * .6); ctx.lineTo(x + w, y + w * .2); ctx.lineTo(x - w * .3, y + w * .5); ctx.closePath(); ctx.fill(); }
+    for (let i = 0; i < 3; i++){ const q = (anim * .6 + i * .33 + o.v) % 1, a = i * 2.1 + o.v * 6, rr = o.r * (.3 + .4 * frac(i * .41 + o.v)); ctx.strokeStyle = 'rgba(255,240,180,' + (.8 * (1 - q)).toFixed(2) + ')'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(o.x + Math.cos(a) * rr, o.y + Math.sin(a) * rr, 1.5 + q * 5, 0, TAU); ctx.stroke(); }
+  }
+}
+function drawLairGround(){                         // the trampled clearing, bones, and a red ring while its master is at home
+  const o = lairObj(); if (!o) return; const p = lairCenter(o);
+  if (Math.abs(p.x - cam.x) > 900 || Math.abs(p.y - cam.y) > 900) return;
+  const g = ctx.createRadialGradient(p.x, p.y, 20, p.x, p.y, 165); g.addColorStop(0, 'rgba(40,26,16,.42)'); g.addColorStop(.8, 'rgba(40,26,16,.22)'); g.addColorStop(1, 'rgba(40,26,16,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 165, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#d9d0b8';
+  for (let i = 0; i < 14; i++){ const a = i * 2.4 + o.v * 5, r = 40 + frac(i * .37 + o.v) * 110; ctx.save(); ctx.translate(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r); ctx.rotate(a * 1.7); ctx.fillRect(-5, -1.2, 10, 2.4); ctx.beginPath(); ctx.arc(-5, 0, 1.8, 0, TAU); ctx.arc(5, 0, 1.8, 0, TAU); ctx.fill(); ctx.restore(); }
+  if (creatures.some(c => c.lair)){ ctx.strokeStyle = 'rgba(255,70,60,.45)'; ctx.lineWidth = 3; ctx.setLineDash([10, 9]); ctx.lineDashOffset = anim * 8; ctx.beginPath(); ctx.arc(p.x, p.y, 150, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+}
+function drawLandGround(){                         // lava puddles, webs, the shadows of what is falling (on the ground)
+  for (const p of pools){
+    if (!p.kind) continue; const a = Math.min(1, p.t / 1.2, (p.T - p.t) / .3 + .2);
+    if (p.kind === 'lava'){
+      ctx.fillStyle = 'rgba(232,84,26,' + (.55 * a).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,207,74,' + (.5 * a).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * .5, 0, TAU); ctx.fill();
+    } else {
+      ctx.strokeStyle = 'rgba(235,230,245,' + (.7 * a).toFixed(2) + ')'; ctx.lineWidth = 1.4;
+      for (let i = 0; i < 8; i++){ const q = i / 8 * TAU; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(q) * p.r, p.y + Math.sin(q) * p.r); ctx.stroke(); }
+      for (const k of [.35, .65, .95]){ ctx.beginPath(); for (let i = 0; i <= 8; i++){ const q = i / 8 * TAU, x = p.x + Math.cos(q) * p.r * k, y = p.y + Math.sin(q) * p.r * k; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); }
+    }
+  }
+  for (const b of skyFalls){ const k = b.t / b.T; ctx.fillStyle = 'rgba(0,0,0,' + (.15 + .25 * k).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(b.x, b.y, 8 + 14 * k, 0, TAU); ctx.fill(); }
+}
+function drawLandFx(){                             // fox fire, the anchor and its chain, cannonballs and fireballs falling (upright)
+  if (!foxOrbs.length && !hookShots.length && !skyFalls.length) return;
+  ctx.save(); uprightT();
+  for (const b of foxOrbs){ const x = ux(b.x, b.y), y = uy(b.x, b.y) - 16; ctx.drawImage(glowTex('170,150,255'), x - 16, y - 16, 32, 32); ctx.fillStyle = '#f2eeff'; ctx.beginPath(); ctx.arc(x, y, 4, 0, TAU); ctx.fill(); }
+  for (const b of hookShots){
+    const x = ux(b.x, b.y), y = uy(b.x, b.y) - 18, cx = ux(b.c.x, b.c.y), cy = uy(b.c.x, b.c.y) - 30;
+    ctx.strokeStyle = 'rgba(160,240,230,.8)'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#5c6b70'; ctx.fillRect(x - 2, y - 7, 4, 12); ctx.fillRect(x - 7, y + 2, 14, 3);
+  }
+  for (const b of skyFalls){
+    const k = b.t / b.T, x = ux(b.x, b.y), y = uy(b.x, b.y) - (1 - k) * 300;
+    if (b.kind === 'lava'){ ctx.drawImage(glowTex('255,140,40'), x - 22, y - 22, 44, 44); ctx.fillStyle = '#ffcf4a'; ctx.beginPath(); ctx.arc(x, y, 7, 0, TAU); ctx.fill(); }
+    else { ctx.fillStyle = '#222428'; ctx.beginPath(); ctx.arc(x, y, 7, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x - 3, y - 4, 2, 2); }
+  }
+  ctx.restore();
+}
+function drawUnder(c){                             // a burrowing mole is a moving mound of earth; a diving crocodile is ripples and two eyes
+  if (c.k === 'crocking'){
+    for (let i = 0; i < 3; i++){ const q = (anim * 1.4 + i / 3) % 1; ctx.strokeStyle = 'rgba(200,235,240,' + (.6 * (1 - q)).toFixed(2) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(c.x, c.y, 10 + q * 26, (10 + q * 26) * .5, 0, 0, TAU); ctx.stroke(); }
+    ctx.fillStyle = '#f2d24a'; ctx.fillRect(c.x - 7, c.y - 4, 3, 3); ctx.fillRect(c.x + 4, c.y - 4, 3, 3);
+  } else {
+    ell(c.x, c.y + 2, 26, 10, 'rgba(0,0,0,.25)'); ell(c.x, c.y - 4, 22, 11, '#5d4630'); ell(c.x - 4, c.y - 8, 13, 6, '#76593c');
+    ctx.fillStyle = '#8e8674'; for (let i = 0; i < 5; i++){ const a = i * 1.3 + anim * 3; ctx.fillRect(c.x + Math.cos(a) * 16, c.y - 6 + Math.sin(a) * 5, 3, 3); }
+  }
+}
+const bossTag = c => (c.sleepy ? '💤 ' : '👑 ') + c.name;
+
 /* ================= fishing: cast, wait for a nibble, hook it when the bobber dives, then time three taps on the moving bar ================= */
 const FISH_KIND = {
   small: { name: '작은 물고기', n: 1, zw: .36, sp: .85, bite: 1.25 },
@@ -4781,10 +5443,10 @@ const SND = (() => {
     stepSnow:  { d: .2, cd: 90, v: .45, j: .3, fn: (c, o, t, r) => { burst(c, o, t, { type: 'highpass', f: 1400 * r, d: .09, a: .01, v: .5 }); burst(c, o, t + .03, { type: 'bandpass', f: 4500, q: 1, d: .05, v: .2 }); } },
     stepCave:  { d: .5, cd: 90, v: .4, j: .3, wet: .8, fn: (c, o, t, r) => { burst(c, o, t, { f: 1500 * r, q: 1.2, d: .035, v: .5 }); tone(c, o, t, { f: 180 * r, f1: 100, d: .05, v: .22 }); } }
   };
-  const HIT_V = { plaguegiant: 'hitZ', frostgiant: 'hitStone', zombie: 'hitZ', brute: 'hitZ', zombielord: 'hitZ', golem: 'hitStone', mountainking: 'hitStone' };
+  const HIT_V = { magma: 'hitStone', lavagiant: 'hitStone', turtle: 'hitStone', ghostcaptain: 'hitZ', yeti: 'hitZ', plaguegiant: 'hitZ', frostgiant: 'hitStone', zombie: 'hitZ', brute: 'hitZ', zombielord: 'hitZ', golem: 'hitStone', mountainking: 'hitStone' };
   const PAIN_V = { batqueen: 'screech', wolf: 'yelp', wolfking: 'yelp', boar: 'oink', bear: 'roarS', rabbit: 'squeal', bat: 'screech', zombie: 'groan', brute: 'groan' };
-  const ATK_V = { batqueen: 'bite', plaguegiant: 'claw', frostgiant: 'stomp', wolf: 'bite', wolfking: 'bite', zombie: 'claw', brute: 'claw', zombielord: 'claw', boar: 'claw', bear: 'claw', mountainking: 'claw', bat: 'screech', golem: 'stomp' };
-  const VOICE_V = { batqueen: ['screech', 2.2, 4.5, 700, 1, .55], plaguegiant: ['moan', 4, 7, 700, 1, .75], frostgiant: ['roar', 5, 8, 700, 1, .65], zombie: ['groan', 3, 7, 520], brute: ['groan', 3.5, 7, 520, .6], zombielord: ['moan', 4, 8, 640], wolf: ['growl', 4, 9, 260], wolfking: ['roar', 5, 9, 640], bear: ['roarS', 3, 6, 300], boar: ['oink', 3, 6, 260], bat: ['screech', 1.4, 3, 300], mountainking: ['roar', 5, 8, 700], golem: ['stomp', 2.6, 4, 320] };
+  const ATK_V = { snake: 'bite', spider: 'bite', magma: 'stomp', firebat: 'screech', boarking: 'claw', mole: 'claw', spiderqueen: 'bite', yeti: 'stomp', crocking: 'bite', lavagiant: 'stomp', ninetail: 'bite', ghostcaptain: 'claw', turtle: 'stomp', batqueen: 'bite', plaguegiant: 'claw', frostgiant: 'stomp', wolf: 'bite', wolfking: 'bite', zombie: 'claw', brute: 'claw', zombielord: 'claw', boar: 'claw', bear: 'claw', mountainking: 'claw', bat: 'screech', golem: 'stomp' };
+  const VOICE_V = { boarking: ['oink', 3, 6, 600, 1, .6], mole: ['growl', 4, 8, 500, 1, .7], spiderqueen: ['screech', 3, 6, 600, 1, .5], yeti: ['roar', 5, 8, 700, 1, .8], crocking: ['growl', 4, 8, 600, 1, .6], lavagiant: ['roar', 5, 8, 700, 1, .5], ninetail: ['growl', 4, 8, 600, 1, 1.3], ghostcaptain: ['moan', 4, 7, 640], turtle: ['roarS', 5, 9, 600, 1, .5], firebat: ['screech', 1.4, 3, 300, .7, 1.2], batqueen: ['screech', 2.2, 4.5, 700, 1, .55], plaguegiant: ['moan', 4, 7, 700, 1, .75], frostgiant: ['roar', 5, 8, 700, 1, .65], zombie: ['groan', 3, 7, 520], brute: ['groan', 3.5, 7, 520, .6], zombielord: ['moan', 4, 8, 640], wolf: ['growl', 4, 9, 260], wolfking: ['roar', 5, 9, 640], bear: ['roarS', 3, 6, 300], boar: ['oink', 3, 6, 260], bat: ['screech', 1.4, 3, 300], mountainking: ['roar', 5, 8, 700], golem: ['stomp', 2.6, 4, 320] };
 
   /* ---------- the output graph ---------- */
   function start(){
@@ -4887,7 +5549,7 @@ const SND = (() => {
   const S = { fire: 0, dmin: 1e9, edge: 999, scan: 0 };
   function tick(dt){
     if (!ac) return; const now = ac.currentTime;
-    const live_ = running, night = live_ && isNight() && !Z.cave, bossUp = live_ && creatures.some(c => c.boss);
+    const live_ = running, night = live_ && isNight() && !Z.cave, bossUp = live_ && creatures.some(c => c.boss && !c.sleepy);
     const duck = paused || !live_ ? .5 : 1;
     sentWet = live_ && Z.cave ? 2.2 : 1;
     if (st.muted || ac.state !== 'running') return;
@@ -4922,17 +5584,17 @@ const SND = (() => {
     if (S.fire > .02){ tm.crack -= dt; if (tm.crack <= 0){ tm.crack = rnd(.05, .4) / (.4 + S.fire * 2.5); play('crackle', { v: Math.min(1, S.fire * 2.2), pan: rnd(-.3, .3) }); } }
     // --- scattered one-shots
     const rw = Z.cave ? 0 : rainAmt(), snow = Z.ground === 'snow', dk = darkness(dayT());
-    if (!Z.cave && !snow && dk < .15 && rw < .2){ tm.bird -= dt; if (tm.bird <= 0){ tm.bird = rnd(3, 10); play('bird', { pan: rnd(-.8, .8) }); } }
+    if (!Z.cave && !snow && !Z.heat && dk < .15 && rw < .2){ tm.bird -= dt; if (tm.bird <= 0){ tm.bird = rnd(3, 10); play('bird', { pan: rnd(-.8, .8) }); } }
     if (!Z.cave && !snow && dk > .6 && rw < .4){ tm.cricket -= dt; if (tm.cricket <= 0){ tm.cricket = rnd(.35, 1.4); play('cricket', { pan: rnd(-.9, .9), v: rnd(.6, 1) }); } }
     if (!Z.cave && (dk > .7 || Z.dayWolves)){ tm.howl -= dt; if (tm.howl <= 0){ tm.howl = rnd(22, 48); play('howl', { pan: rnd(-.9, .9), v: .55, r: rnd(.9, 1.15) }); } }
     if (Z.cave){ tm.drip -= dt; if (tm.drip <= 0){ tm.drip = rnd(1.4, 5); play('drip', { pan: rnd(-.7, .7) }); } }
     if (P.hp < 30 && P.hp > 0){ tm.heart -= dt; if (tm.heart <= 0){ tm.heart = .95 + P.hp / 60; play('heart', { key: 1 }); } }
     // --- footsteps
     const si = Math.floor(P.step / Math.PI);
-    if (si !== stepI){ stepI = si; if (P.moving && !sleeping) play(Z.cave ? 'stepCave' : Z.ground === 'snow' ? 'stepSnow' : Z.ground === 'rock' ? 'stepRock' : S.edge < 46 ? 'stepSand' : 'stepGrass'); }
+    if (si !== stepI){ stepI = si; if (P.moving && !sleeping) play(Z.cave ? 'stepCave' : Z.ground === 'snow' ? 'stepSnow' : Z.ground === 'rock' || Z.ground === 'ash' ? 'stepRock' : S.edge < 46 ? 'stepSand' : 'stepGrass'); }
     // --- what the animals say
     for (const c of creatures){
-      const vv = VOICE_V[c.k]; if (!vv) continue;
+      const vv = VOICE_V[c.k]; if (!vv || c.sleepy || c.under) continue;
       if ((c.k === 'bear' || c.k === 'boar') && c.state !== 'angry' || c.k === 'golem' && c.state !== 'awake') continue;
       const d = Math.hypot(c.x - P.x, c.y - P.y); if (d > vv[3]) continue;
       c.vt = (c.vt == null ? rnd(0, vv[2]) : c.vt) - dt;
@@ -4994,6 +5656,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 
 // debug/test hook (read-only view of the running game)
 window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
+Object.assign(window.__game, { ZONES, LAIR, RELICS, relic, lairCheck, lairObj, lairCenter, lairSpot, placeLair, fillRing, migrateWorld, loadGame, BOSS_AI, foxOrbs, hookShots, skyFalls, upgradeBoat3, BOAT_UPG3, DEST, inside, setZone, genWorld, GEN, updateLands, lairDef, renderPerk }); Object.defineProperty(window.__game, 'WORLD', { get: () => WORLD });
 })();
 </script>
 </body>

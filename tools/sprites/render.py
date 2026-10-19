@@ -48,6 +48,10 @@ MAT = {
   'batf':   ramp('#251f30', '#352d45', '#493e5e', '#625780'), 'batw': ramp('#2b2339', '#3d3253', '#54476f', '#716391'), 'bred': ramp('#7a1010', '#b01818', '#d62a2a', '#ff5a4a'),
   'rock':   ramp('#43484e', '#595f66', '#737a82', '#8f979f'), 'rock2': ramp('#33373c', '#454a50', '#585e65', '#6f767e'),
   'glow':   ramp('#a65a12', '#d98122', '#f5a64a', '#ffd185'), 'glow2': ramp('#4a8a22', '#74c032', '#a3ec55', '#d4ff8a'),
+  # weapons
+  'blade':  ramp('#5a646d', '#8d99a3', '#bcc7cf', '#e6eef3'), 'copper': ramp('#5a2a12', '#8a4420', '#b8642e', '#e0904a'),
+  'tnt':    ramp('#5a0c0c', '#8a1414', '#bb2222', '#e04a3a'), 'string': ramp('#8d8472', '#b0a690', '#cfc4ad', '#e9e0cb'),
+  'spark':  ramp('#2f6fb0', '#4f9ce0', '#8cd0ff', '#d4f0ff'), 'leaf':   ramp('#2a4a1a', '#3d6a26', '#56903a', '#78b850'),
   # boss variants (materials swapped in with SWAP)
   'pskin':  ramp('#4f522a', '#6e7136', '#8f9245', '#b0b25e'), 'pshirt': ramp('#1c2114', '#28301d', '#384229', '#4a5636'),
   'ice':    ramp('#355670', '#4f7c9e', '#77a9cf', '#acd8f2'), 'ice2': ramp('#263c52', '#365670', '#4d7494', '#6e98ba'), 'frost': ramp('#4fb0e2', '#83d0f4', '#bce8ff', '#effaff'),
@@ -146,6 +150,35 @@ def tool_boxes(b, hand, tool):
         box(b, hand, (0, 0, .72), (.12, .08, .08), 'dark', 'pickmid')
         for sg in (1, -1):
             n = Node(hand, (sg * .12, 0, .72), rz(sg * .5)); box(b, n, (sg * .13, 0, 0), (.30, .045, .06), 'metal', 'pick' + str(sg))
+    elif tool == 'sword':
+        box(b, hand, (0, 0, .02), (.05, .05, .2), 'strap', 'grip'); box(b, hand, (0, 0, -.1), (.07, .07, .05), 'metal', 'pommel')
+        box(b, hand, (0, 0, .14), (.07, .26, .045), 'metal', 'guard'); box(b, hand, (0, 0, .58), (.03, .09, .84), 'blade', 'blade')
+        box(b, hand, (0, 0, 1.02), (.03, .05, .06), 'blade', 'tip')
+    elif tool == 'hammer':
+        box(b, hand, (0, 0, .26), (.055, .055, .8), 'wood', 'shaft'); box(b, hand, (0, 0, .7), (.13, .34, .15), 'dark', 'head')
+        box(b, hand, (0, .19, .7), (.15, .05, .17), 'metal', 'face'); box(b, hand, (0, -.17, .7), (.08, .06, .1), 'metal', 'claw')
+    elif tool == 'wrench':
+        box(b, hand, (0, 0, .3), (.06, .045, .78), 'metal', 'shaft'); box(b, hand, (0, 0, .42), (.075, .06, .18), 'spark', 'coil')
+        for sg in (1, -1): box(b, hand, (0, sg * .08, .76), (.06, .05, .16), 'copper', 'jaw' + str(sg))
+        box(b, hand, (0, 0, .68), (.07, .2, .05), 'copper', 'jawbase')
+    elif tool == 'sickle':
+        box(b, hand, (0, 0, .2), (.055, .055, .52), 'wood', 'shaft'); box(b, hand, (0, 0, .1), (.065, .065, .14), 'leaf', 'wrap')
+        box(b, hand, (0, .12, .48), (.04, .28, .07), 'blade', 'b1'); box(b, hand, (0, .27, .36), (.04, .07, .26), 'blade', 'b2')
+        box(b, hand, (0, .22, .22), (.04, .06, .08), 'blade', 'b3'); box(b, hand, (0, .05, .44), (.05, .06, .06), 'leaf', 'b4')
+    elif tool == 'bombpick':
+        box(b, hand, (0, 0, .30), (.05, .05, .86), 'wood', 'shaft'); box(b, hand, (0, 0, .72), (.12, .08, .08), 'dark', 'pickmid')
+        for sg in (1, -1):
+            n = Node(hand, (sg * .12, 0, .72), rz(sg * .5)); box(b, n, (sg * .13, 0, 0), (.30, .045, .06), 'metal', 'pick' + str(sg))
+        box(b, hand, (0, .07, .48), (.12, .06, .16), 'tnt', 'tnt'); box(b, hand, (0, .11, .58), (.02, .02, .06), 'string', 'fuse')
+    elif tool == 'bow':
+        box(b, hand, (0, 0, .1), (.05, .06, .12), 'strap', 'grip')
+        for sg in (1, -1):
+            n = Node(hand, (0, sg * .05, .1), rx(-sg * .28)); box(b, n, (0, sg * .24, 0), (.04, .46, .05), 'wood', 'limb' + str(sg))
+        box(b, hand, (0, 0, -.04), (.015, .86, .015), 'string', 'string')
+    elif tool == 'shotgun':
+        box(b, hand, (0, -.02, -.12), (.08, .16, .42), 'wood', 'stock'); box(b, hand, (0, 0, .24), (.08, .1, .3), 'dark', 'body')
+        for sg in (1, -1): box(b, hand, (sg * .025, .04, .6), (.045, .045, .5), 'metal', 'barrel' + str(sg))
+        box(b, hand, (0, -.02, .5), (.085, .06, .2), 'wood', 'pump')
     elif tool == 'gun':
         box(b, hand, (0, -.02, -.12), (.07, .15, .46), 'wood', 'stock')
         box(b, hand, (0, .0, .30), (.075, .10, .46), 'wood', 'fore'); box(b, hand, (0, .035, .78), (.045, .045, .55), 'metal', 'barrel')
@@ -227,7 +260,15 @@ TOOLPOSE = {
     'axe':     dict(grip=.8,  carry=(.45, .7),  wind=(2.5, .6),   hit=(.9, .15),   follow=(.5, .1)),
     'pickaxe': dict(grip=.8,  carry=(.45, .7),  wind=(2.5, .6),   hit=(.9, .15),   follow=(.5, .1)),
     'gun':     dict(grip=1.2, carry=(.45, .5),  wind=(.7, .7),    hit=(.62, .7),   follow=(.7, .7)),
+    'sword':   dict(grip=.9,  carry=(.35, .6),  wind=(2.3, .55),  hit=(1.05, .1),  follow=(.35, .1)),
+    'hammer':  dict(grip=.8,  carry=(.45, .7),  wind=(2.6, .6),   hit=(.85, .15),  follow=(.45, .1)),
+    'wrench':  dict(grip=.8,  carry=(.45, .7),  wind=(2.4, .6),   hit=(.9, .15),   follow=(.5, .1)),
+    'sickle':  dict(grip=.7,  carry=(.3, .6),   wind=(1.9, .7),   hit=(1.1, .2),   follow=(.6, .2)),
+    'bombpick':dict(grip=.8,  carry=(.45, .7),  wind=(2.5, .6),   hit=(.9, .15),   follow=(.5, .1)),
+    'bow':     dict(grip=1.2, carry=(.45, .5),  wind=(.7, .7),    hit=(.62, .7),   follow=(.7, .7)),
+    'shotgun': dict(grip=1.2, carry=(.45, .5),  wind=(.7, .7),    hit=(.62, .7),   follow=(.7, .7)),
 }
+RANGED = ('gun', 'bow', 'shotgun')
 
 def survivor_pose(anim, phase, tool=None):
     tp = TOOLPOSE[tool or 'hand']
@@ -245,7 +286,7 @@ def survivor_pose(anim, phase, tool=None):
         i = min(3, int(phase * 4)); a, e = steps[i]
         p = dict(armR=a, elbowR=e, armL=.3, elbowL=.4, lean=[.12, -.05, -.22, -.12][i], twist=[-.35, -.1, .3, .2][i], bob=[.01, -.01, -.04, -.02][i], head_lean=-.05,
                  legL=[-.2, .1, .4, .3][i], legR=[.3, .0, -.3, -.2][i], kneeL=.15, kneeR=.15)
-        if tool == 'gun':                                           # shouldering the rifle: left hand forward on the grip, small recoil
+        if tool in RANGED:                                          # shouldering the rifle: left hand forward on the grip, small recoil
             p.update(armL=1.0, elbowL=.55, lean=[0, -.06, -.02, -.04][i], twist=0, bob=0, legL=.2, legR=-.2, armR=[.6, .62, .5, .56][i], elbowR=[.75, .7, .85, .8][i])
     elif anim == 'hurt':
         p = dict(lean=.28, head_lean=.22, armL=.5, armR=.4, elbowL=.6, elbowR=.5, outL=.3, outR=.3, bob=-.04, legL=-.18, legR=.2, kneeL=.2, kneeR=.15)
@@ -253,7 +294,7 @@ def survivor_pose(anim, phase, tool=None):
     if anim in ('idle', 'walk') or (anim == 'hurt'):
         if tool:                                                   # carry the tool at the ready
             a, e = tp['carry']; p.update(armR=a + (.06 * s if anim == 'idle' else .05 * s), elbowR=e)
-            if tool == 'gun':
+            if tool in RANGED:
                 p.update(armL=.8, elbowL=.5)
     p['grip'] = -tp['grip'] if tool else 0
     return p

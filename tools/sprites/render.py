@@ -56,6 +56,18 @@ MAT = {
   'pskin':  ramp('#4f522a', '#6e7136', '#8f9245', '#b0b25e'), 'pshirt': ramp('#1c2114', '#28301d', '#384229', '#4a5636'),
   'ice':    ramp('#355670', '#4f7c9e', '#77a9cf', '#acd8f2'), 'ice2': ramp('#263c52', '#365670', '#4d7494', '#6e98ba'), 'frost': ramp('#4fb0e2', '#83d0f4', '#bce8ff', '#effaff'),
   'qfur':   ramp('#330d14', '#4e1520', '#6e1f2e', '#922f42'), 'qwing': ramp('#260a0f', '#3b0f18', '#561624', '#742134'),
+  # new bosses and creatures (bosses.py)
+  'bkfur':  ramp('#2a120c', '#43201a', '#5e2f24', '#7a4031'), 'bkdark': ramp('#190a06', '#28120c', '#3a1b12', '#4d261a'),
+  'molef':  ramp('#1f1b1e', '#2e292d', '#433c41', '#5b5257'),
+  'spf':    ramp('#1a1512', '#2a211b', '#3b2f26', '#4f4033'), 'sqfur': ramp('#1a0f1f', '#2a1733', '#3d2149', '#552e64'), 'sqleg': ramp('#120a15', '#1e1124', '#2c1934', '#3d2448'),
+  'yfur':   ramp('#8f9aa6', '#b6c0ca', '#d6dde4', '#eef3f7'), 'yfur2': ramp('#6f7a86', '#8e99a5', '#aeb8c2', '#c9d1d9'), 'yskin': ramp('#3f4a5a', '#55637a', '#6e7f98', '#8a9bb4'),
+  'croc':   ramp('#1e2a14', '#2d3d1d', '#3f5428', '#566e36'), 'cbelly': ramp('#59613a', '#7a8450', '#9aa66a', '#b9c486'), 'cdark': ramp('#141c0d', '#1e2914', '#2a381c', '#384a26'),
+  'lava1':  ramp('#2e1d18', '#45291f', '#5e382a', '#7a4a36'), 'lava2': ramp('#22140f', '#331e17', '#472a1f', '#5e3828'), 'magma': ramp('#b33a0a', '#e0601a', '#ff9a2a', '#ffd860'),
+  'fbat':   ramp('#3a0e08', '#561812', '#73241a', '#933426'), 'fwing': ramp('#4a1206', '#6e1d0a', '#962c10', '#c04218'),
+  'snk':    ramp('#4a2a12', '#6e4020', '#93582c', '#b8743c'), 'snkband': ramp('#1a120c', '#281a12', '#38251a', '#4a3324'), 'snkbelly': ramp('#6b6a3a', '#8d8b50', '#ada968', '#ccc784'),
+  'nfur':   ramp('#9a96a8', '#c2bfcf', '#e0dde9', '#f6f4fb'), 'nlight': ramp('#a8987a', '#cbb99a', '#e3d4b8', '#f4ead6'), 'spirit': ramp('#4a3ab0', '#6f5ee0', '#a596ff', '#dcd4ff'),
+  'gskin':  ramp('#4f7f86', '#6fa3a8', '#94c6c8', '#bfe6e4'), 'coat': ramp('#2a0e14', '#43161f', '#5e202c', '#7a2c3a'), 'hat': ramp('#121215', '#1d1d22', '#2a2a31', '#393942'), 'gbeard': ramp('#3f6a70', '#5a8a8e', '#7cadb0', '#a6d2d2'),
+  'shell':  ramp('#2e2a18', '#433d22', '#5c542f', '#776d3e'), 'shell2': ramp('#3d3420', '#574a2c', '#73623a', '#90804c'), 'tskin': ramp('#3a4a2c', '#4f633b', '#67804d', '#819c62'),
   'robe':   ramp('#231a3c', '#35275a', '#4c3a80', '#6a52a8'), 'robe2': ramp('#1a1230', '#271b44', '#372860', '#4b3a80'), 'lskin': ramp('#5f7a52', '#7c9a6c', '#9cc78c', '#b8e0a8'),
 }
 
@@ -186,10 +198,13 @@ def tool_boxes(b, hand, tool):
 
 def person(pose, look='survivor', tool=None):
     """pose: dict of angles (radians). +z is the front, +x the person's left. positive arm/leg angle swings forward."""
-    z = look in ('zombie', 'brute', 'golem', 'lord'); zz = look in ('zombie', 'brute')
+    z = look in ('zombie', 'brute', 'golem', 'lord', 'lava', 'yeti'); zz = look in ('zombie', 'brute'); cap = look == 'captain'; gol = look in ('golem', 'lava')
     if look == 'brute': M = dict(skin='bskin', top='bshirt', legs='bpants', boots='strap'); FAT[0] = 1.28
     elif look == 'golem': M = dict(skin='rock', top='rock2', legs='rock2', boots='rock'); FAT[0] = 1.75
+    elif look == 'lava': M = dict(skin='lava1', top='lava2', legs='lava2', boots='lava1'); FAT[0] = 1.75
+    elif look == 'yeti': M = dict(skin='yfur', top='yfur', legs='yfur2', boots='yskin'); FAT[0] = 1.4
     elif look == 'lord': M = dict(skin='lskin', top='robe', legs='robe2', boots='robe2'); FAT[0] = 1.1
+    elif cap: M = dict(skin='gskin', top='coat', legs='zpants', boots='boots'); FAT[0] = 1.12
     elif z: M = dict(skin='zskin', top='zshirt', legs='zpants', boots='strap'); FAT[0] = 1.0
     else: M = dict(skin='skin', top='armor', legs='pants', boots='boots'); FAT[0] = 1.0
     b = []
@@ -201,7 +216,11 @@ def person(pose, look='survivor', tool=None):
     box(b, chest, (0, .30, 0), (.50, .60, .28), M['top'], 'torso')
     box(b, chest, (0, .02, 0), (.53, .07, .31), 'strap', 'belt')
     box(b, chest, (0, .61, 0), (.46, .06, .29), M['top'], 'collar')
-    if not z:
+    if cap:                                                        # the ghost captain: gold buttons and epaulettes, a long coat
+        for i in range(3): box(b, chest, (.07, .44 - i * .14, .145), (.05, .05, .02), 'gold', 'btn' + str(i))
+        box(b, chest, (.27, .6, 0), (.14, .06, .3), 'gold', 'epL'); box(b, chest, (-.27, .6, 0), (.14, .06, .3), 'gold', 'epR')
+        box(b, root, (0, -.22, -.05), (.54, .52, .3), 'coat', 'coattail')
+    elif not z:
         box(b, chest, (0, .30, -.23), (.38, .46, .20), 'pack', 'pack'); box(b, chest, (0, .56, -.30), (.34, .08, .06), 'pack', 'rollTop'); box(b, chest, (.15, .38, .12), (.04, .40, .17), 'strap', 'pstrapL'); box(b, chest, (-.15, .38, .12), (.04, .40, .17), 'strap', 'pstrapR')
         box(b, chest, (0, .28, .145), (.035, .52, .02), 'strap', 'zip1')
     elif zz:
@@ -209,18 +228,36 @@ def person(pose, look='survivor', tool=None):
         if look == 'brute': box(b, chest, (.0, .28, -.15), (.4, .5, .02), 'blood', 'stain3'); box(b, chest, (.24, .58, 0), (.12, .10, .34), 'bshirt', 'padL'); box(b, chest, (-.24, .58, 0), (.12, .10, .34), 'bshirt', 'padR')
     neck = Node(chest, (0, .63, 0), rx(-pose.get('head_lean', 0)) @ rz(pose.get('head_roll', 0)))
     box(b, neck, (0, .03, 0), (.14, .09, .14), M['skin'], 'neck')
-    hs = .6 if look == 'golem' else 1
+    hs = .6 if gol else 1
     box(b, neck, (0, .26, 0), (.40 * hs, .40, .38 * hs), M['skin'], 'head')
-    if not z:
+    if cap:                                                        # a tricorn with gold trim, glowing eyes, a ragged beard
+        box(b, neck, (0, .5, 0), (.62, .07, .5), 'hat', 'brim'); box(b, neck, (0, .6, -.02), (.4, .16, .36), 'hat', 'crownHat'); box(b, neck, (0, .535, .25), (.5, .05, .02), 'gold', 'trim')
+        box(b, Node(neck, (.3, .55, 0), rz(-.5)), (0, 0, 0), (.08, .14, .46), 'hat', 'flapL'); box(b, Node(neck, (-.3, .55, 0), rz(.5)), (0, 0, 0), (.08, .14, .46), 'hat', 'flapR')
+        box(b, neck, (-.09, .29, .195), (.07, .06, .02), 'spirit', 'eyeR'); box(b, neck, (.09, .29, .195), (.07, .06, .02), 'spirit', 'eyeL')
+        box(b, neck, (0, .1, .17), (.3, .14, .08), 'gbeard', 'beard'); box(b, neck, (0, .02, .19), (.18, .08, .06), 'gbeard', 'beard2')
+    elif not z:
         box(b, neck, (0, .45, -.02), (.42, .10, .38), 'hair', 'hairtop'); box(b, neck, (0, .31, -.20), (.42, .30, .05), 'hair', 'hairback')
         box(b, neck, (.215, .36, -.03), (.03, .20, .30), 'hair', 'hairL'); box(b, neck, (-.215, .36, -.03), (.03, .20, .30), 'hair', 'hairR')
         box(b, neck, (0, .425, .20), (.40, .07, .04), 'hair', 'fringe')
         box(b, neck, (-.10, .28, .195), (.07, .07, .02), 'eye', 'eyeR'); box(b, neck, (.10, .28, .195), (.07, .07, .02), 'eye', 'eyeL')
     else:
-        eye = 'glow' if look == 'golem' else 'glow2' if look == 'lord' else 'zeye'
+        eye = 'glow' if look == 'golem' else 'magma' if look == 'lava' else 'frost' if look == 'yeti' else 'glow2' if look == 'lord' else 'zeye'
+        zf = .19 * FAT[0] + .005                                   # (the bulk factor widens the head, so the face sits further out)
+        if look == 'yeti': box(b, neck, (0, .24, zf), (.3 / FAT[0], .26, .02), 'yskin', 'face'); box(b, neck, (-.07, .28, zf + .012), (.06 / FAT[0], .05, .02), 'frost', 'yeyeR'); box(b, neck, (.07, .28, zf + .012), (.06 / FAT[0], .05, .02), 'frost', 'yeyeL')
         box(b, neck, (0, .43, -.02), (.36, .06, .36), M['skin'], 'scalp'); box(b, neck, (-.09, .27, .185), (.07, .06, .02), eye, 'eyeR'); box(b, neck, (.09, .27, .185), (.07, .06, .02), eye, 'eyeL')
         if zz: box(b, neck, (0, .15, .185), (.17, .04, .02), 'blood', 'mouth')
         if look == 'zombie': box(b, neck, (-.14, .38, .0), (.10, .10, .36), 'hair', 'tuft')
+        if look == 'yeti':
+            box(b, neck, (0, .17, zf + .012), (.16 / FAT[0], .05, .02), 'dark', 'mouth'); box(b, neck, (-.05, .15, zf + .02), (.03 / FAT[0], .05, .02), 'tusk', 'fangR'); box(b, neck, (.05, .15, zf + .02), (.03 / FAT[0], .05, .02), 'tusk', 'fangL')
+            for sg in (1, -1): box(b, Node(neck, (sg * .2, .44, 0), rz(-sg * .7)), (0, .08, 0), (.07, .2, .07), 'tusk', 'horn' + str(sg))
+            box(b, neck, (0, .47, -.02), (.3, .08, .3), 'yfur2', 'tuft')
+            box(b, chest, (.3, .62, 0), (.18, .16, .32), 'yfur2', 'padL'); box(b, chest, (-.3, .62, 0), (.18, .16, .32), 'yfur2', 'padR'); box(b, chest, (0, .32, .14 * FAT[0] + .01), (.34 / FAT[0], .4, .02), 'yfur2', 'belly')
+        if look == 'lava':
+            box(b, neck, (.0, .16, .2), (.2, .06, .02), 'magma', 'jaw'); box(b, neck, (-.2, .47, .0), (.12, .10, .18), 'lava1', 'chunkL'); box(b, neck, (.18, .08, .1), (.08, .1, .12), 'lava1', 'chunkR')
+            for sg in (1, -1): box(b, Node(neck, (sg * .14, .48, 0), rz(-sg * .5)), (0, .1, 0), (.08, .22, .08), 'lava1', 'horn' + str(sg))
+            box(b, chest, (.34, .66, 0), (.26, .16, .34), 'lava1', 'padL'); box(b, chest, (-.34, .66, 0), (.26, .16, .34), 'lava1', 'padR')
+            box(b, chest, (0, .35, .15), (.1, .44, .02), 'magma', 'vein1'); box(b, chest, (.12, .22, .15), (.26, .05, .02), 'magma', 'vein2'); box(b, chest, (-.1, .46, .15), (.2, .04, .02), 'magma', 'vein3')
+            box(b, chest, (.0, .4, -.15), (.08, .4, .02), 'magma', 'vein4'); box(b, chest, (.27, .3, 0), (.02, .3, .08), 'magma', 'vein5'); box(b, chest, (-.27, .36, 0), (.02, .26, .08), 'magma', 'vein6')
         if look == 'golem':
             box(b, neck, (.0, .16, .2), (.2, .06, .02), 'rock2', 'jaw'); box(b, neck, (-.2, .47, .0), (.12, .10, .18), 'rock', 'chunkL'); box(b, neck, (.18, .08, .1), (.08, .1, .12), 'rock', 'chunkR')
             box(b, chest, (.34, .66, 0), (.26, .16, .34), 'rock', 'padL'); box(b, chest, (-.34, .66, 0), (.26, .16, .34), 'rock', 'padR'); box(b, chest, (0, .35, .15), (.1, .34, .02), 'glow', 'vein1'); box(b, chest, (.12, .2, .15), (.2, .04, .02), 'glow', 'vein2')
@@ -233,7 +270,8 @@ def person(pose, look='survivor', tool=None):
         box(b, sh, (0, -.17, 0), (.17, .37, .17), M['top'], 'uarm' + side)
         el = Node(sh, (0, -.35, 0), rx(-elb))
         box(b, el, (0, -.15, 0), (.15, .32, .15), M['skin'] if z else M['top'], 'farm' + side)
-        box(b, el, (0, -.34, 0), (.14, .13, .14), M['skin'], 'hand' + side)
+        box(b, el, (0, -.34, 0), (.14, .13, .14), 'yskin' if look == 'yeti' else M['skin'], 'hand' + side)
+        if look == 'lava': box(b, sh, (0, -.2, .09), (.04, .26, .02), 'magma', 'avein' + side); box(b, el, (.08, -.18, 0), (.02, .2, .04), 'magma', 'fvein' + side)
         if tool and not z and side == 'R':
             hand = Node(el, (0, -.34, 0), rx(-pose.get('grip', 1.2)))
             tool_boxes(b, hand, tool)
@@ -244,6 +282,7 @@ def person(pose, look='survivor', tool=None):
         box(b, hp, (0, -.23, 0), (.20, .48, .22), M['legs'], 'thigh' + side)
         kt = Node(hp, (0, -.47, 0), rx(kn))
         box(b, kt, (0, -.22, 0), (.17, .45, .19), M['legs'], 'shin' + side)
+        if look == 'lava': box(b, hp, (0, -.24, .115), (.04, .3, .02), 'magma', 'lvein' + side)
         ft = Node(kt, (0, -.45, 0), rx(0.0))
         box(b, ft, (0, -.04, .06), (.19, .13, .32), M['boots'], 'foot' + side)
     FAT[0] = 1.0                                                   # (the bulk factor only applies to this person; animals and objects built next must not inherit it)

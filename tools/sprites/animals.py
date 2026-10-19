@@ -35,11 +35,19 @@ def quad(sp, pose):
     box(b, root, (0, 0, 0), (w, h, l), fur, 'body')
     if light != fur: box(b, root, (0, -h * .32, .02), (w * .9, h * .36, l * .85), light, 'belly')
     if sp.get('ridge'):
-        for i in range(5): box(b, root, (0, h / 2 + .03, l * (.36 - i * .17)), (.07, .09, .1), 'bdark' if sp['fur'] != 'armor' else 'armor', 'ridge' + str(i))
+        for i in range(5): box(b, root, (0, h / 2 + .03, l * (.36 - i * .17)), (.07, .09, .1), sp.get('ridgemat', 'bdark' if sp['fur'] != 'armor' else 'armor'), 'ridge' + str(i))
     if sp.get('mane'):
         for i in range(5): box(b, root, (0, h / 2 + .06, l * (.34 - i * .16)), (.06, .14 + (.05 if i % 2 == 0 else 0), .1), 'klight', 'mane' + str(i))
     if sp.get('scars'):
         box(b, root, (w / 2 + .005, .05, .12), (.01, .05, .3), 'blood', 'scarL'); box(b, root, (-w / 2 - .005, .0, -.1), (.01, .05, .28), 'blood', 'scarR')
+    if sp.get('shell'):                                               # a domed shell: a wide slab, a narrower one on top, plates and moss
+        box(b, root, (0, h * .42, -.02), (w * 1.3, h * .55, l * 1.18), 'shell', 'shell')
+        box(b, root, (0, h * .78, -.02), (w * 1.0, h * .34, l * .92), 'shell', 'shellTop')
+        for i, (px, pz) in enumerate(((0, .22), (0, -.02), (0, -.26), (.24, .1), (-.24, .1), (.24, -.16), (-.24, -.16))):
+            box(b, root, (px * w * 1.6, h * .96, pz * l * 1.6), (w * .28, .04, l * .22), 'shell2', 'plate' + str(i))
+        box(b, root, (w * .2, h * .99, -l * .1), (w * .3, .03, l * .3), 'leaf', 'moss')
+        box(b, root, (0, h * .12, -.02), (w * 1.36, .07, l * 1.24), 'shell2', 'rim')
+    if pose.get('tuck'): return b                                     # pulled into the shell: nothing else shows
     ph = pose.get('ph', 0); A = pose.get('A', 0)
     hop = pose.get('hop')
     for sx in (1, -1):
@@ -55,6 +63,8 @@ def quad(sp, pose):
             box(b, hip, (0, -leg * .26, 0), (lw, leg * .56, lw), fur, 'up')
             knee = Node(hip, (0, -leg * .5, 0), rx(kn))
             box(b, knee, (0, -leg * .26, 0), (lw * .85, leg * .56, lw * .85), fur, 'low'); box(b, knee, (0, -leg * .5, lw * .45), (lw * 1.1, .05, lw * 1.7), 'dark' if fur != 'rfur' else 'rfur', 'paw')
+            if sp.get('claws') and front:
+                for k in (-1, 0, 1): box(b, knee, (k * lw * .42, -leg * .5 + .01, lw * 1.45), (lw * .26, .05, lw * .9), 'tusk', 'claw' + str(k))
     neck = Node(root, (0, h * .22, l / 2 - .06), rx(pose.get('head_down', 0)))
     box(b, neck, (0, .01, .02), (w * .62, h * .62, .2), fur, 'neck')
     zc = .10 + hl / 2
@@ -75,13 +85,20 @@ def quad(sp, pose):
         for i, dx in enumerate((-.09, -.045, 0, .045, .09)): box(b, neck, (dx, .03 + hh / 2 + .02 + (.03 if i % 2 == 0 else 0), zc - .02), (.04, .08 + (.04 if i % 2 == 0 else 0), .05), 'gold', 'crown' + str(i))
         box(b, neck, (0, .03 + hh / 2 + .01, zc - .02), (hw + .02, .04, .14), 'gold', 'crownBand')
     tw, th, tl = sp['tail']
-    tail = Node(root, (0, h * .28, -l / 2 + .03), ry(pose.get('wag', 0)) @ rx(pose.get('tail_up', 0)))
+    if sp.get('tails'):                                               # a fan of tails, each with a glowing tip
+        n = sp['tails']
+        for i in range(n):
+            u = (i / (n - 1) - .5) * 2
+            tail = Node(root, (0, h * .28, -l / 2 + .03), ry(u * 1.05 + pose.get('wag', 0) * .6) @ rx(pose.get('tail_up', 0) + .55 - abs(u) * .35 + .06 * math.sin(pose.get('ph', 0) + i)))
+            box(b, tail, (0, 0, -tl * .4), (tw, th, tl * .8), fur, 'tail' + str(i)); box(b, tail, (0, 0, -tl * .88), (tw * 1.15, th * 1.15, tl * .26), sp['tip'], 'tip' + str(i))
+        return b
+    tail = Node(root, (0, h * .28, -l / 2 + .03), ry(pose.get('wag', 0)) @ rx(pose.get('tail_up', 0) - sp.get('tail_drop', 0)))
     box(b, tail, (0, 0, -tl / 2), (tw, th, tl), light if sp.get('hop') else fur, 'tail')
     return b
 
 # ------------------------------------------------------------------ poses
 def quad_pose(name, anim, phase, tool=None):
-    sp = SPECIES[name]; ph = phase * 2 * math.pi; s = math.sin(ph); A = sp['A']
+    sp = SPECIES[name]; ph = phase * 2 * math.pi; s = math.sin(ph); A = sp['A']; fam = sp.get('fam', name)
     hop = sp.get('hop')
     p = dict(ph=ph, A=0)
     if anim == 'idle':
@@ -95,9 +112,9 @@ def quad_pose(name, anim, phase, tool=None):
             p.update(A=A, bob=-.02 * abs(s), head_down=.12 + .05 * s, wag=.35 * math.sin(ph * 2), tail_up=.15, dip=.02 * s)
     elif anim == 'attack':
         i = min(3, int(phase * 4)); p.update(A=0)
-        if name in ('wolf', 'wolfking'):
+        if fam in ('wolf', 'wolfking'):
             p.update(dip=[-.12, .1, .25, .08][i], head_down=[-.25, .1, .3, .1][i], jaw=[.55, .6, .02, .25][i], lunge=[-.05, .12, .24, .1][i], tail_up=.3, bob=[.0, -.02, -.05, -.02][i], fswing=[-.2, .3, .5, .2][i])
-        elif name == 'boar':
+        elif fam == 'boar':
             p.update(dip=[.05, .15, .25, .05][i], head_down=[.5, .6, .0, .15][i], jaw=[.2, .3, .1, .1][i], lunge=[-.05, .14, .22, .08][i], fswing=[-.2, .3, .4, .1][i], bob=[.0, -.03, -.04, -.01][i])
         else:                                                         # bears rise up and swipe
             p.update(rear=[.55, .75, .35, .12][i], dip=0, head_down=[.0, -.2, .25, .1][i], jaw=[.5, .6, .3, .2][i], fswing=[1.0, 1.6, .5, .3][i], lunge=[0, .04, .12, .04][i])

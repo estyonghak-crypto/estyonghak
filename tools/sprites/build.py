@@ -1,4 +1,4 @@
-"""Bake the pixel-art sheets (survivor x 5 tools, 14 creatures, and an atlas of trees, rocks, bushes, ore and buildings) and embed them into ../../index.html.
+"""Bake the pixel-art sheets (survivor x 12 tools, 27 creatures, and an atlas of trees, rocks, bushes, ore and buildings) and embed them into ../../index.html.
 
     python3 tools/sprites/build.py          # needs numpy + pillow
 
@@ -10,13 +10,15 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import render as R
 import animals  # noqa: F401  (registers the animals)
+import bosses   # noqa: F401  (the zone bosses, the new night bosses, the creatures of the new islands)
 import objects
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(HERE, '..', '..', 'index.html')
 
 sheets = {}
-LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun', 'sword', 'hammer', 'wrench', 'sickle', 'bombpick', 'bow', 'shotgun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem', 'batqueen', 'plaguegiant', 'frostgiant')]
+LOOKS = [('survivor', ['hand', 'axe', 'spear', 'pickaxe', 'gun', 'sword', 'hammer', 'wrench', 'sickle', 'bombpick', 'bow', 'shotgun'])] + [(k, [None]) for k in ('zombie', 'brute', 'zombielord', 'wolf', 'wolfking', 'boar', 'bear', 'mountainking', 'rabbit', 'bat', 'golem', 'batqueen', 'plaguegiant', 'frostgiant',
+                                                        'boarking', 'mole', 'spiderqueen', 'spider', 'yeti', 'crocking', 'lavagiant', 'magma', 'firebat', 'snake', 'ninetail', 'ghostcaptain', 'turtle')]
 for look, tools in LOOKS:
     for tool in tools:
         key = tool if look == 'survivor' else look
@@ -25,7 +27,7 @@ for look, tools in LOOKS:
         sheets[key] = dict(meta, img=base64.b64encode(buf.getvalue()).decode(), mime='image/webp')
         print(f"{key:9s} {img.size[0]}x{img.size[1]}  frame {meta['w']}x{meta['h']}  {len(buf.getvalue()) // 1024} KB")
 
-atlas, place = objects.build_atlas(objects.objects_list() + objects.building_list(), width=720)      # trees, rocks, bushes, ore, buildings: one image, a rectangle and an anchor for each
+atlas, place = objects.build_atlas(objects.objects_list() + objects.building_list() + bosses.extra_objects(), width=720)      # trees, rocks, bushes, ore, buildings: one image, a rectangle and an anchor for each
 buf = io.BytesIO(); atlas.convert('RGBA').save(buf, 'WEBP', lossless=True, quality=100, method=6)
 sheets['objects'] = dict(items={k: [int(v) for v in vals] for k, vals in place.items()}, img=base64.b64encode(buf.getvalue()).decode(), mime='image/webp')
 print(f"objects   {atlas.size[0]}x{atlas.size[1]}  {len(place)} pieces  {len(buf.getvalue()) // 1024} KB")

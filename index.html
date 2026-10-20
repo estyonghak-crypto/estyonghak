@@ -225,6 +225,16 @@ body.building #ctx{display:none}
 .cost span.ok{color:var(--moss)}
 .cost span.no{color:var(--blood)}
 .note{display:block;margin-top:5px;font-size:11.5px;color:var(--amber)}
+.recipe.gear{border-left:3px solid var(--gc);padding-left:10px}
+.recipe.gear .gname{color:var(--gc)}
+.gtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(var(--gr),.18);color:var(--gc);font-size:11px;font-weight:700;vertical-align:1px}
+.gcmp{display:block;font-size:11.5px;color:var(--dim)}
+.gcmp b{font-size:11.5px}
+.gearhead{margin:12px 0 2px!important;font-weight:700}
+.btn.trans{background:#ff4a5a;border-color:#ff4a5a;color:#2a0508}
+#btnCraft.newgear::after{content:'';position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:#ffa53a;box-shadow:0 0 0 2px rgba(0,0,0,.5)}
+.eq[data-g="1"]{box-shadow:inset 0 0 0 2px #5aa8ff}.eq[data-g="2"]{box-shadow:inset 0 0 0 2px #5fd16a}.eq[data-g="3"]{box-shadow:inset 0 0 0 2px #b57cff}
+.eq[data-g="4"]{box-shadow:inset 0 0 0 2px #ffa53a,0 0 8px rgba(255,165,58,.6)}.eq[data-g="5"]{box-shadow:inset 0 0 0 2px #ff4a5a,0 0 10px rgba(255,74,90,.7)}
 .btn{border:0;border-radius:12px;padding:12px 20px;font-weight:700;font-size:15px;background:var(--ember);color:#2a1305;min-width:84px}
 .btn:disabled{background:rgba(255,255,255,.1);color:var(--dim);cursor:default}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--bone)}
@@ -353,7 +363,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 <div id="craft" class="modal" hidden>
   <div class="sheet">
     <div class="head"><h2>제작</h2><button class="xbtn" id="craftClose" aria-label="닫기">✕</button></div>
-    <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button><button class="tab" id="tabSmelt">제련</button></div>
+    <div class="tabs"><button class="tab on" id="tabMake">제작</button><button class="tab" id="tabUp">강화</button><button class="tab" id="tabSmelt">제련</button><button class="tab" id="tabGear">장비</button></div>
     <p class="sub" id="craftSub">재료를 모아 도구와 시설을 만드세요.</p>
     <div id="craftList"></div>
   </div>
@@ -413,6 +423,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li><b>사건</b> 하루에도 무슨 일이 생겨요. 낮에는 표류 화물 · 운석 · 약초 · 사냥감 · 폭풍 · 한파 · 버려진 야영지, 밤에는 늑대 무리 · 좀비 떼 · 안개 · 보름달. 날씨 사건은 시계 아래에 표시돼요</li>
     <li><b>보스</b> 3일마다(3 · 6 · 9 … 27일) 밤에 와요. 판마다 세 후보 중 하나가 나와요 (늑대왕 / 흡혈 박쥐 여왕 / 구미호, 좀비 군주 / 역병 거인 / 유령 선장, 산군 / 서리 거상 / 고대 거북). 12일차부터는 더 강해진 보스가 다시 와요</li>
     <li><b>구역 보스</b> 섬마다(광산 갱도에도) 둥지가 하나씩 있고, 그 섬의 주인이 잠들어 있어요 (미니맵의 붉은 점). 가까이 가면 깨어나요. 처음 쓰러뜨리면 <b>유물</b>을 얻고, 5일 뒤 더 강해져서 돌아와요</li>
+    <li><b>등급 장비</b> 엘리트와 보스가 <b style="color:#5aa8ff">레어</b> · <b style="color:#5fd16a">유니크</b> · <b style="color:#b57cff">에픽</b> · <b style="color:#ffa53a">레전드</b> 무기·갑옷·장신구를 떨어뜨려요. 제작 → <b>장비</b> 탭(G)에서 끼고, 레전드는 초월석으로 <b style="color:#ff4a5a">초월</b>시켜요</li>
     <li><b>섬</b> 무인도 · 광산섬(+갱도) · 설원섬 · 밀림섬 · 화산섬. 범선(Lv.2)이면 설원섬과 밀림섬, 철갑선(Lv.3)이면 화산섬까지 가요</li>
     <li><b>함정</b> 건축 메뉴의 가시 함정 · 올가미 덫 · 화염 함정은 적이 밟으면 터져요. 가시 울타리는 공격한 적을 다치게 해요</li>
     <li><b>상태 이상</b> 늑대·곰에게 물리면 출혈, 좀비에게 긁히면 감염, 날것을 먹으면 중독될 수 있어요. 위쪽 칩을 누르면 붕대·약초로 치료해요. 오래 깨어 있으면 피곤해져요. 냄비로 달인 피로회복제를 마시면 기운이 나요</li>
@@ -531,6 +542,7 @@ const ITEMS = {
   swift:  { name: '신속약', icon: '💨', use: 1 },     // elite loot: 30 s of speed
   power:  { name: '괴력약', icon: '💥', use: 1 },     // elite loot: 30 s of x1.5 damage
   core:   { name: '정예핵', icon: '💠' },             // elite loot: needed for the Lv.4 upgrades
+  tstone: { name: '초월석', icon: '🔺' },             // the strongest bosses: turns a legend item transcendent
   copper: { name: '구리광석', icon: '🟠', ore: 1, info: '구리광석: 용광로에서 구리 주괴로 녹여요' },
   iron:   { name: '철광석',   icon: '⚪', ore: 1, info: '철광석: 용광로에서 철 주괴로 녹여요 (캐려면 곡괭이 Lv.2)' },
   gold:   { name: '금광석',   icon: '🟡', ore: 1, info: '금광석: 용광로에서 금 주괴로 녹여요 (캐려면 곡괭이 Lv.3)' },
@@ -554,8 +566,8 @@ const ORE = {     // minable nodes: pickaxe level needed, units per node, second
 };
 const mkOre = kind => (x, y) => ({ t: 'ore', kind, x, y, r: 15, amt: ORE[kind].amt, v: Math.random(), shake: 0, regrow: 0 });
 const ALWAYS_SHOWN = { wood: 1, stone: 1 };           // every other bag slot appears when you hold some and disappears when you run out
-const RARE = { ammo: 1, arrow: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1, fish: 1, grilled: 1, stew: 1, soup: 1, feast: 1 };   // bag slots that stay hidden until you first get one
-const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1, bandage: 1, herb: 1, tonic: 1 };                           // these live in the second bag row
+const RARE = { ammo: 1, arrow: 1, scrap: 1, hide: 1, heal: 1, swift: 1, power: 1, core: 1, copper: 1, iron: 1, gold: 1, cuBar: 1, feBar: 1, auBar: 1, fish: 1, grilled: 1, stew: 1, soup: 1, feast: 1, tstone: 1 };   // bag slots that stay hidden until you first get one
+const SPECIAL = { heal: 1, swift: 1, power: 1, core: 1, bandage: 1, herb: 1, tonic: 1, tstone: 1 };                           // these live in the second bag row
 const BUFF_T = 30;
 const SPECS = {
   rabbit: { hp: 3,   r: 7,  speed: 55,  flee: 140, drop: { meat: 1 } },
@@ -594,7 +606,7 @@ function bossOf(day){            // each boss night has two candidates; which on
   return pool[Math.floor(hash01(day * 97 + ((P && P.seed) || 0)) * pool.length) % pool.length];
 }
 const isBossDay = day => day % BOSS_EVERY === 0 && day < RAFT_DAY;
-const BOSS_HP = [1, 1.6, 2.3], BOSS_DMG = [1, 1.3, 1.6], BOSS_PRE = ['', '강해진 ', '최강의 '];            // round 1 (days 3-9), 2 (12-18), 3 (21-27)
+const BOSS_HP = [1, 1.8, 2.7], BOSS_DMG = [1, 1.3, 1.6], BOSS_PRE = ['', '강해진 ', '최강의 '];            // round 1 (days 3-9), 2 (12-18), 3 (21-27)
 const bossCycle = day => Math.max(0, Math.min(2, Math.floor((Math.round(day / BOSS_EVERY) - 1) / 3)));
 const bossTitle = day => BOSS_PRE[bossCycle(day)] + bossOf(day).name;
 const NIGHT_KINDS = { wolf: 1, zombie: 1, brute: 1 };
@@ -610,8 +622,8 @@ const AFFIX = {
 const ELITE_LOOT = { heal: [.45, 1, 1], swift: [.22, 1, 1], power: [.22, 1, 1], ammo: [.35, 10, 20], core: [.22, 1, 1] };   // item -> [chance, min, max]
 const AFFIX_LOOT = { frenzy: { swift: .42, power: .42 }, armor: { core: .42 }, regen: { heal: .7 }, split: { ammo: .55 } };   // each affix favours some drops
 const ELITE_BONUS = { wolf: { hide: [2, 3] }, zombie: { scrap: [3, 5] }, bear: { hide: [3, 4], meat: [3, 4] }, golem: { iron: [2, 3], copper: [2, 3], gold: [0, 1] } };               // sure drops, picked up from the ground
-const PICK_COL = { tonic: '255,200,90', herb: '120,220,110', bandage: '240,230,220', heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110', copper: '255,150,80', iron: '190,210,235', gold: '255,215,90', cuBar: '255,150,80', feBar: '190,210,235', auBar: '255,215,90' };
-const PICK_BEAM = { heal: 1, swift: 1, power: 1, core: 1 };
+const PICK_COL = { tonic: '255,200,90', herb: '120,220,110', bandage: '240,230,220', heal: '255,110,140', swift: '110,200,255', power: '255,150,70', core: '200,140,255', ammo: '255,220,120', scrap: '190,200,210', hide: '200,150,100', meat: '235,120,110', copper: '255,150,80', iron: '190,210,235', gold: '255,215,90', cuBar: '255,150,80', feBar: '190,210,235', auBar: '255,215,90', tstone: '255,74,90' };
+const PICK_BEAM = { heal: 1, swift: 1, power: 1, core: 1, tstone: 1 };
 const TOOLS = {   // what each equipped tool does: yield per swing, damage, extra reach, swing cooldowns (wood / stone / attack)
   hand:    { name: '맨손',   wood: 1, stone: 1, dmg: 1, reach: 0,  cdW: .55, cdS: .6,  cdA: .4 },
   axe:     { name: '도끼',   wood: 2, stone: 1, dmg: 2, reach: 0,  cdW: .38, cdS: .6,  cdA: .4 },
@@ -966,8 +978,8 @@ GEN.snow = function(){
 };
 function newPlayer(){
   return { x: WORLD / 2, y: WORLD / 2, fx: 0, fy: 1, flip: 1, hp: 100, hunger: 100, thirst: 100, warmth: 100,
-    lairs: {}, relic: {}, fill: {},
-    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, arrow: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false, sword: false, hammer: false, wrench: false, sickle: false, bombpick: false, bow: false, shotgun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1, sword: 1, hammer: 1, wrench: 1, sickle: 1, bombpick: 1, bow: 1, shotgun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true }, job: 'survivor', jobCd: 0, jobFx: {}, free: {}, hx: {},
+    lairs: {}, relic: {}, fill: {}, gear: { w: {}, armor: null, ring: null, neck: null, charm: null }, bag: [], gx: {},
+    inv: { wood: 0, stone: 0, berry: 0, meat: 0, cooked: 0, ammo: 0, arrow: 0, scrap: 0, hide: 0, heal: 0, swift: 0, power: 0, core: 0, tstone: 0, copper: 0, iron: 0, gold: 0, cuBar: 0, feBar: 0, auBar: 0, fish: 0, grilled: 0, stew: 0, soup: 0, feast: 0, bandage: 0, herb: 0, tea: 0, tonic: 0 }, buffs: { swift: 0, power: 0, warm: 0, full: 0, vigor: 0 }, st: { bleed: 0, infect: 0, poison: 0, chill: 0 }, fatigue: 0, stats: { elites: 0, bosses: 0 }, bossKills: {}, tools: { axe: false, pickaxe: false, spear: false, gun: false, sword: false, hammer: false, wrench: false, sickle: false, bombpick: false, bow: false, shotgun: false }, equip: 'hand', auto: true, lv: { axe: 1, spear: 1, pickaxe: 1, gun: 1, sword: 1, hammer: 1, wrench: 1, sickle: 1, bombpick: 1, bow: 1, shotgun: 1 }, armor: 0, seen: {}, boat: false, boatLv: 0, lantern: false, rod: false, pot: false, seed: (Math.random() * 1e9) | 0, ev: null, evPlan: [], evRoll: 0, xp: 0, level: 1, perkPts: 0, perk: {}, offer: null, xpDone: {}, visited: { home: true }, job: 'survivor', jobCd: 0, jobFx: {}, free: {}, hx: {},
     built: { fire: false, shelter: false, wall: false }, cd: 0, swing: 0, step: 0, moving: false };
 }
 
@@ -1026,6 +1038,7 @@ addEventListener('keydown', e => {
   if (k){ keys[k] = true; if (running && !paused) e.preventDefault(); return; }
   if (!running) return;
   if (e.key === 'c' || e.key === 'C') toggleCraft();
+  else if ((e.key === 'g' || e.key === 'G') && running){ if ($('craft').hidden || craftTab !== 'gear'){ craftTab = 'gear'; if ($('craft').hidden) openCraft(); else renderCraft(); } else closeCraft(); }
   else if (e.key === 'e' || e.key === 'E'){ if (!paused) eatBest(); }
   else if (e.key === 'z' || e.key === 'Z'){ if (!paused) useItem('heal'); }
   else if (e.key === 'x' || e.key === 'X'){ if (!paused) useItem('swift'); }
@@ -1272,7 +1285,7 @@ const hasTool = t => t === 'hand' || !!P.tools[t];
 const ownedTools = () => TOOL_ORDER.filter(hasTool);
 function bestFor(tg){          // tool that suits the thing in front of the player, or null to keep the current one
   if (!tg) return null;
-  if (tg.kind === 'creature'){ const m = ['sword', 'hammer', 'wrench', 'sickle', 'spear', 'bombpick', 'axe'].filter(hasTool); return m.length ? m.sort((a, b) => stat(b).dmg - stat(a).dmg)[0] : 'hand'; }      // the hardest-hitting melee weapon
+  if (tg.kind === 'creature'){ const m = ['sword', 'hammer', 'wrench', 'sickle', 'spear', 'bombpick', 'axe'].filter(hasTool); return m.length ? m.sort((a, b) => stat(b).dmg * gearWeaponMul(b) - stat(a).dmg * gearWeaponMul(a))[0] : 'hand'; }      // the hardest-hitting melee weapon
   if (tg.o.t === 'wall') return hasTool('hammer') && tg.o.hp < tg.o.max ? 'hammer' : null;                  // the carpenter's hammer mends for free
   if (tg.o.t === 'rock' || tg.o.t === 'ore'){ const m = ['bombpick', 'pickaxe'].filter(hasTool); return m.length ? m.sort((a, b) => stat(b).stone - stat(a).stone)[0] : 'hand'; }
   return tg.o.t === 'tree' ? (hasTool('axe') ? 'axe' : 'hand') : null;
@@ -1292,7 +1305,7 @@ function setEquipOpen(v){ const b = $('equip'); b.classList.toggle('min', !v); c
 function syncEquip(){
   $('equip').classList.toggle('isauto', !!P.auto);
   $('equip').querySelectorAll('.eq').forEach(b => {
-    b.classList.toggle('on', b.dataset.t === P.equip);
+    b.classList.toggle('on', b.dataset.t === P.equip); b.dataset.g = P.gear && P.gear.w[b.dataset.t] ? P.gear.w[b.dataset.t].g : 0;
     const lv = P.lv[b.dataset.t] || 1, i = b.querySelector('.lv'); if (i){ i.textContent = lv > 1 ? 'Lv' + lv : ''; i.className = 'lv' + (lv >= 5 ? ' l5' : lv >= 4 ? ' l4' : lv >= 3 ? ' l3' : ''); }
   });
   const a = $('autoBtn'); if (a){ a.classList.toggle('on', P.auto); a.textContent = P.auto ? '자동' : '수동'; }
@@ -1522,7 +1535,8 @@ function updatePickups(dt){
     const d = Math.hypot(P.x - p.x, P.y - p.y);
     if (p.age > .5 && d < 110){ const k = Math.min(1, 230 * dt / (d || 1)); p.x += (P.x - p.x) * k; p.y += (P.y - p.y) * k; }   // magnet
     if (p.age > .35 && d < 30){
-      gain(p.k, p.n); fx('spark', p.x, p.y, 10, 5); pickups.splice(i, 1); SND.play('pickup');
+      if (p.gear) gearPick(p.gear); else gain(p.k, p.n);
+      fx('spark', p.x, p.y, 10, 5); pickups.splice(i, 1); if (!p.gear) SND.play('pickup');
       if (p.k === 'core') toast('정예의 핵을 얻었어요! 장비를 Lv.4로 강화할 수 있어요.');
     } else if (p.age > p.life) pickups.splice(i, 1);
   }
@@ -1534,6 +1548,7 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   if (c.frozen > 0 && !dot) dmg *= 2;                                           // frozen solid: it shatters
   if (c.vuln && !dot) dmg = Math.round(dmg * 1.5);                              // the ancient turtle, dizzy after a roll
   c.hp -= dmg; c.sinceHit = 0;
+  if (byPlayer && !byTower && !dot && P) gearOnHit(c, dmg);
   if (byPlayer && !byTower && !dot && c.hp > 0){ if (isJob('phoenix') || relic('heart')) c.flame = Math.max(c.flame || 0, 3); if (isJob('frost')) c.slow = Math.max(c.slow || 0, 2); }
   if (dot && c.hp > 0){ if (sp.rage){ c.state = 'angry'; c.angry = 8; } return; }        // bleeding or burning: no flash, no knockback, no noise until it drops
   c.hit = .18; SND.hit(c, c.hp <= 0);
@@ -1545,6 +1560,8 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   if (c.hp <= 0){
     if (byPlayer) addXp((c.decoy ? 2 : KILL_XP[c.k] || 5) * (c.elite ? 2.5 : 1) * (1 + .5 * (c.cycle || 0)));
     if (byPlayer) for (const k in sp.drop){ const n = rollDrop(sp.drop[k]) * (c.elite ? 2 : 1) + (k === 'scrap' ? perk('scavenger') : 0) + (isJob('hunter') && (k === 'meat' || k === 'hide') ? 1 : 0); if (n > 0) gain(k, n); }
+    if (byPlayer || byTower) rollGearDrop(c);
+    if (byPlayer && P) gearOnKill(c);
     if (c.elite && (byPlayer || byTower)) eliteLoot(c);
     if (c.boss && (byPlayer || byTower)) bossLoot(c);
     if (c.boss) onBossDown(c, byPlayer, byTower);
@@ -1555,13 +1572,14 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   }
 }
 function attack(c){
-  const eq = stat(P.equip); P.cd = eq.cdA; SND.play('swing');
-  let m = (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler')) * meleeMul();
+  const eq = stat(P.equip); P.cd = eq.cdA * gearCd(); SND.play('swing');
+  let m = (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler')) * meleeMul() * gearAtk();
   if (P.jobFx.mark){ P.jobFx.mark = 0; m *= 2; floater(c.x, c.y, 44, '급소!', '#ffe08a'); }             // the hunter's tracking: the next blow lands double
-  else if (perk('vital') && Math.random() < .2){ m *= 2; floater(c.x, c.y, 44, '치명타!', '#ffe08a'); }
+  else if (Math.random() < (perk('vital') ? .2 : 0) + gearOpt('crit')){ m *= 2; floater(c.x, c.y, 44, '치명타!', '#ffe08a'); }
   hitCreature(c, Math.round(eq.dmg * m), c.x - P.x, c.y - P.y, true);
   if (!creatures.includes(c)) onWolfPunched(c);
   weaponHit(c, Math.round(eq.dmg * m));
+  gearStrike(c, Math.round(eq.dmg * m)); gearSwing(c);
 }
 
 /* ================= guns, arrows, towers ================= */
@@ -1584,10 +1602,10 @@ function fireGun(){
   const t = aimTarget(); let ax = P.fx, ay = P.fy;
   if (t){ const d = Math.hypot(t.x - P.x, t.y - P.y) || 1; ax = (t.x - P.x) / d; ay = (t.y - P.y) / d; }
   P.fx = ax; P.fy = ay; if (Math.abs(ax - ay) > .2) P.flip = ax < ay ? -1 : 1;
-  const gs = stat('gun'); if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd * gunCdMul(); P.flash = .1;
+  const gs = stat('gun'); if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd * gunCdMul() * gearCd(); P.flash = .1;
   const mk = P.jobFx.mark ? 2 : 1; P.jobFx.mark = 0;
-  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman')) * gunMul() * mk), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet', pierce: perk('pierce') ? 1 : 0 });
-  fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2); SND.play('gun');
+  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * GUN_SPEED, vy: ay * GUN_SPEED, dmg: Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman')) * gunMul() * mk * gearAtk() * gearCritRoll()), life: gs.range / GUN_SPEED + .15, own: 'player', kind: 'bullet', pierce: perk('pierce') ? 1 : 0 });
+  fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 2); SND.play('gun'); gearSwing(t);
   try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
 }
 const towerUpCost = o => TOWER_UPG[(o.lv || 1) - 1];
@@ -1617,7 +1635,7 @@ function updateBullets(dt){
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
       if (c.ally || c.under || b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
-      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.beast && BEAST[c.k] ? b.dmg * 2 : b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); fx('spark', b.x, b.y, 12, 4); if (b.knock && creatures.includes(c)){ c.kvx *= b.knock; c.kvy *= b.knock; } if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
+      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.beast && BEAST[c.k] ? b.dmg * 2 : b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); if (b.own === 'player') gearStrike(c, b.dmg); fx('spark', b.x, b.y, 12, 4); if (b.knock && creatures.includes(c)){ c.kvx *= b.knock; c.kvy *= b.knock; } if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
   }
@@ -1633,17 +1651,19 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
 }
 function hurt(n, raw){
   if (!raw && hitSrc && hitSrc.bmul) n *= hitSrc.bmul;                          // a boss's later rounds hit harder
-  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1) * (relic('scale') ? .85 : 1)));
+  if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1) * (relic('scale') ? .85 : 1) * gearHurtMul()));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1) * (perk('immune') && (k === 'infect' || k === 'poison') ? .5 : 1)) afflict(k); }
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
+  if (!raw && hitSrc) gearRetaliate(hitSrc, n);
   floater(P.x, P.y, 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
   if (P.hp <= 0) endGame(false);
 }
 
 function useItem(k){
-  if (k === 'core'){ toast('정예의 핵: 장비를 Lv.4로 강화할 때 쓰여요'); return; }
+  if (k === 'core'){ toast('정예의 핵: 장비를 Lv.4로 강화하거나 레전드 장비를 초월시킬 때 쓰여요'); return; }
+  if (k === 'tstone'){ toast('초월석: 레전드 장비를 초월 등급으로 올려요 (제작 → 장비, 정예핵 3개도 필요)'); return; }
   if (ITEMS[k].ore || ITEMS[k].bar){ toast(ITEMS[k].info); return; }
   if (!ITEMS[k].food && !ITEMS[k].use) return;
   if (P.inv[k] <= 0){ toast(josa(ITEMS[k].name, '이/가') + ' 없어요'); return; }
@@ -1851,8 +1871,9 @@ function renderUpgrades(){
   if (rows.length === 1){ const p = document.createElement('p'); p.className = 'sub'; p.style.marginTop = '10px'; p.textContent = '도구를 만들면 여기서 강화할 수 있어요. 고철은 좀비와 해안의 난파 잔해에서, 가죽은 늑대·멧돼지·곰에게서 얻어요. Lv.5는 광산의 주괴가 필요해요.'; list.appendChild(p); }
 }
 function renderCraft(){
-  $('tabMake').classList.toggle('on', craftTab === 'make'); $('tabUp').classList.toggle('on', craftTab === 'upgrade'); $('tabSmelt').classList.toggle('on', craftTab === 'smelt');
-  $('craftSub').textContent = craftTab === 'make' ? '재료를 모아 도구와 시설을 만드세요.' : craftTab === 'upgrade' ? '전리품과 주괴로 장비를 강화하세요.' : '광석을 용광로에서 주괴로 녹이세요.';
+  $('tabMake').classList.toggle('on', craftTab === 'make'); $('tabUp').classList.toggle('on', craftTab === 'upgrade'); $('tabSmelt').classList.toggle('on', craftTab === 'smelt'); $('tabGear').classList.toggle('on', craftTab === 'gear');
+  $('craftSub').textContent = craftTab === 'make' ? '재료를 모아 도구와 시설을 만드세요.' : craftTab === 'upgrade' ? '전리품과 주괴로 장비를 강화하세요.' : craftTab === 'gear' ? '레어 · 유니크 · 에픽 · 레전드 · 초월 장비를 끼고, 비교하고, 분해하세요.' : '광석을 용광로에서 주괴로 녹이세요.';
+  if (craftTab === 'gear'){ renderGear(); return; }
   if (craftTab === 'upgrade'){ renderUpgrades(); return; }
   if (craftTab === 'smelt'){ renderSmelt(); return; }
   const list = $('craftList'); list.innerHTML = '';
@@ -1997,7 +2018,7 @@ function drawMini(force){
       case 'lair': dot(o.x + 62, o.y + 62, 5, lairUp ? '#ff4a4a' : '#7d8186'); break;
     }
   }
-  for (const p of pickups) dot(p.x, p.y, 2, 'rgb(' + (PICK_COL[p.k] || '255,220,120') + ')');
+  for (const p of pickups) dot(p.x, p.y, p.gear ? 3 : 2, 'rgb(' + (p.gear ? GRADE[p.gear.g].rgb : PICK_COL[p.k] || '255,220,120') + ')');
   const pulse = Math.sin(anim * 7) > 0;
   for (const c of creatures){
     const d = dn(c), boss = !!c.boss, elite = !!c.elite, trk = P.jobFx.track > 0 && d < 1600; if (!boss && !elite && d > MINI_SEE && !trk) continue;
@@ -2201,7 +2222,7 @@ function update(dt){
   if ((P.buffs.swift > 0 || P.buffs.power > 0) && Math.random() < dt * 8) fx('glow', P.x, P.y, 6, 1, P.buffs.swift > 0 ? '110,200,255' : '255,150,70');
   if (P.moving){
     const wd = scr2world(ix, iy); P.fx = wd.x; P.fy = wd.y; if (Math.abs(ix / m) > .2) P.flip = ix < 0 ? -1 : 1;
-    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1) * (1 + .1 * perk('swift')) * statusSpeed() * jobSpeed();
+    const sp = SPEED * Math.min(1, m) * (P.buffs.swift > 0 ? 1.35 : 1) * (1 + .1 * perk('swift')) * statusSpeed() * jobSpeed() * gearSpeed();
     P.x += P.fx * sp * dt; P.y += P.fy * sp * dt; P.step += dt * 11;
   }
   collide(P, PLAYER_R); clampIsland(P, PLAYER_R + 4);
@@ -2209,8 +2230,8 @@ function update(dt){
 
   // survival stats
   const dark = darkness(t);
-  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1) * [1, .8, .65][perk('hardy')] * (isJob('miner') ? 1.1 : 1));
-  P.thirst = Math.max(0, P.thirst - .28 * dt * [1, .85, .75][perk('hardy')] * (Z.heat ? 1.45 : 1));
+  P.hunger = Math.max(0, P.hunger - .18 * dt * (P.buffs.full > 0 ? .4 : 1) * [1, .8, .65][perk('hardy')] * (isJob('miner') ? 1.1 : 1) * (1 - gearOpt('hardy')));
+  P.thirst = Math.max(0, P.thirst - .28 * dt * [1, .85, .75][perk('hardy')] * (Z.heat ? 1.45 : 1) * (1 - gearOpt('hardy')));
   let warm = false;
   for (const s of structs){
     const lim = s.t === 'fire' ? (s.fuel > 0 ? FIRE_WARM : 0) : SHELTER_SAFE;
@@ -2246,7 +2267,7 @@ function update(dt){
   if (P.auto){ const b = autoRanged() || bestFor(target); if (b) setEquip(b); }
   aim = RANGED[P.equip] ? aimTarget() : null;
   if ((actHeld || keys.act) && !paused) act();
-  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateHidden(dt); updateWeapons(dt); updateBossFx(dt); updateLands(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
+  updateFish(dt); updateCreatures(dt); updateTowers(dt); updateTraps(dt); updateJob(dt); updateHidden(dt); updateWeapons(dt); updateBossFx(dt); updateLands(dt); updateGear(dt); updateBullets(dt); updateParts(dt); updatePickups(dt); emitAmbient(dt);
   for (let i = decals.length - 1; i >= 0; i--) if ((decals[i].life -= dt) <= 0) decals.splice(i, 1);
   for (let i = corpses.length - 1; i >= 0; i--){ const o = corpses[i]; o.t += dt; if (o.t < .5){ o.x += o.vx * dt; o.y += o.vy * dt; o.vx *= .9; o.vy *= .9; } if (o.t > 9) corpses.splice(i, 1); }
   const da = scrAng(P.fx, P.fy) - lightAng; lightAng += Math.atan2(Math.sin(da), Math.cos(da)) * Math.min(1, dt * 8);      // the flashlight follows where you face
@@ -2297,8 +2318,8 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, wv: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx, lairs: P.lairs, relic: P.relic, fill: P.fill },
-      drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age)])
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx, lairs: P.lairs, relic: P.relic, fill: P.fill, gear: P.gear, bag: P.bag, gx: P.gx },
+      drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age), p.gear || 0])
     }));
   } catch (_) {}
 }
@@ -2317,9 +2338,9 @@ function loadGame(s){
   if (!JOBS[P.job]) P.job = 'survivor'; P.jobCd = P.jobCd || 0; P.jobFx = P.jobFx || {}; P.free = P.free || {};    // older saves: a survivor
   P.hx = P.hx || {}; if (P.hx.tool == null && TOOL_ORDER.slice(1).some(t => P.tools[t])) P.hx.tool = true; if (P.hx.wall == null && P.built && P.built.wall) P.hx.wall = true;
   for (const w of wallMap.values()){ w.max = wallMax(w.kind); w.hp = Math.min(w.hp, w.max); }                                                    // (walls were unpacked before the player, and the job sets their strength)
-  for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: 90 });
+  for (const a of (s.drops || [])) pickups.push({ k: a[0], n: a[1], ox: a[2], oy: a[3], x: a[2], y: a[3], tx: a[2], ty: a[3], z: 0, age: (a[4] || 0) + 1, life: a[5] ? 300 : 90, gear: a[5] || undefined });
   if (!hasTool(P.equip)) P.equip = 'hand';
-  landsLoaded(); spawnFauna();
+  landsLoaded(); gearLoaded(); spawnFauna();
 }
 
 /* ================= game flow ================= */
@@ -2339,6 +2360,7 @@ function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try
 function endGame(win, how){
   if (!running) return;
   if (!win && isJob('phoenix') && P.hx.rev !== dayOf()){ phoenixRise(); return; }
+  if (!win && gearUndying()) return;
   running = false; paused = false; actHeld = false; resetJoy(); clearSave(); setBuild(false);
   const days = dayOf(); let best = 0;
   try { best = +localStorage.getItem(BEST_KEY) || 0; if (!win && days > best){ best = days; localStorage.setItem(BEST_KEY, String(days)); } } catch (_) {}
@@ -2378,6 +2400,7 @@ $('sail').addEventListener('click', e => { if (e.target === $('sail')) closeSail
 $('tabMake').addEventListener('click', () => { craftTab = 'make'; renderCraft(); });
 $('tabUp').addEventListener('click', () => { craftTab = 'upgrade'; renderCraft(); });
 $('tabSmelt').addEventListener('click', () => { craftTab = 'smelt'; renderCraft(); });
+$('tabGear').addEventListener('click', () => { craftTab = 'gear'; renderCraft(); });
 $('craft').addEventListener('click', e => { if (e.target === $('craft')) closeCraft(); });
 $('menu').addEventListener('click', e => { if (e.target === $('menu')) closeMenu(); });
 $('menuResume').addEventListener('click', closeMenu);
@@ -3213,10 +3236,12 @@ function drawPickups(){              // after the darkness layer, so loot stays 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const p of pickups){
     if (p.age > p.life - 10 && Math.floor(anim * 5) % 2) continue;
-    const col = PICK_COL[p.k] || '255,220,120', px = ux(p.x, p.y), sy = uy(p.x, p.y) - p.z - 12 - Math.sin(anim * 3 + p.x) * 2;
+    const G = p.gear && GRADE[p.gear.g], col = G ? G.rgb : PICK_COL[p.k] || '255,220,120', px = ux(p.x, p.y), sy = uy(p.x, p.y) - p.z - 12 - Math.sin(anim * 3 + p.x) * 2;
     ctx.globalAlpha = .6 + .3 * Math.sin(anim * 5 + p.y); ctx.drawImage(glowTex(col), px - 20, sy - 20, 40, 40);
-    if (PICK_BEAM[p.k]){ ctx.globalAlpha = .28; ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(px - 1.5, sy - 46, 3, 40); }
-    ctx.globalAlpha = 1; ctx.font = '17px system-ui,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.fillText(ITEMS[p.k].icon, px, sy);
+    if (G){ const h = 40 + p.gear.g * 16; ctx.globalAlpha = .22 + .06 * p.gear.g; ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(px - 2, sy - h - 6, 4, h); }          // graded gear: a beam the colour of its grade, taller for better ones
+    else if (PICK_BEAM[p.k]){ ctx.globalAlpha = .28; ctx.fillStyle = 'rgb(' + col + ')'; ctx.fillRect(px - 1.5, sy - 46, 3, 40); }
+    ctx.globalAlpha = 1; ctx.font = '17px system-ui,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.fillText(G ? GEAR_SLOT[p.gear.slot].icon : ITEMS[p.k].icon, px, sy);
+    if (G && p.gear.g >= 3){ const t = G.name + ' ' + gearName(p.gear); ctx.font = '700 10px "Noto Sans KR",sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(t, px, sy - 18); ctx.fillStyle = G.col; ctx.fillText(t, px, sy - 18); }
     if (p.n > 1){ ctx.font = '700 10px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText('×' + p.n, px + 12, sy + 8); ctx.fillStyle = '#fff'; ctx.fillText('×' + p.n, px + 12, sy + 8); }
   }
   ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
@@ -3667,6 +3692,7 @@ function openCrate(o){
   for (let i = 0; i < 3 && pool.length; i++){ const [k, a, b] = pool.splice((Math.random() * pool.length) | 0, 1)[0]; const n = a + ((Math.random() * (b - a + 1)) | 0); P.inv[k] += n; P.seen[k] = true; got.push(ITEMS[k].icon + n); }
   removeObj(o); SND.play('craft'); fx('chip', o.x, o.y, 10, 8); fx('glow', o.x, o.y, 12, 8, '255,214,90'); floater(o.x, o.y, 34, got.join(' '), '#ffd166');
   toast('📦 상자를 열었어요: ' + got.join(' ')); addXp(8);
+  if (Math.random() < .3) dropGear(o.x, o.y, Math.random() < .2 ? 2 : 1);
 }
 function meteorLand(m){
   shakeT = .55; SND.play('slam', { x: m.x, y: m.y, r: .8, key: 1 }); flashT = Math.max(flashT, .35);
@@ -4028,7 +4054,7 @@ function rollOffer(){
 }
 function addXp(n, label){
   if (!P || !running || !(n > 0)) return;
-  n = Math.round(n); P.xp += n; let up = 0;
+  n = Math.round(n * (1 + gearOpt('xp'))); P.xp += n; let up = 0;
   while (P.level < MAXLV && P.xp >= xpTotal(P.level + 1)){ P.level++; P.perkPts++; up++; }
   if (n >= 15 && !up) floater(P.x, P.y, 46, '+' + n + ' XP', '#d2b6ff');
   if (up){
@@ -4122,13 +4148,13 @@ Object.assign(PERKS, {         // each job's own two perks: offered (always as o
 });
 const isJob = k => !!P && P.job === k;
 const jobDef = () => (P && JOBS[P.job]) || JOBS.survivor;
-const gatherAdj = () => (isJob('soldier') ? -1 : 0);                   // added to what one swing gathers (never below 1)
+const gatherAdj = () => (isJob('soldier') ? -1 : 0) + (Math.random() < gearOpt('gather') ? 1 : 0);                   // added to what one swing gathers (never below 1)
 const gunMul = () => (isJob('carpenter') ? .8 : isJob('soldier') ? 1.25 : 1);
 const gunCdMul = () => (isJob('soldier') ? .85 * (perk('rapidfire') ? .8 : 1) : 1) * (P.jobFx.rapid > 0 ? .5 : 1);
 const meleeMul = () => (isJob('engineer') ? .85 : 1) * (relic('tusk') ? 1.2 : 1);
 const potionMul = () => (isJob('herbalist') ? 1.5 : 1);
 const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1) * (isJob('phoenix') && P.jobFx.blaze > 0 ? 1.3 : 1);
-const coldMul = () => (isJob('hunter') ? 1.15 : 1) * (relic('pelt') ? .25 : 1);
+const coldMul = () => (isJob('hunter') ? 1.15 : 1) * (relic('pelt') ? .25 : 1) * (1 - gearOpt('warm'));
 function wallMax(kind){ const d = WALLS[kind]; return Math.round(d.hp * (isJob('carpenter') && !d.trap ? 1.3 : 1)); }
 function buildCost(k){           // what one piece costs you, after your job's discount
   const base = WALLS[k].cost, out = {};
@@ -4454,17 +4480,17 @@ function aimDir(){
 function fireBow(){                // the hunter's bow: arrows, double damage on beasts, every third arrow goes through
   if (P.inv.arrow <= 0){ P.cd = .45; SND.play('dry'); toast('화살이 없어요. 제작에서 나무 1개로 화살 5발을 만들어요'); return; }
   const [ax, ay] = aimDir(), bs = stat('bow'), mk = P.jobFx.mark ? 2 : 1; P.jobFx.mark = 0;
-  P.inv.arrow--; P.cd = bs.cd; P.flash = .1; P.bowN = (P.bowN || 0) + 1;
-  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * 520, vy: ay * 520, dmg: Math.round(bs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * mk), life: bs.range / 520 + .15, own: 'player', kind: 'arrow', beast: 1, pierce: P.bowN % 3 === 0 ? 2 : 0 });
-  SND.play('arrow');
+  P.inv.arrow--; P.cd = bs.cd * gearCd(); P.flash = .1; P.bowN = (P.bowN || 0) + 1;
+  bullets.push({ x: P.x + ax * 14, y: P.y + ay * 14, vx: ax * 520, vy: ay * 520, dmg: Math.round(bs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * mk * gearAtk() * gearCritRoll()), life: bs.range / 520 + .15, own: 'player', kind: 'arrow', beast: 1, pierce: P.bowN % 3 === 0 ? 2 : 0 });
+  SND.play('arrow'); gearSwing(aimTarget());
 }
 function fireShotgun(){            // the soldier's shotgun: five pellets in a fan for one round, and they knock back hard
   if (P.inv.ammo <= 0){ P.cd = .45; SND.play('dry'); toast('탄약이 없어요. 제작에서 탄약을 만드세요.'); return; }
   const [ax, ay] = aimDir(), gs = stat('shotgun'), mk = P.jobFx.mark ? 2 : 1; P.jobFx.mark = 0;
-  if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd * gunCdMul(); P.flash = .14;
-  const a0 = Math.atan2(ay, ax), dmg = Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman')) * gunMul() * mk);
+  if (Math.random() >= [0, .25, .45][perk('ammo')]) P.inv.ammo--; P.cd = gs.cd * gunCdMul() * gearCd(); P.flash = .14;
+  const a0 = Math.atan2(ay, ax), dmg = Math.round(gs.dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('marksman')) * gunMul() * mk * gearAtk() * gearCritRoll());
   for (let i = 0; i < 5; i++){ const a = a0 + (i - 2) * .16; bullets.push({ x: P.x + Math.cos(a) * 14, y: P.y + Math.sin(a) * 14, vx: Math.cos(a) * 600, vy: Math.sin(a) * 600, dmg, life: gs.range / 600 + .05, own: 'player', kind: 'bullet', knock: 2.6 }); }
-  fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 4); SND.play('gun'); shakeT = Math.max(shakeT, .12);
+  fx('smoke', P.x + ax * 22, P.y + ay * 10, 22, 4); SND.play('gun'); shakeT = Math.max(shakeT, .12); gearSwing(aimTarget());
   try { navigator.vibrate && navigator.vibrate(20); } catch (_) {}
 }
 function autoRanged(){             // which gun the auto switch reaches for (shotgun up close, then rifle, then bow)
@@ -5129,6 +5155,261 @@ function drawUnder(c){                             // a burrowing mole is a movi
 }
 const bossTag = c => (c.sleepy ? '💤 ' : '👑 ') + c.name;
 
+/* ================= graded gear: rare, unique, epic, legend, transcendent. A weapon of each kind, armour, a ring, a necklace and a charm; elites and bosses drop them, the craft sheet's 장비 tab manages them ================= */
+const GRADE = [
+  { name: '일반', col: '#e8e4da', rgb: '232,228,218' },
+  { name: '레어', col: '#5aa8ff', rgb: '90,168,255' },
+  { name: '유니크', col: '#5fd16a', rgb: '95,209,106' },
+  { name: '에픽', col: '#b57cff', rgb: '181,124,255' },
+  { name: '레전드', col: '#ffa53a', rgb: '255,165,58' },
+  { name: '초월', col: '#ff4a5a', rgb: '255,74,90' }
+];
+const G_MUL = [1, 1.15, 1.3, 1.5, 1.75, 2.1];         // a weapon's damage
+const G_ARM = [0, .06, .1, .15, .2, .26];             // armour: this much less of what still gets through the crafted armour
+const G_NOPT = [0, 1, 2, 3, 3, 4], G_VAL = [0, 1, 1.5, 2.1, 2.8, 3.6];      // options per grade, and how strong they roll
+const GEAR_SLOT = { weapon: { name: '무기', icon: '🗡' }, armor: { name: '갑옷', icon: '🛡' }, ring: { name: '반지', icon: '💍' }, neck: { name: '목걸이', icon: '📿' }, charm: { name: '부적', icon: '🧿' } };
+const gpc = v => Math.round(v * 100) + '%';
+const GOPT = {     // value per grade step (x G_VAL), the cap on the total over everything you wear, the name's adjective, how it reads
+  atk:    { v: .06, cap: 1,   pre: '날선',   txt: v => '공격력 +' + gpc(v) },
+  crit:   { v: .04, cap: .6,  pre: '예리한', txt: v => '치명타 확률 +' + gpc(v) },
+  leech:  { v: .02, cap: .15, pre: '흡혈의', txt: v => '준 피해의 ' + gpc(v) + ' 회복' },
+  haste:  { v: .05, cap: .6,  pre: '재빠른', txt: v => '공격 속도 +' + gpc(v) },
+  speed:  { v: .03, cap: .3,  pre: '바람의', txt: v => '이동 속도 +' + gpc(v) },
+  guard:  { v: .04, cap: .5,  pre: '단단한', txt: v => '받는 피해 -' + gpc(v) },
+  regen:  { v: .12, cap: 2,   pre: '생명의', txt: v => '체력 재생 +' + v.toFixed(2) + '/초' },
+  gather: { v: .08, cap: 1,   pre: '일꾼의', txt: v => '채집할 때 ' + gpc(v) + ' 확률로 하나 더' },
+  fire:   { v: .07, cap: .6,  pre: '불꽃',   txt: v => gpc(v) + ' 확률로 적을 불태움' },
+  venom:  { v: .07, cap: .6,  pre: '맹독',   txt: v => gpc(v) + ' 확률로 적을 중독시킴' },
+  frost:  { v: .07, cap: .6,  pre: '서리',   txt: v => gpc(v) + ' 확률로 적을 느리게 함' },
+  warm:   { v: .1,  cap: .9,  pre: '따스한', txt: v => '추위 -' + gpc(v) },
+  hardy:  { v: .05, cap: .6,  pre: '질긴',   txt: v => '배고픔·갈증 -' + gpc(v) },
+  xp:     { v: .05, cap: 1,   pre: '현자의', txt: v => '경험치 +' + gpc(v) },
+  thorns: { v: 2,   cap: 30,  pre: '가시',   txt: v => '나를 공격한 적에게 피해 ' + Math.round(v) }
+};
+const GPOOL = { weapon: ['atk', 'crit', 'leech', 'haste', 'fire', 'venom', 'frost', 'gather'], armor: ['guard', 'regen', 'speed', 'warm', 'hardy', 'thorns'],
+  ring: ['atk', 'crit', 'haste', 'leech', 'xp', 'gather'], neck: ['guard', 'regen', 'leech', 'xp', 'warm', 'speed'], charm: ['fire', 'venom', 'frost', 'gather', 'hardy', 'xp', 'thorns'] };
+const GUNIQ = {    // every legend has one of these
+  chain:   { name: '번개 사슬', txt: '공격이 맞으면 25% 확률로 가까운 적 둘에게 번개가 튐 (피해 60%)' },
+  boom:    { name: '폭렬', txt: '처치한 적이 터져 주변(반경 70)을 다치게 함' },
+  reflect: { name: '반사', txt: '맞으면 30% 확률로 받은 피해의 60%를 되돌려 줌' },
+  rage:    { name: '최후의 저항', txt: '체력 30 이하일 때 받는 피해 -30%, 주는 피해 +20%' },
+  dash:    { name: '질풍', txt: '적을 처치하면 3초 동안 빨라짐' }
+};
+const GTRANS = {   // and a transcendent one also has one of these
+  undying: { name: '불사', txt: '하루 한 번, 쓰러질 피해를 버티고 체력 30으로 일어남' },
+  inferno: { name: '지옥불', txt: '주위(반경 95)의 적이 계속 불탐' },
+  tempest: { name: '뇌신', txt: '세 번 공격할 때마다 벼락이 떨어짐 (무기 피해 3배, 잠깐 기절)' }
+};
+const GUPOOL = { weapon: ['chain', 'boom'], armor: ['reflect', 'rage'], ring: ['chain', 'boom', 'dash'], neck: ['reflect', 'rage', 'dash'], charm: ['boom', 'dash', 'chain'] };
+const BAG_MAX = 30, JOB_WEAPON = { carpenter: 'hammer', hunter: 'bow', engineer: 'wrench', herbalist: 'sickle', miner: 'bombpick', soldier: 'shotgun' };
+const SALV_SCRAP = [0, 3, 5, 8, 12, 20], SALV_CORE = [0, 0, 0, 1, 2, 4], TRANS_COST = { tstone: 1, core: 3 };
+const newGearSet = () => ({ w: {}, armor: null, ring: null, neck: null, charm: null });
+let gearSeq = 0;
+function makeGear(g, slot, base){
+  if (!slot){ const r = Math.random(); slot = r < .45 ? 'weapon' : r < .65 ? 'armor' : PICK(['ring', 'neck', 'charm']); }
+  if (slot === 'weapon' && isJob('fist')) slot = PICK(['ring', 'neck', 'charm']);          // the fist fights bare-handed: trinkets instead
+  if (slot === 'weapon' && !base) base = gearBase();
+  const pool = GPOOL[slot].slice(), opts = [], acc = slot === 'ring' || slot === 'neck' || slot === 'charm';
+  for (let i = 0; i < G_NOPT[g] && pool.length; i++){ const k = pool.splice((Math.random() * pool.length) | 0, 1)[0]; opts.push([k, +(GOPT[k].v * G_VAL[g] * (acc ? 1.4 : 1) * rand(.85, 1.15)).toFixed(3)]); }
+  const it = { id: Date.now().toString(36) + '-' + (gearSeq++), slot, g, opts };
+  if (base) it.base = base;
+  if (g >= 4) it.uq = PICK(GUPOOL[slot]);
+  if (g >= 5) it.tr = PICK(Object.keys(GTRANS));
+  return it;
+}
+function gearBase(){                // a weapon the player can use: the common ones and their own job's, most often the ones they already carry
+  const list = ['axe', 'spear', 'sword', 'pickaxe', 'gun'], jw = JOB_WEAPON[P.job]; if (jw) list.push(jw);
+  const w = list.map(t => (P.tools[t] ? 3 : 1) * (t === 'pickaxe' || t === 'axe' ? .6 : 1)); let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < list.length; i++){ r -= w[i]; if (r <= 0) return list[i]; }
+  return list[0];
+}
+const gearBaseName = it => it.slot === 'weapon' ? TOOLS[it.base].name : GEAR_SLOT[it.slot].name;
+const gearName = it => it.tr ? '「' + GTRANS[it.tr].name + '」 ' + gearBaseName(it) : it.uq ? '「' + GUNIQ[it.uq].name + '」 ' + gearBaseName(it) : (it.opts.length ? GOPT[it.opts[0][0]].pre + ' ' : '') + gearBaseName(it);
+const gearFull = it => GRADE[it.g].name + ' ' + gearName(it);
+function gearLines(it){
+  const L = [];
+  if (it.slot === 'weapon') L.push(TOOLS[it.base].name + ' 피해 ×' + G_MUL[it.g] + ' (손에 들었을 때)');
+  if (it.slot === 'armor') L.push('받는 피해 추가 -' + gpc(G_ARM[it.g]));
+  for (const [k, v] of it.opts) L.push(GOPT[k].txt(v));
+  if (it.uq) L.push('★ ' + GUNIQ[it.uq].name + ': ' + GUNIQ[it.uq].txt);
+  if (it.tr) L.push('✦ ' + GTRANS[it.tr].name + ': ' + GTRANS[it.tr].txt);
+  return L;
+}
+
+/* ---- what is worn counts: armour and trinkets always, a weapon only while it is in hand ---- */
+let gearVer = 0, gearKey = '', GC = { o: {}, h: {}, top: 0 };
+function gearC(){
+  const key = P.seed + '|' + P.equip + '|' + gearVer; if (key === gearKey) return GC;
+  gearKey = key; const o = {}, h = {}, g = P.gear || newGearSet(), list = [g.armor, g.ring, g.neck, g.charm, g.w && g.w[P.equip]].filter(Boolean); let top = 0;
+  for (const it of list){ for (const [k, v] of it.opts) o[k] = (o[k] || 0) + v; if (it.uq) h[it.uq] = 1; if (it.tr) h[it.tr] = 1; top = Math.max(top, it.g); }
+  for (const k in o) o[k] = Math.min(o[k], GOPT[k].cap);
+  return GC = { o, h, top };
+}
+const gearOpt = k => (P ? gearC().o[k] || 0 : 0);
+const gearHas = k => !!(P && gearC().h[k]);
+const gearWeaponMul = t => { const w = P && P.gear && P.gear.w[t]; return w ? G_MUL[w.g] : 1; };
+const gearAtk = () => P ? gearWeaponMul(P.equip) * (1 + gearOpt('atk')) * (gearHas('rage') && P.hp <= 30 ? 1.2 : 1) : 1;
+const gearCd = () => 1 / (1 + gearOpt('haste'));
+const gearSpeed = () => 1 + gearOpt('speed');
+const gearCritRoll = () => { if (Math.random() < gearOpt('crit')){ floater(P.x, P.y, 46, '치명타!', '#ffe08a'); return 2; } return 1; };
+function gearHurtMul(){ if (!P || !P.gear) return 1; const a = P.gear.armor; return (1 - (a ? G_ARM[a.g] : 0)) * (1 - gearOpt('guard')) * (gearHas('rage') && P.hp <= 30 ? .7 : 1); }
+
+/* ---- what gear does in a fight ---- */
+let gearBusy = false;                 // (extra hits from gear do not set off more gear)
+function gearOnHit(c, dmg){            // every blow or shot of yours that lands: life steal and the elemental procs
+  const lc = gearOpt('leech'); if (lc && P.hp > 0 && P.hp < 100) P.hp = Math.min(100, P.hp + dmg * lc);
+  if (!creatures.includes(c) || c.hp <= 0) return;
+  if (Math.random() < gearOpt('fire')) c.flame = Math.max(c.flame || 0, 3);
+  if (Math.random() < gearOpt('venom')){ c.venom = Math.max(c.venom || 0, 4); fx('glow', c.x, c.y, 14, 2, '120,220,110'); }
+  if (Math.random() < gearOpt('frost')){ c.slow = Math.max(c.slow || 0, 2.5); fx('glow', c.x, c.y, 14, 3, '170,220,255'); }
+}
+function gearStrike(c, dmg){           // an attack of yours landed on c: the legend lightning
+  if (gearBusy || !gearHas('chain') || Math.random() >= .25) return;
+  gearBusy = true;
+  try {
+    const near = creatures.filter(e => e !== c && foe(e) && isHostile(e) && Math.hypot(e.x - c.x, e.y - c.y) < 140).sort((a, b) => Math.hypot(a.x - c.x, a.y - c.y) - Math.hypot(b.x - c.x, b.y - c.y)).slice(0, 2);
+    for (const e of near){ zaps.push({ ax: c.x, ay: c.y, bx: e.x, by: e.y, t: .25, seed: Math.random() * 1e4 }); hitCreature(e, Math.max(1, Math.round(dmg * .6)), e.x - c.x, e.y - c.y, true); }
+  } finally { gearBusy = false; }
+}
+function gearSwing(c){                 // each attack (a blow or a shot): with the storm god, every third one brings down lightning on what you aim at
+  if (!gearHas('tempest') || !c || !creatures.includes(c)) return;
+  P.gx.ts = (P.gx.ts || 0) + 1; if (P.gx.ts % 3) return;
+  const dmg = Math.max(6, Math.round(stat(P.equip).dmg * gearAtk() * 3));
+  bolts.push({ x: c.x, y: c.y, t: .35, seed: Math.random() * 1000 }); flashT = Math.max(flashT, .12); SND.play('thunder', { x: c.x, y: c.y, v: .6 });
+  gearBusy = true; try { hitCreature(c, dmg, 0, 0, true); } finally { gearBusy = false; }
+  if (creatures.includes(c)) c.stun = Math.max(c.stun || 0, c.boss ? .3 : .8);
+}
+function gearOnKill(c){
+  if (gearBusy) return;
+  if (gearHas('dash')) P.buffs.swift = Math.max(P.buffs.swift, 3);
+  if (gearHas('boom')){
+    gearBusy = true;
+    try {
+      const dmg = clamp(Math.round(c.max * .3), 8, 60); fx('smoke', c.x, c.y, 12, 6); fx('spark', c.x, c.y, 12, 10); fx('glow', c.x, c.y, 16, 8, GRADE[4].rgb); SND.play('slam', { x: c.x, y: c.y, r: 1.6 });
+      for (const e of [...creatures]) if (e !== c && foe(e) && isHostile(e) && Math.hypot(e.x - c.x, e.y - c.y) < 70 + e.r) hitCreature(e, dmg, e.x - c.x, e.y - c.y, true);
+    } finally { gearBusy = false; }
+  }
+}
+function gearRetaliate(c, n){          // thorns and the legend mirror, on whatever just hurt you
+  if (!creatures.includes(c) || c.ally) return;
+  let d = Math.round(gearOpt('thorns')); if (gearHas('reflect') && Math.random() < .3){ d += Math.round(n * .6); floater(P.x, P.y, 50, '반사!', GRADE[4].col); }
+  if (d <= 0) return;
+  gearBusy = true; try { hitCreature(c, d, c.x - P.x, c.y - P.y, true); } finally { gearBusy = false; }
+}
+function gearUndying(){                // the immortal: once a day, death does not take you
+  if (!gearHas('undying') || P.gx.und === dayOf()) return false;
+  P.gx.und = dayOf(); P.hp = 30; P.hunger = Math.max(P.hunger, 20); P.thirst = Math.max(P.thirst, 20); P.warmth = Math.max(P.warmth, 30);
+  flashT = .4; shakeT = .5; fx('glow', P.x, P.y, 24, 30, GRADE[5].rgb); floater(P.x, P.y, 60, '불사!', GRADE[5].col); SND.play('levelup', { key: 1 });
+  toast('✦ 「불사」가 죽음을 막았어요! 오늘은 다시 막지 못해요');
+  return true;
+}
+function updateGear(dt){
+  if (!P.gear) return;
+  const C = gearC(), rg = C.o.regen || 0;
+  if (rg && P.hp > 0) P.hp = Math.min(100, P.hp + rg * dt);
+  if (C.h.inferno){
+    for (const c of creatures) if (foe(c) && isHostile(c) && !c.under && Math.hypot(c.x - P.x, c.y - P.y) < 95 + c.r) c.flame = Math.max(c.flame || 0, .6);
+    if (Math.random() < dt * 14){ const a = rand(0, TAU); fx('ember', P.x + Math.cos(a) * 85, P.y + Math.sin(a) * 60, 4, 1); }
+  }
+  if (C.top >= 4 && Math.random() < dt * (C.top >= 5 ? 6 : 3)) fx('glow', P.x + rand(-10, 10), P.y + rand(-6, 6), rand(8, 34), 1, GRADE[C.top].rgb);       // a legend or better glows on you
+  if (!jobDef().hidden){ for (const b of bolts) b.t -= dt; if (bolts.length) bolts = bolts.filter(b => b.t > 0); }       // (the hidden jobs already age the bolts)
+}
+
+/* ---- drops: elites, bosses, zone bosses, drifting crates, now and then anything hostile ---- */
+function dropGear(x, y, g, slot){
+  const it = makeGear(g, slot), a = rand(0, TAU), d = rand(18, 42);
+  pickups.push({ k: 'gear', n: 1, gear: it, ox: x, oy: y, x, y, tx: x + Math.cos(a) * d, ty: y + Math.sin(a) * d, z: 0, age: 0, life: 300 });
+  if (g >= 4) toast('✨ ' + GRADE[g].name + ' 장비가 떨어졌어요!');
+  return it;
+}
+function rollGearDrop(c){
+  if (!P || c.decoy || c.ally) return;
+  if (c.boss && c.lair){                                   // a zone boss: an epic for sure, often a legend; from its third round, a transcendence stone
+    const cy = c.cycle || 0; dropGear(c.x, c.y, Math.random() < [.2, .35, .5][cy] ? 4 : 3);
+    if (cy >= 2 && Math.random() < .5) dropPickup('tstone', 1, c.x, c.y);
+    return;
+  }
+  if (c.boss){                                             // a night boss: unique to legend, better in later rounds; the strongest round may leave a transcendence stone
+    const cy = c.cycle || 0, W = [[.6, .35, .05], [.3, .55, .15], [0, .6, .4]][cy], r = Math.random(), g = r < W[0] ? 2 : r < W[0] + W[1] ? 3 : 4;
+    dropGear(c.x, c.y, g); if (Math.random() < [.15, .3, .5][cy]) dropGear(c.x, c.y, Math.max(1, g - 1));
+    if (cy >= 2 && Math.random() < .25) dropPickup('tstone', 1, c.x, c.y);
+    return;
+  }
+  if (c.elite){ if (Math.random() < .45){ const r = Math.random(); dropGear(c.x, c.y, r < .7 ? 1 : r < .95 ? 2 : 3); } return; }
+  if (!isHostile(c)) return;
+  if (Math.random() < (c.k === 'brute' || c.k === 'golem' || c.k === 'magma' ? .05 : .015)) dropGear(c.x, c.y, Math.random() < .2 ? 2 : 1);
+}
+function gearPick(it){                 // walked over a dropped piece: straight on if that slot is empty, otherwise into the bag
+  const name = gearFull(it), col = GRADE[it.g].col, icon = GEAR_SLOT[it.slot].icon;
+  floater(P.x, P.y, 46, name, col);
+  if (it.g >= 3){ SND.play('levelup', { key: 1 }); fx('glow', P.x, P.y, 20, 16, GRADE[it.g].rgb); } else SND.play('pickup');
+  const empty = it.slot === 'weapon' ? P.tools[it.base] && !P.gear.w[it.base] : !P.gear[it.slot];
+  if (empty){ equipGear(it); toast(icon + ' ' + josa(name, '을/를') + ' 주워서 바로 장착했어요'); return; }
+  if (P.bag.length >= BAG_MAX){ salvageGear(it); toast('가방(' + BAG_MAX + '칸)이 가득 차서 ' + josa(name, '을/를') + ' 분해했어요 (+고철 ' + SALV_SCRAP[it.g] + ')'); return; }
+  P.bag.push(it); P.newGear = (P.newGear || 0) + 1; syncGearBadge();
+  toast(icon + ' ' + josa(name, '을/를') + ' 주웠어요! 제작 → 장비 탭에서 낄 수 있어요');
+}
+function equipGear(it){
+  const i = P.bag.indexOf(it); if (i >= 0) P.bag.splice(i, 1);
+  if (it.slot === 'weapon'){
+    const old = P.gear.w[it.base]; if (old && old !== it) P.bag.push(old); P.gear.w[it.base] = it;
+    if (!P.tools[it.base]){ P.tools[it.base] = true; P.hx.tool = true; buildEquip(); }          // a weapon you find is a weapon you have
+  } else { const old = P.gear[it.slot]; if (old && old !== it) P.bag.push(old); P.gear[it.slot] = it; }
+  gearVer++; syncEquip(); SND.play('upgrade');
+}
+function unequipGear(it){
+  if (P.bag.length >= BAG_MAX){ toast('가방이 가득 찼어요'); return false; }
+  if (it.slot === 'weapon'){ if (P.gear.w[it.base] !== it) return false; delete P.gear.w[it.base]; }
+  else { if (P.gear[it.slot] !== it) return false; P.gear[it.slot] = null; }
+  P.bag.push(it); gearVer++; syncEquip(); SND.play('ui'); return true;
+}
+function salvageGear(it){
+  const i = P.bag.indexOf(it); if (i >= 0) P.bag.splice(i, 1);
+  P.inv.scrap += SALV_SCRAP[it.g]; P.seen.scrap = true; if (SALV_CORE[it.g]){ P.inv.core += SALV_CORE[it.g]; P.seen.core = true; }
+  SND.play('scrap');
+}
+function transcend(it){                // a legend becomes transcendent: one more option, everything stronger, and a transcendent power
+  if (it.g !== 4 || !Object.keys(TRANS_COST).every(k => P.inv[k] >= TRANS_COST[k])) return false;
+  for (const k in TRANS_COST) P.inv[k] -= TRANS_COST[k];
+  const acc = it.slot === 'ring' || it.slot === 'neck' || it.slot === 'charm';
+  for (const o of it.opts) o[1] = +(o[1] * G_VAL[5] / G_VAL[4]).toFixed(3);
+  const left = GPOOL[it.slot].filter(k => !it.opts.some(o => o[0] === k)); if (left.length){ const k = PICK(left); it.opts.push([k, +(GOPT[k].v * G_VAL[5] * (acc ? 1.4 : 1) * rand(.85, 1.15)).toFixed(3)]); }
+  it.g = 5; it.tr = PICK(Object.keys(GTRANS)); gearVer++;
+  flashT = .3; SND.play('levelup', { key: 1 }); fx('glow', P.x, P.y, 24, 30, GRADE[5].rgb);
+  toast('✦ ' + josa(gearFull(it), '이/가') + ' 되었어요! ' + GTRANS[it.tr].name + ': ' + GTRANS[it.tr].txt);
+  return true;
+}
+function gearLoaded(){ P.gear = Object.assign(newGearSet(), P.gear || {}); P.gear.w = P.gear.w || {}; P.bag = P.bag || []; P.gx = P.gx || {}; gearVer++; syncGearBadge(); }
+function syncGearBadge(){ const b = $('btnCraft'); if (b) b.classList.toggle('newgear', !!(P && P.newGear > 0)); }
+
+/* ---- the 장비 tab ---- */
+function gearRow(it, where){
+  const div = document.createElement('div'); div.className = 'recipe gear'; div.style.setProperty('--gc', GRADE[it.g].col); div.style.setProperty('--gr', GRADE[it.g].rgb);
+  const cur = where === 'bag' ? (it.slot === 'weapon' ? P.gear.w[it.base] : P.gear[it.slot]) : null;
+  const cmp = where === 'bag' ? '<span class="gcmp">지금: ' + (cur ? '<b style="color:' + GRADE[cur.g].col + '">' + gearFull(cur) + '</b>' : '없음') + (it.slot === 'weapon' && !P.tools[it.base] ? ' · 끼면 ' + TOOLS[it.base].name + '을 얻어요' : '') + '</span>' : '';
+  div.innerHTML = `<div><b class="gname">${GEAR_SLOT[it.slot].icon} ${gearName(it)}</b><span class="gtag">${GRADE[it.g].name}</span><p>${gearLines(it).join('<br>')}</p>${cmp}</div>`;
+  const box = document.createElement('div'); box.className = 'btns';
+  const btn = (t, cls, fn, dis) => { const b = document.createElement('button'); b.className = 'btn small' + (cls ? ' ' + cls : ''); b.textContent = t; b.disabled = !!dis; b.addEventListener('click', () => { fn(); renderCraft(); }); box.appendChild(b); };
+  if (where === 'worn') btn('해제', 'ghost', () => unequipGear(it), P.bag.length >= BAG_MAX);
+  else {
+    btn('장착', '', () => equipGear(it));
+    if (it.g === 4) btn('초월', 'trans', () => transcend(it), !Object.keys(TRANS_COST).every(k => P.inv[k] >= TRANS_COST[k]));
+    btn('분해', 'ghost', () => salvageGear(it));
+  }
+  div.appendChild(box); return div;
+}
+function renderGear(){
+  const list = $('craftList'); list.innerHTML = ''; P.newGear = 0; syncGearBadge();
+  const head = t => { const h = document.createElement('p'); h.className = 'sub gearhead'; h.textContent = t; list.appendChild(h); };
+  head('착용 중 · 무기는 손에 들었을 때만, 갑옷과 장신구는 늘 효과가 있어요');
+  const worn = [...TOOL_ORDER.filter(t => P.gear.w[t]).map(t => P.gear.w[t]), P.gear.armor, P.gear.ring, P.gear.neck, P.gear.charm].filter(Boolean);
+  if (!worn.length){ const p = document.createElement('p'); p.className = 'sub'; p.textContent = '아직 낀 등급 장비가 없어요.'; list.appendChild(p); }
+  for (const it of worn) list.appendChild(gearRow(it, 'worn'));
+  head('가방 ' + P.bag.length + '/' + BAG_MAX + ' · 분해하면 고철(에픽부터 정예핵도)을 돌려받아요');
+  if (!P.bag.length){ const p = document.createElement('p'); p.className = 'sub'; p.textContent = '엘리트, 3일마다 오는 보스, 구역 보스, 표류 화물에서 레어 · 유니크 · 에픽 · 레전드 장비가 나와요. 레전드는 초월석(최강의 보스·3회차 구역 보스) 1개와 정예핵 3개로 초월시킬 수 있어요.'; list.appendChild(p); }
+  for (const it of P.bag.slice().sort((a, b) => b.g - a.g || a.slot.localeCompare(b.slot))) list.appendChild(gearRow(it, 'bag'));
+}
+
 /* ================= fishing: cast, wait for a nibble, hook it when the bobber dives, then time three taps on the moving bar ================= */
 const FISH_KIND = {
   small: { name: '작은 물고기', n: 1, zw: .36, sp: .85, bite: 1.25 },
@@ -5657,6 +5938,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 // debug/test hook (read-only view of the running game)
 window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
 Object.assign(window.__game, { ZONES, LAIR, RELICS, relic, lairCheck, lairObj, lairCenter, lairSpot, placeLair, fillRing, migrateWorld, loadGame, BOSS_AI, foxOrbs, hookShots, skyFalls, upgradeBoat3, BOAT_UPG3, DEST, inside, setZone, genWorld, GEN, updateLands, lairDef, renderPerk }); Object.defineProperty(window.__game, 'WORLD', { get: () => WORLD });
+Object.assign(window.__game, { GRADE, GOPT, GUNIQ, GTRANS, G_MUL, G_ARM, makeGear, dropGear, rollGearDrop, gearPick, equipGear, unequipGear, salvageGear, transcend, gearOpt, gearHas, gearAtk, gearHurtMul, gearFull, gearName, gearLines, renderGear, BAG_MAX, TRANS_COST, bumpGear: () => { gearVer++; }, attack: c => attack(c) });
 })();
 </script>
 </body>

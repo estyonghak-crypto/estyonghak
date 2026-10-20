@@ -1281,10 +1281,11 @@ $('btnBuild').addEventListener('click', toggleBuild);
 $('build').addEventListener('click', e => { const b = e.target.closest('.bp'); if (b && running && !paused) selectBuild(b.dataset.k); });
 
 let equipTip = false, autoTip = false, trapTip = false, thornTip = false;
-const hasTool = t => t === 'hand' || !!P.tools[t];
+const hasTool = t => t === 'hand' || (!!P.tools[t] && !(isJob('plum') && (t === 'gun' || t === 'bow' || t === 'shotgun')));      // the plum swordsman will not touch a gun or a bow
 const ownedTools = () => TOOL_ORDER.filter(hasTool);
 function bestFor(tg){          // tool that suits the thing in front of the player, or null to keep the current one
   if (!tg) return null;
+  if (tg.kind === 'creature' && isJob('plum') && hasTool('sword')) return 'sword';
   if (tg.kind === 'creature'){ const m = ['sword', 'hammer', 'wrench', 'sickle', 'spear', 'bombpick', 'axe'].filter(hasTool); return m.length ? m.sort((a, b) => stat(b).dmg * gearWeaponMul(b) - stat(a).dmg * gearWeaponMul(a))[0] : 'hand'; }      // the hardest-hitting melee weapon
   if (tg.o.t === 'wall') return hasTool('hammer') && tg.o.hp < tg.o.max ? 'hammer' : null;                  // the carpenter's hammer mends for free
   if (tg.o.t === 'rock' || tg.o.t === 'ore'){ const m = ['bombpick', 'pickaxe'].filter(hasTool); return m.length ? m.sort((a, b) => stat(b).stone - stat(a).stone)[0] : 'hand'; }
@@ -1541,8 +1542,10 @@ function updatePickups(dt){
     } else if (p.age > p.life) pickups.splice(i, 1);
   }
 }
+let swordCtx = false;              // set while a sword blow (or what it sets off) is landing: the plum swordsman's trial counts only those
 function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   if (!creatures.includes(c) || c.under) return;                                // (a burrowed boss is out of reach)
+  if (c.lair && c.k === 'lavagiant'){ if (c.hp >= c.max) c.impure = false; if (!dot && !swordCtx) c.impure = true; }      // anything but the sword spoils the plum swordsman's trial
   const sp = SPECS[c.k];
   if (c.dr){ const red = Math.max(1, Math.round(dmg * (1 - c.dr))); if (red < dmg) floater(c.x, c.y, 34, '방어', '#8fc4ff'); dmg = red; }
   if (c.frozen > 0 && !dot) dmg *= 2;                                           // frozen solid: it shatters
@@ -1572,14 +1575,16 @@ function hitCreature(c, dmg, kx, ky, byPlayer, byTower, dot){
   }
 }
 function attack(c){
-  const eq = stat(P.equip); P.cd = eq.cdA * gearCd(); SND.play('swing');
-  let m = (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler')) * meleeMul() * gearAtk();
+  const eq = stat(P.equip), plum = isJob('plum') && P.equip === 'sword'; P.cd = eq.cdA * gearCd(); SND.play('swing'); swordCtx = P.equip === 'sword';
+  let m = (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler')) * meleeMul() * gearAtk() * (plum ? 1.3 : 1);
   if (P.jobFx.mark){ P.jobFx.mark = 0; m *= 2; floater(c.x, c.y, 44, '급소!', '#ffe08a'); }             // the hunter's tracking: the next blow lands double
   else if (Math.random() < (perk('vital') ? .2 : 0) + gearOpt('crit')){ m *= 2; floater(c.x, c.y, 44, '치명타!', '#ffe08a'); }
   hitCreature(c, Math.round(eq.dmg * m), c.x - P.x, c.y - P.y, true);
   if (!creatures.includes(c)) onWolfPunched(c);
   weaponHit(c, Math.round(eq.dmg * m));
   gearStrike(c, Math.round(eq.dmg * m)); gearSwing(c);
+  if (plum){ plumMark(c, Math.round(eq.dmg * m)); firePetals(c, Math.round(eq.dmg * m)); }
+  swordCtx = false;
 }
 
 /* ================= guns, arrows, towers ================= */
@@ -1635,7 +1640,8 @@ function updateBullets(dt){
     for (const c of creatures){
       if (b.hostileOnly && !isHostile(c)) continue;
       if (c.ally || c.under || b.hits && b.hits.includes(c)) continue;                          // a piercing round goes through the one it hit
-      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ hitCreature(c, b.beast && BEAST[c.k] ? b.dmg * 2 : b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); if (b.own === 'player') gearStrike(c, b.dmg); fx('spark', b.x, b.y, 12, 4); if (b.knock && creatures.includes(c)){ c.kvx *= b.knock; c.kvy *= b.knock; } if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
+      if (b.petal && !foe(c)) continue;
+      if (Math.hypot(c.x - b.x, c.y - b.y) < c.r + 4){ swordCtx = !!b.petal; hitCreature(c, b.beast && BEAST[c.k] ? b.dmg * 2 : b.dmg, b.vx, b.vy, b.own === 'player' || (b.own === 'tower' && Math.hypot(c.x - P.x, c.y - P.y) < 400), b.own === 'tower'); swordCtx = false; if (b.own === 'player' && !b.petal) gearStrike(c, b.dmg); fx('spark', b.x, b.y, 12, 4); if (b.knock && creatures.includes(c)){ c.kvx *= b.knock; c.kvy *= b.knock; } if (b.pierce > 0){ b.pierce--; (b.hits = b.hits || []).push(c); } else hit = true; break; }
     }
     if (hit || b.life <= 0) bullets.splice(i, 1);
   }
@@ -1650,12 +1656,13 @@ function bloodAt(x, y, kind, big){         // stains stay on the ground for a wh
   }
 }
 function hurt(n, raw){
+  if (!raw && hitSrc && isJob('plum') && Math.random() < .2){ floater(P.x, P.y, 30, '흘려냄', '#ffc4dd'); fx('petal', P.x, P.y, 16, 8); SND.play('swing'); return; }      // 암향표: drifting off like a petal
   if (!raw && hitSrc && hitSrc.bmul) n *= hitSrc.bmul;                          // a boss's later rounds hit harder
   if (!raw) n = Math.max(1, Math.round(n * (1 - ARMOR_RED[P.armor || 0]) * (1 - [0, .12, .22][perk('tough')]) * (isJob('herbalist') ? 1.1 : 1) * (isJob('fist') ? .7 : isJob('frost') ? .75 : 1) * (relic('scale') ? .85 : 1) * gearHurtMul()));
   if (fish.on) fishStop('깜짝 놀라 낚싯줄을 놓쳤어요');
   if (!raw && hitSrc){ const ch = CATCH[hitSrc.k]; if (ch) for (const k in ch) if (Math.random() < ch[k] * (hitSrc.elite ? 1.3 : 1) * (perk('immune') && (k === 'infect' || k === 'poison') ? .5 : 1)) afflict(k); }
   P.hp -= n; hurtT = .45; shakeT = .25; bloodAt(P.x, P.y + 4, 'player', false); SND.play('hurt');
-  if (!raw && hitSrc) gearRetaliate(hitSrc, n);
+  if (!raw && hitSrc){ swordCtx = P.equip === 'sword'; gearRetaliate(hitSrc, n); swordCtx = false; }
   floater(P.x, P.y, 28, '-' + Math.round(n), '#ff6b5e');
   try { navigator.vibrate && navigator.vibrate(35); } catch (_) {}
   if (P.hp <= 0) endGame(false);
@@ -1744,6 +1751,7 @@ function nearCoast(){
 function craftBlock(r){
   for (const k in r.cost) if (P.inv[k] < r.cost[k]) return '재료가 부족해요';
   if (r.job && r.job !== P.job) return JOBS[r.job].name + ' 전용이에요';
+  if (isJob('plum') && (r.id === 'gun' || r.id === 'bow' || r.id === 'shotgun' || r.id === 'arrows')) return '매화검수는 검만 써요';
   if (r.tool && P.tools[r.tool]) return '이미 가지고 있어요';
   if (r.tool && isJob('fist')) return '권왕은 도구를 쓰지 않아요';
   if (r.raft && isJob('owner')) return '섬의 주인은 섬을 떠나지 않아요';
@@ -1882,7 +1890,7 @@ function renderCraft(){
     const why = craftBlock(r), owned = recipeOwned(r);
     const cost = Object.keys(r.cost).map(k => `<span class="${P.inv[k] >= r.cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${r.cost[k]}</span>`).join('');
     const div = document.createElement('div'); div.className = 'recipe';
-    div.innerHTML = `<div><b>${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${why && !owned && (r.raft || r.boat) ? `<span class="note">${why}</span>` : ''}</div>`;
+    div.innerHTML = `<div><b>${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${why && (!owned && (r.raft || r.boat) || why === '매화검수는 검만 써요') ? `<span class="note">${why}</span>` : ''}</div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = owned ? '보유 중' : '제작'; b.disabled = !!why;
     b.addEventListener('click', () => craft(r)); div.appendChild(b); list.appendChild(div);
   });
@@ -3013,6 +3021,7 @@ function fx(kind, x, y, z, n, col){
     const a = rand(0, TAU), ca = Math.cos(a), sa = Math.sin(a);
     switch (kind){
       case 'dust':  addPart('dust', x + rand(-3, 3), y + rand(-2, 2), 2, rand(-8, 8), rand(-6, 6), rand(6, 16), .55, rand(3, 5), '216,198,152'); break;
+      case 'petal': addPart('petal', x + rand(-10, 10), y + rand(-6, 6), z + rand(0, 10), rand(-30, 30), rand(-12, 12), rand(-2, 16), rand(1.1, 2), rand(2.6, 4.2), PICK(['255,170,205', '255,140,190', '255,215,230', '250,120,175'])); break;
       case 'leaf':  addPart('leaf', x + rand(-14, 14), y + rand(-6, 6), z + rand(0, 14), rand(-26, 26), rand(-8, 8), rand(-4, 10), rand(.9, 1.4), rand(2.2, 3.4), PICK(['110,190,90', '78,150,70', '160,210,100'])); break;
       case 'chip':  addPart('chip', x, y, z, ca * rand(20, 60), sa * rand(8, 24), rand(40, 90), .55, rand(1.8, 2.8), PICK(['150,108,60', '110,76,40', '196,160,100'])); break;
       case 'rock':  addPart('chip', x, y, z, ca * rand(20, 60), sa * rand(8, 24), rand(40, 90), .55, rand(1.8, 2.8), PICK(['170,176,180', '120,126,130', '205,208,210'])); break;
@@ -3029,7 +3038,7 @@ function updateParts(dt){
   for (let i = parts.length - 1; i >= 0; i--){
     const p = parts[i]; p.life -= dt; if (p.life <= 0){ parts.splice(i, 1); continue; }
     p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.rot += dt * 5;
-    if (p.kind === 'chip') p.vz -= 260 * dt; else if (p.kind === 'spark') p.vz -= 200 * dt; else if (p.kind === 'leaf'){ p.vz -= 14 * dt; p.vx += Math.sin(anim * 5 + p.rot) * 30 * dt; } else if (p.kind === 'smoke' || p.kind === 'dust') p.vz *= 1 - .8 * dt;
+    if (p.kind === 'chip') p.vz -= 260 * dt; else if (p.kind === 'spark') p.vz -= 200 * dt; else if (p.kind === 'leaf' || p.kind === 'petal'){ p.vz -= 14 * dt; p.vx += Math.sin(anim * 5 + p.rot) * 30 * dt; } else if (p.kind === 'smoke' || p.kind === 'dust') p.vz *= 1 - .8 * dt;
     if (p.z < 0){ p.z = 0; p.vz = 0; p.vx *= .5; p.vy *= .5; }
   }
 }
@@ -3047,6 +3056,8 @@ function drawParts(){            // flat screen space: height z lifts a point st
       const r = p.size * (1.3 + (1 - k) * (p.kind === 'smoke' ? 2.6 : 1.6)); ctx.globalAlpha = (p.kind === 'smoke' ? .5 : .55) * k; ctx.drawImage(p.kind === 'smoke' ? puffSmoke : puffDust, px - r, sy - r, r * 2, r * 2);
     } else if (p.kind === 'ember' || p.kind === 'spark'){
       ctx.globalAlpha = Math.min(1, k * 1.8); ctx.fillStyle = 'rgb(' + p.col + ')'; ctx.beginPath(); ctx.arc(px, sy, Math.max(.6, p.size * (.5 + k * .6)), 0, TAU); ctx.fill();
+    } else if (p.kind === 'petal'){
+      ctx.globalAlpha = Math.min(1, k * 2); ctx.fillStyle = 'rgb(' + p.col + ')'; ctx.beginPath(); ctx.ellipse(px, sy, p.size, p.size * .55, p.rot, 0, TAU); ctx.fill();
     } else {
       ctx.globalAlpha = Math.min(1, k * 2); ctx.fillStyle = 'rgb(' + p.col + ')'; ctx.save(); ctx.translate(px, sy); ctx.rotate(p.rot); ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * (p.kind === 'leaf' ? .6 : 1)); ctx.restore();
     }
@@ -3139,7 +3150,11 @@ function drawBullets(){        // upright space too, so the flight height stays 
   ctx.lineCap = 'round';
   for (const b of bullets){
     const h = b.own === 'tower' ? 16 : 18, bx = ux(b.x, b.y), by = uy(b.x, b.y) - h, vx2 = ux(b.vx, b.vy), vy2 = uy(b.vx, b.vy), n = Math.hypot(vx2, vy2) || 1, dx = vx2 / n, dy = vy2 / n;
-    if (b.kind === 'arrow'){
+    if (b.kind === 'petal'){
+      ctx.strokeStyle = 'rgba(255,170,210,.45)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx - dx * 16, by - dy * 16); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.save(); ctx.translate(bx, by); ctx.rotate(b.rot + anim * 14); ctx.fillStyle = '#ff9cc8'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 3.2, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#ffe1ee'; ctx.beginPath(); ctx.ellipse(1.2, 0, 2.6, 1.3, 0, 0, TAU); ctx.fill(); ctx.restore();
+    } else if (b.kind === 'arrow'){
       ctx.strokeStyle = '#d9c9a0'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(bx - dx * 13, by - dy * 13); ctx.lineTo(bx, by); ctx.stroke();
       ctx.fillStyle = '#cfd4d8'; ctx.beginPath(); ctx.moveTo(bx + dx * 5, by + dy * 5); ctx.lineTo(bx - dy * 3, by + dx * 3); ctx.lineTo(bx + dy * 3, by - dx * 3); ctx.closePath(); ctx.fill();
     } else {
@@ -3346,6 +3361,7 @@ function drawCreature(c){
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(c.x - w / 2, by, w, 4);
     ctx.fillStyle = hk > .5 ? '#8fd16a' : hk > .25 ? '#f2b84b' : '#ec5a4d'; ctx.fillRect(c.x - w / 2 + 1, by + 1, (w - 2) * hk, 2);
   }
+  if (c.plum > 0) for (let i = 0; i < c.plum; i++){ const px = c.x + (i - (c.plum - 1) / 2) * 8, py = c.y - top - 4; ctx.fillStyle = '#ff9cc8'; ctx.beginPath(); ctx.arc(px, py, 3, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff1c4'; ctx.beginPath(); ctx.arc(px, py, 1.1, 0, TAU); ctx.fill(); }      // the plum swordsman's marks
   if (c.burn > 0) for (let i = 0; i < 3; i++){
     const fx = c.x + (i - 1) * 6, fy = c.y - 18 - Math.abs(Math.sin(anim * 12 + i)) * 8;
     ctx.fillStyle = i === 1 ? '#ffc247' : '#ff6a1f'; ctx.beginPath(); ctx.ellipse(fx, fy, 3, 5, 0, 0, TAU); ctx.fill();
@@ -3580,7 +3596,7 @@ function render(){
     ctx.restore();
   }
   if (buildMode && running){ drawPlan(); drawGhost(); }
-  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawWeaponFx(); drawLandFx();
+  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawPlumFx(); drawWeaponFx(); drawLandFx();
 
   uprightT();
   drawParts(); drawBullets();
@@ -4153,7 +4169,7 @@ const gunMul = () => (isJob('carpenter') ? .8 : isJob('soldier') ? 1.25 : 1);
 const gunCdMul = () => (isJob('soldier') ? .85 * (perk('rapidfire') ? .8 : 1) : 1) * (P.jobFx.rapid > 0 ? .5 : 1);
 const meleeMul = () => (isJob('engineer') ? .85 : 1) * (relic('tusk') ? 1.2 : 1);
 const potionMul = () => (isJob('herbalist') ? 1.5 : 1);
-const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1) * (isJob('phoenix') && P.jobFx.blaze > 0 ? 1.3 : 1);
+const jobSpeed = () => (isJob('hunter') && perk('stalker') && P.jobFx.track > 0 ? 1.2 : 1) * (isJob('phoenix') && P.jobFx.blaze > 0 ? 1.3 : 1) * (isJob('plum') ? 1.2 : 1);
 const coldMul = () => (isJob('hunter') ? 1.15 : 1) * (relic('pelt') ? .25 : 1) * (1 - gearOpt('warm'));
 function wallMax(kind){ const d = WALLS[kind]; return Math.round(d.hp * (isJob('carpenter') && !d.trap ? 1.3 : 1)); }
 function buildCost(k){           // what one piece costs you, after your job's discount
@@ -4316,9 +4332,12 @@ Object.assign(JOBS, {
     skill: { id: 'zero', name: '절대영도', icon: '🧊', cd: 35, desc: '반경 200 안의 적을 4초 동안 꽁꽁 얼려요 (보스는 1.5초). 언 적은 피해를 2배로 받아요' }, related: [] },
   owner:   { name: '섬의 주인', icon: '🌲', tag: '섬이 인정한 자', hidden: true, ramp: ['#2a3a14', '#46601e', '#6f8f2c', '#b8d060'], ui: '#b8d060', glow: '190,230,120',
     kit: '각성', traits: ['늑대·곰·멧돼지·박쥐·골렘이 먼저 공격하지 않아요 (좀비와 보스는 공격해요)', '채집 3배', '체력이 3배 빨리 차올라요'], weak: '뗏목을 만들 수 없어요. 대신 ' + OWNER_DAY + '일차 아침을 맞으면 "섬의 주인" 엔딩',
-    skill: { id: 'wrath', name: '섬의 분노', icon: '⚡', cd: 30, desc: '주변(450) 적 8마리에게 번개를 내리꽂아요 (각 80)' }, related: [] }
+    skill: { id: 'wrath', name: '섬의 분노', icon: '⚡', cd: 30, desc: '주변(450) 적 8마리에게 번개를 내리꽂아요 (각 80)' }, related: [] },
+  plum:    { name: '매화검수', icon: '🌸', tag: '화산에 올라 깨달음을 얻은 검객', hidden: true, ramp: ['#141318', '#221f28', '#332f3b', '#4b4555'], ui: '#ff9cc8', glow: '255,150,196',
+    kit: '각성', traits: ['검을 휘두르면 매화 꽃잎 검기 5줄기가 날아가요', '검 피해 +30% · 베기 마릿수 제한 없음 · 매화 표식 3개가 쌓이면 꽃이 터져요', '암향표: 이동 +20%, 20% 확률로 공격을 흘려 피해요'], weak: '총·활·산탄총을 쓸 수 없어요',
+    skill: { id: 'plum', name: '이십사수매화검법', icon: '🌸', cd: 30, desc: '2초 동안 주변(200) 적 위로 매화 24송이가 피어나요 (한 송이에 검 피해 ×1.5). 끝나면 남은 적이 모두 개화해요' }, related: [] }
 });
-const HIDDEN_ORDER = ['fist', 'phoenix', 'lich', 'frost', 'owner'];
+const HIDDEN_ORDER = ['fist', 'phoenix', 'lich', 'frost', 'owner', 'plum'];
 const TAME = { wolf: 1, bear: 1, boar: 1, bat: 1, golem: 1 };          // what leaves the island's owner alone
 const gatherMul = () => (isJob('owner') ? 3 : 1);
 const tamed = c => isJob('owner') && TAME[c.k];
@@ -4328,6 +4347,7 @@ function awaken(id){
   if (id === 'fist'){ P.auto = true; setEquip('hand'); buildEquip(); }
   if (id === 'frost'){ P.warmth = 100; cure(['chill']); }
   if (id === 'lich') cure(['infect', 'poison']);
+  if (id === 'plum'){ buildEquip(); if (P.equip !== 'sword') setEquip('sword'); for (let i = 0; i < 70; i++){ const a = rand(0, TAU), r = rand(20, 260); fx('petal', P.x + Math.cos(a) * r, P.y + Math.sin(a) * r, rand(10, 90), 1); } }
   if (id === 'owner') for (const c of creatures) if (TAME[c.k]){ c.state = c.k === 'golem' ? 'idle' : c.state === 'angry' ? 'idle' : c.state; c.angry = 0; }
   flashT = .5; shakeT = .5; SND.play('levelup', { key: 1 }); setTimeout(() => SND.play('perk', { key: 1 }), 350);
   fx('glow', P.x, P.y, 30, 34, J.glow); fx('spark', P.x, P.y, 20, 20); floater(P.x, P.y, 64, '✦ 각성 ✦', '#ffe08a');
@@ -4336,6 +4356,7 @@ function awaken(id){
   toast('✦ 각성! ' + J.icon + ' ' + J.name + ' — ' + J.traits[0]);
   setTimeout(() => toast(J.icon + ' 고유 기술 ' + J.skill.icon + ' ' + J.skill.name + ': 건축 버튼 옆의 동그란 버튼 (R)'), 2800);
   if (id === 'owner') setTimeout(() => toast('🌲 ' + OWNER_DAY + '일차 아침까지 섬을 지키면 "섬의 주인" 엔딩이에요. 뗏목은 만들 수 없어요'), 5600);
+  if (id === 'plum') setTimeout(() => toast('🌸 화산에 올라 깨달음을 얻었어요. 이제 검 끝에서 매화가 피어나요'), 5600);
   updateSkillHUD(); updatePerkHUD(); save(); return true;
 }
 const canWake = () => P && P.job === 'survivor';
@@ -4346,7 +4367,8 @@ function onWolfPunched(c){         // the fist: a wolf finished off bare-handed,
 }
 function onBossDown(c, byPlayer, byTower){
   if (!canWake()) return;
-  if (byPlayer && P.hp > 0 && P.hp <= 10) awaken('phoenix');
+  if (c.lair && c.k === 'lavagiant' && Z.id === 'volcano' && byPlayer && !byTower && !c.impure && P.equip === 'sword') awaken('plum');      // the plum swordsman: up the volcano, the sword alone
+  else if (byPlayer && P.hp > 0 && P.hp <= 10) awaken('phoenix');
   else if ((c.k === 'zombielord' || c.k === 'plaguegiant') && (byPlayer || byTower) && P.st.infect > 0) awaken('lich');
 }
 function hiddenPhase(ph, day){     // the frost: a whole night on the snow island, never by a fire or a shelter
@@ -4430,8 +4452,67 @@ Object.assign(SKILL_FN, {
     floater(P.x, P.y, 44, '섬의 분노!', '#d8f08a'); return true;
   }
 });
+const plumDmg = () => Math.round(stat('sword').dmg * (P.buffs.power > 0 ? 1.5 : 1) * (1 + .25 * perk('brawler')) * meleeMul() * gearWeaponMul('sword') * (1 + gearOpt('atk')) * 1.3);
+function plumMark(c, dmg){         // three marks on one foe and it bursts into blossom
+  if (!isJob('plum') || !creatures.includes(c)) return;
+  c.plum = (c.plum || 0) + 1; c.plumT = 5;
+  if (c.plum >= 3){ c.plum = 0; blossom(c.x, c.y, Math.round(dmg * 2), 70); }
+}
+function blossom(x, y, dmg, r){    // a plum flower opens: petals everywhere, and everything inside it is cut
+  fx('petal', x, y, 18, 14); fx('glow', x, y, 16, 6, '255,150,196'); SND.play('cast', { x, y });
+  plumBursts.push({ x, y, t: .45, r });
+  const prev = swordCtx; swordCtx = true;
+  for (const e of [...creatures]) if (foe(e) && Math.hypot(e.x - x, e.y - y) < r + e.r) hitCreature(e, dmg, e.x - x, e.y - y, true);
+  swordCtx = prev;
+}
+let plumBursts = [];
+function firePetals(c, dmg){       // 매화검기: five petals of sword-qi in a fan, through everything they meet
+  const a0 = Math.atan2(c.y - P.y, c.x - P.x), d = Math.max(1, Math.round(dmg * .35));
+  for (let i = -2; i <= 2; i++){ const a = a0 + i * .3; bullets.push({ x: P.x + Math.cos(a) * 16, y: P.y + Math.sin(a) * 16, vx: Math.cos(a) * 430, vy: Math.sin(a) * 430, dmg: d, life: 200 / 430, own: 'player', kind: 'petal', petal: 1, pierce: 99, hits: [c], rot: rand(0, TAU) }); }
+}
+SKILL_FN.plum = function(){       // 이십사수매화검법: twenty-four flowers in two seconds
+  if (!creatures.some(c => foe(c) && isHostile(c) && Math.hypot(c.x - P.x, c.y - P.y) < 200 + c.r)){ toast('주변에 적이 없어요'); return false; }
+  if (hasTool('sword') && P.equip !== 'sword') setEquip('sword');
+  P.jobFx.plum = 2; P.jobFx.plumN = 0; SND.play('cast', { key: 1 }); floater(P.x, P.y, 48, '이십사수매화검법!', '#ffb3d6');
+  for (let i = 0; i < 24; i++){ const a = i / 24 * TAU; fx('petal', P.x + Math.cos(a) * 120, P.y + Math.sin(a) * 120, rand(10, 40), 1); }
+  return true;
+};
+function updatePlum(dt){
+  if (Math.random() < dt * 3) fx('petal', P.x + rand(-22, 22), P.y + rand(-14, 14), rand(24, 52), 1);          // a few petals always drift about
+  for (const c of creatures) if (c.plum && (c.plumT -= dt) <= 0) c.plum = 0;          // marks fade after five seconds without a cut
+  if (P.jobFx.plum > 0){
+    P.jobFx.plum = Math.max(0, P.jobFx.plum - dt);
+    const tg = creatures.filter(c => foe(c) && isHostile(c) && Math.hypot(c.x - P.x, c.y - P.y) < 200 + c.r).sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
+    const due = P.jobFx.plum > 0 ? Math.min(24, Math.floor((2 - P.jobFx.plum) / 2 * 24) + 1) : 24, d = Math.round(plumDmg() * 1.5);
+    while (P.jobFx.plumN < due && tg.length){
+      const e = tg[P.jobFx.plumN % tg.length]; P.jobFx.plumN++;
+      if (!creatures.includes(e)) continue;
+      fx('petal', e.x, e.y, 20, 6); plumBursts.push({ x: e.x + rand(-8, 8), y: e.y + rand(-6, 6), t: .4, r: 26 });
+      swordCtx = true; hitCreature(e, d, e.x - P.x, e.y - P.y, true); swordCtx = false;
+    }
+    if (P.jobFx.plum <= 0){              // the last flower: whatever still stands bursts into blossom
+      P.jobFx.plumN = 0; const left = tg.filter(e => creatures.includes(e)), b = plumDmg() * 2;
+      for (const e of left){ e.plum = 0; fx('petal', e.x, e.y, 22, 10); plumBursts.push({ x: e.x, y: e.y, t: .5, r: 46 }); swordCtx = true; hitCreature(e, b, e.x - P.x, e.y - P.y, true); swordCtx = false; }
+      if (left.length) SND.play('slam', { key: 1 }); shakeT = Math.max(shakeT, .25);
+    }
+  }
+  for (const b of plumBursts) b.t -= dt; plumBursts = plumBursts.filter(b => b.t > 0);
+}
+function drawPlumFx(){             // the blossoms that open where the sword cuts: upright on screen at chest height, five petals and a pale heart
+  if (!plumBursts.length) return;
+  ctx.save(); uprightT();
+  for (const b of plumBursts){
+    const k = Math.min(1, b.t / .45), r = b.r * (1.25 - k * .45), x = ux(b.x, b.y), y = uy(b.x, b.y) - 22, rot = b.x * .1 + (1 - k) * 1.2;
+    ctx.globalAlpha = Math.min(1, k * 1.6); ctx.shadowColor = 'rgba(255,120,180,.8)'; ctx.shadowBlur = 10;
+    for (let i = 0; i < 5; i++){ const a = i / 5 * TAU + rot; ctx.fillStyle = i % 2 ? '#ff8fc0' : '#ffb3d6'; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * r * .5, y + Math.sin(a) * r * .5, r * .46, r * .3, a, 0, TAU); ctx.fill(); }
+    ctx.shadowBlur = 0; ctx.fillStyle = '#fff1c4'; ctx.beginPath(); ctx.arc(x, y, r * .18, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#d2457f'; for (let i = 0; i < 5; i++){ const a = i / 5 * TAU + rot + .6; ctx.beginPath(); ctx.arc(x + Math.cos(a) * r * .26, y + Math.sin(a) * r * .26, Math.max(1, r * .04), 0, TAU); ctx.fill(); }
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
 function updateHidden(dt){
   const J = jobDef(); if (!J.hidden) return;
+  if (isJob('plum')) updatePlum(dt);
   if (Math.random() < dt * 4) fx('glow', P.x + rand(-8, 8), P.y + rand(-6, 6), rand(8, 30), 1, J.glow);            // a faint aura: you are not a plain survivor any more
   if (isJob('phoenix') && P.jobFx.blaze > 0){
     P.jobFx.blaze = Math.max(0, P.jobFx.blaze - dt);
@@ -4508,10 +4589,10 @@ function weaponHit(c, dmg){        // after a melee blow lands on c: what the we
   if (w === 'sword'){              // a sweeping cut: up to two more in front
     const a0 = Math.atan2(c.y - P.y, c.x - P.x), reach = 40 + stat('sword').reach; let n = 0;
     for (const e of [...creatures]){
-      if (n >= 2) break; if (e === c || !foe(e)) continue;
+      if (n >= (isJob('plum') ? 99 : 2)) break; if (e === c || !foe(e)) continue;
       if (Math.hypot(e.x - P.x, e.y - P.y) - e.r > reach) continue;
       let da = Math.abs(Math.atan2(e.y - P.y, e.x - P.x) - a0); if (da > Math.PI) da = TAU - da; if (da > 1.05) continue;
-      hitCreature(e, dmg, e.x - P.x, e.y - P.y, true); n++;
+      hitCreature(e, dmg, e.x - P.x, e.y - P.y, true); n++; plumMark(e, dmg);
     }
   } else if (w === 'hammer'){ if (creatures.includes(c) && Math.random() < .25){ c.stun = c.boss ? .5 : 1.5; floater(c.x, c.y, 40, '기절!', '#ffe08a'); } }
   else if (w === 'wrench'){         // the shock jumps to two more nearby
@@ -5218,8 +5299,8 @@ function makeGear(g, slot, base){
   return it;
 }
 function gearBase(){                // a weapon the player can use: the common ones and their own job's, most often the ones they already carry
-  const list = ['axe', 'spear', 'sword', 'pickaxe', 'gun'], jw = JOB_WEAPON[P.job]; if (jw) list.push(jw);
-  const w = list.map(t => (P.tools[t] ? 3 : 1) * (t === 'pickaxe' || t === 'axe' ? .6 : 1)); let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  const list = ['axe', 'spear', 'sword', 'pickaxe'].concat(isJob('plum') ? [] : ['gun']), jw = JOB_WEAPON[P.job]; if (jw) list.push(jw);
+  const w = list.map(t => (P.tools[t] ? 3 : 1) * (t === 'pickaxe' || t === 'axe' ? .6 : 1) * (t === 'sword' && isJob('plum') ? 4 : 1)); let r = Math.random() * w.reduce((a, b) => a + b, 0);
   for (let i = 0; i < list.length; i++){ r -= w[i]; if (r <= 0) return list[i]; }
   return list[0];
 }
@@ -5938,6 +6019,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 // debug/test hook (read-only view of the running game)
 window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
 Object.assign(window.__game, { ZONES, LAIR, RELICS, relic, lairCheck, lairObj, lairCenter, lairSpot, placeLair, fillRing, migrateWorld, loadGame, BOSS_AI, foxOrbs, hookShots, skyFalls, upgradeBoat3, BOAT_UPG3, DEST, inside, setZone, genWorld, GEN, updateLands, lairDef, renderPerk }); Object.defineProperty(window.__game, 'WORLD', { get: () => WORLD });
+Object.assign(window.__game, { firePetals, plumMark, blossom, plumDmg, get swordCtx(){ return swordCtx; }, plumBursts: () => plumBursts, jobSpeed, hasTool, ownedTools });
 Object.assign(window.__game, { GRADE, GOPT, GUNIQ, GTRANS, G_MUL, G_ARM, makeGear, dropGear, rollGearDrop, gearPick, equipGear, unequipGear, salvageGear, transcend, gearOpt, gearHas, gearAtk, gearHurtMul, gearFull, gearName, gearLines, renderGear, BAG_MAX, TRANS_COST, bumpGear: () => { gearVer++; }, attack: c => attack(c) });
 })();
 </script>

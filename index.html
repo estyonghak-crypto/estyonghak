@@ -2082,14 +2082,15 @@ function arrive(id){
 /* ================= UI ================= */
 const toastPri = m => /^⚠|보스|각성|✦/.test(m) ? 2 : /엘리트|처치|레전드|초월|유물|✨|🏆|튜토리얼|레벨|잠잠|뗏목/.test(m) ? 1 : 0;
 let toastWait = [];
-function toast(msg, p){            // two at a time; a repeat bumps a counter instead of a new line; the least important one makes way
+function toast(msg, p){            // three at a time; a repeat bumps a counter instead of a new line; the least important one makes way
   const box = $('toasts'), live = [...box.children].filter(d => !d.classList.contains('out')), pri = Math.max(toastPri(msg), p || 0);
   const same = live.find(d => d.dataset.msg === msg);
   if (same){ const n = (+same.dataset.n || 1) + 1; same.dataset.n = n; let b = same.querySelector('.tn'); if (!b){ b = document.createElement('b'); b.className = 'tn'; same.appendChild(b); } b.textContent = '×' + n; toastLife(same, msg); return; }
-  if (live.length >= 2){
+  const wait = () => { if (!toastWait.some(w => w.msg === msg)) toastWait.push({ msg, p: pri, at: performance.now() }); toastWait = toastWait.slice(-3); };
+  if (pri < 2 && live.filter(d => +d.dataset.p === 2).length >= 2) return wait();      // two warnings up: anything less waits a moment
+  if (live.length >= 3){
     const victim = live.slice().sort((a, b) => a.dataset.p - b.dataset.p)[0], vp = +victim.dataset.p;
-    if (vp > pri && (vp === 2 || performance.now() - victim._at < 1500)){      // a warning never gives way to something less; anything else important gets 1.5 s first. Meanwhile it waits
-      if (!toastWait.some(w => w.msg === msg)) toastWait.push({ msg, p: pri, at: performance.now() }); toastWait = toastWait.slice(-3); return; }
+    if (vp > pri && (vp === 2 || performance.now() - victim._at < 1500)) return wait();      // a warning never gives way to something less; anything else important gets 1.5 s first
     toastGone(victim);
   }
   const d = document.createElement('div'); d.className = 'toast' + (pri ? ' p' + pri : ''); d.dataset.msg = msg; d.dataset.p = pri; d._at = performance.now(); d.textContent = msg; box.appendChild(d);

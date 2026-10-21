@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&text=%EB%AC%B4%EC%9D%B8%EB%8F%84%EC%83%9D%EC%A1%B4%EA%B8%B0%ED%83%88%EC%B6%9C%EC%84%B1%EA%B3%B5%EC%93%B0%EB%9F%AC%EC%A1%8C%EC%8A%B5%EB%8B%88%EB%8B%A4%EC%84%AC%EC%9D%98%EC%A3%BC%EC%9D%B8&display=swap">
 <style>
 /* Layout: full-bleed canvas world, HUD floats on top, thumbs own the bottom corners. */
 :root{
@@ -25,6 +26,7 @@
   --sea:#4fb0e0;
   --blood:#ec5a4d;
   --font-display:'Black Han Sans','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --font-logo:'East Sea Dokdo','Black Han Sans','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --font-body:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
   color-scheme:dark;
 }
@@ -322,6 +324,52 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 #voyage.on .vbar i{animation:vfill 2.6s linear forwards}
 @keyframes vfill{to{width:100%}}
 @media (prefers-reduced-motion:reduce){.stat.low .bar i,.toast,.eq.pop,#vboat,#voyage .wv,#fxSnow1,#fxSnow2,#fxRain1,#fxRain2,#fxGrain{animation:none}}
+
+/* ---- the title: the camp at dusk shows through; the logo up top, the menu at the bottom */
+#title{justify-content:space-between;gap:10px;padding-top:max(7vh,env(safe-area-inset-top));padding-bottom:max(4vh,env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(6,12,10,.8) 0%,rgba(6,12,10,.3) 28%,rgba(6,12,10,0) 46%,rgba(6,12,10,.2) 64%,rgba(6,12,10,.86) 100%)}
+#title>:first-child{margin-top:0}#title>:last-child{margin-bottom:0}
+#title .logo{display:flex;flex-direction:column;align-items:center;gap:4px;animation:tIn 1.3s cubic-bezier(.2,.7,.2,1) both}
+#title h1{font-family:var(--font-logo);font-size:clamp(68px,23vw,124px);line-height:.84;letter-spacing:.03em;text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 28px rgba(0,0,0,.6)}
+#title h1 em{display:inline-block;color:var(--ember);animation:ember 3.4s ease-in-out infinite}
+@keyframes ember{0%,100%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 16px rgba(255,120,40,.3)}50%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 34px rgba(255,140,50,.75)}}
+#title .tag{margin-top:8px;font-size:11px;letter-spacing:.46em;text-indent:.46em;color:var(--bone);opacity:.72}
+#title .bottom{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+#title .lead{animation:tIn 1.2s .3s both;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+#title .stack{margin-top:0;animation:tIn 1.1s .5s both}
+#title .row{display:flex;gap:9px}#title .row .btn{flex:1;min-width:0;padding:10px 12px;font-size:14px;background:rgba(10,18,16,.55)}
+#title .foot{margin:0;font-size:11px;color:var(--dim);opacity:.85}
+@keyframes tIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (max-height:520px){#title{flex-direction:row;justify-content:center;align-items:center;gap:6vw;padding-top:max(14px,env(safe-area-inset-top));padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  #title h1{font-size:clamp(54px,19vh,92px)}#title .lead,#title .foot{display:none}#title .bottom{width:auto}}
+#help,#settings{z-index:35}
+#help .how{max-width:none;margin:0;padding:0;border:0;background:none;font-size:13px;line-height:1.6}
+#help .how li{padding:8px 0;border-bottom:1px solid var(--line)}#help .how li+li{margin-top:0}
+#settings .stack{width:100%;margin:0}#settings .sub{margin:12px 0 0}
+
+/* ---- the first-day coach */
+#coach{margin-top:8px;align-self:flex-start;max-width:min(330px,100%);padding:9px 12px 10px;border-radius:12px;border-color:rgba(242,184,75,.55);box-shadow:0 0 0 1px rgba(242,184,75,.15),0 6px 18px rgba(0,0,0,.35);
+  text-align:left;animation:coachIn .45s cubic-bezier(.2,.8,.2,1) both;transition:border-color .3s}
+#coach .ch{display:flex;align-items:center;gap:8px}
+#coach .cn{font-size:10.5px;font-weight:700;color:#2a1305;background:var(--amber);border-radius:999px;padding:1px 7px}
+#coach b{font-size:14px;color:var(--bone)}
+#coach p{margin:5px 0 0;font-size:12.5px;line-height:1.45;color:var(--bone);opacity:.9}#coach p b{font-size:inherit;color:var(--amber)}
+#coach small{display:block;margin-top:5px;font-size:12px;font-weight:700;color:var(--amber)}
+#coachSkip{margin-left:auto;border:0;background:none;color:var(--dim);font-size:11.5px;padding:2px 0 2px 8px;text-decoration:underline;text-underline-offset:2px}
+#coach.ok{border-color:var(--moss)}#coach.ok small{color:var(--moss)}
+body.tutOn #goal{display:none}
+@keyframes coachIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+#tutArrow{position:fixed;left:0;top:0;z-index:40;pointer-events:none;width:0;height:0}
+#tutArrow::before{content:'';position:absolute;left:-13px;bottom:0;border:13px solid transparent;border-top:17px solid var(--amber);border-bottom:0;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));animation:tutBob .8s ease-in-out infinite}
+#tutArrow.up::before{bottom:auto;top:0;border-top:0;border-bottom:17px solid var(--amber)}
+@keyframes tutBob{0%,100%{transform:translateY(-4px)}50%{transform:translateY(-12px)}}
+#tutArrow.up::before{animation-name:tutBobUp}
+@keyframes tutBobUp{0%,100%{transform:translateY(4px)}50%{transform:translateY(12px)}}
+#tutHand{position:fixed;left:22%;bottom:30%;z-index:6;pointer-events:none;width:120px;height:70px}
+#tutHand i{position:absolute;left:0;top:30px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 7px rgba(255,255,255,.18);animation:tutDrag 1.8s ease-in-out infinite}
+#tutHand::before{content:'';position:absolute;left:14px;top:43px;height:4px;width:0;border-radius:2px;background:rgba(255,255,255,.35);animation:tutTrail 1.8s ease-in-out infinite}
+@keyframes tutDrag{0%{transform:translate(0,0) scale(1.15);opacity:0}15%{transform:translate(0,0) scale(1);opacity:1}70%{transform:translate(86px,-18px);opacity:1}100%{transform:translate(86px,-18px);opacity:0}}
+@keyframes tutTrail{0%,15%{width:0;opacity:0}70%{width:88px;opacity:1;transform:rotate(-12deg)}100%{width:88px;opacity:0;transform:rotate(-12deg)}}
 </style>
 </head>
 <body>
@@ -345,6 +393,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   <div id="bossBar" class="panel" hidden><div class="bn"><span id="bossName"></span><small id="bossHp"></small></div><div class="bbar"><i id="bossFill"></i></div></div>
   <div id="bag"><div id="inv"></div><div id="inv2" hidden></div><div id="inv3" hidden></div></div>
   <div id="goal" class="panel"></div>
+  <div id="coach" class="panel" hidden></div>
   <div id="eliteArrow" hidden><i></i><b></b></div>
   <canvas id="mini" width="104" height="104" aria-label="미니맵"></canvas>
   <div class="spacer"></div>
@@ -359,6 +408,8 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
 </div>
 <div id="toasts"></div>
 <div id="awake" hidden></div>
+<div id="tutArrow" hidden></div>
+<div id="tutHand" hidden><i></i></div>
 
 <div id="craft" class="modal" hidden>
   <div class="sheet">
@@ -400,6 +451,7 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <div class="stack" style="width:100%;margin:0">
       <button class="btn" id="menuResume">계속하기</button>
       <button class="btn ghost" id="menuPerk">기술 · 레벨</button>
+      <button class="btn ghost" id="menuHelp">도움말</button>
       <button class="btn ghost" id="optSfx">효과음·환경음</button>
       <button class="btn ghost" id="optMusic">음악</button>
       <button class="btn ghost" id="menuTitle">처음 화면으로</button>
@@ -407,14 +459,10 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
   </div>
 </div>
 
-<div id="title" class="screen">
-  <h1>무인도<br><em>생존기</em></h1>
-  <p class="lead" id="leadTxt">폭풍에 휩쓸려 혼자 남은 섬. 30일을 버텨 뗏목을 만들고 탈출하세요.</p>
-  <div class="stack">
-    <button class="btn" id="btnContinue" hidden>이어하기</button>
-    <button class="btn" id="btnNew">새 게임</button>
-  </div>
-  <ul class="how">
+<div id="help" class="modal" hidden>
+  <div class="sheet">
+    <div class="head"><h2>도움말</h2><button class="xbtn" id="helpClose" aria-label="닫기">✕</button></div>
+    <ul class="how">
     <li><b>직업</b> 새 게임에서 목수 · 사냥꾼 · 공병 · 약초의 · 광부 · 군인 · 생존자 중 하나를 골라요. 직업마다 시작 장비와 특성, 고유 기술(건축 버튼 옆 동그란 버튼, R)이 달라요</li>
     <li><b>이동</b> 화면을 누른 채 드래그 (키보드 WASD)</li>
     <li><b>행동</b> 오른쪽 큰 버튼, 꾹 누르면 반복 (스페이스)</li>
@@ -439,6 +487,36 @@ body.lowfx #fxGrain,body.lowfx #fxRain2,body.lowfx #fxSnow2{display:none}
     <li>전리품(고철, 가죽)으로 제작 창의 <b>강화</b> 탭에서 장비를 올려요</li>
     <li>해안에서 <b>배</b>를 만들면 다른 섬으로 갈 수 있어요. <b>광산</b>에서 광석을 캐 <b>용광로</b>에서 주괴로 녹여 쓰세요</li>
   </ul>
+  </div>
+</div>
+
+<div id="settings" class="modal" hidden>
+  <div class="sheet">
+    <div class="head"><h2>설정</h2><button class="xbtn" id="setClose" aria-label="닫기">✕</button></div>
+    <div class="stack">
+      <button class="btn ghost" id="setSfx">효과음·환경음</button>
+      <button class="btn ghost" id="setMusic">음악</button>
+      <button class="btn ghost" id="setLite">가벼운 화면</button>
+      <button class="btn ghost" id="setTut">튜토리얼 다시 보기</button>
+    </div>
+    <p class="sub">가벼운 화면을 켜면 그림자·입자·화면 효과를 줄여서 느린 기기에서도 부드럽게 움직여요. 느려지면 저절로 켜지기도 해요.</p>
+  </div>
+</div>
+
+<div id="title" class="screen">
+  <div class="logo">
+    <h1>무인도<br><em>생존기</em></h1>
+    <span class="tag">30 DAYS · SURVIVAL</span>
+  </div>
+  <div class="bottom">
+    <p class="lead" id="leadTxt">폭풍에 휩쓸려 혼자 남은 섬. 30일을 버텨 뗏목을 만들고 탈출하세요.</p>
+    <div class="stack">
+      <button class="btn" id="btnContinue" hidden>이어하기</button>
+      <button class="btn" id="btnNew">새 게임</button>
+      <div class="row"><button class="btn ghost" id="btnHelp">도움말</button><button class="btn ghost" id="btnSettings">설정</button></div>
+    </div>
+    <p class="foot">진행 상황은 자동으로 저장돼요</p>
+  </div>
 </div>
 
 <div id="jobs" class="screen" hidden>
@@ -1889,7 +1967,7 @@ function renderCraft(){
     if (r.job && r.job !== P.job) return;                                  // another job's weapon
     const why = craftBlock(r), owned = recipeOwned(r);
     const cost = Object.keys(r.cost).map(k => `<span class="${P.inv[k] >= r.cost[k] ? 'ok' : 'no'}">${ITEMS[k].icon} ${P.inv[k]}/${r.cost[k]}</span>`).join('');
-    const div = document.createElement('div'); div.className = 'recipe';
+    const div = document.createElement('div'); div.className = 'recipe'; div.dataset.id = r.id;
     div.innerHTML = `<div><b>${r.name}</b><p>${r.desc}</p><div class="cost">${cost}</div>${why && (!owned && (r.raft || r.boat) || why === '매화검수는 검만 써요') ? `<span class="note">${why}</span>` : ''}</div>`;
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = owned ? '보유 중' : '제작'; b.disabled = !!why;
     b.addEventListener('click', () => craft(r)); div.appendChild(b); list.appendChild(div);
@@ -2056,9 +2134,9 @@ function updateEliteArrow(){            // red arrow at the screen edge pointing
 }
 let hudSig = '', lastGoal = '';
 function layoutHud(){            // keep the toasts just below the goal pill however many bag rows are showing
-  const sig = [...inv2El.children, ...inv3El.children].filter(c => !c.hidden).length + '|' + inv2El.hidden + inv3El.hidden + $('bossBar').hidden + '|' + W + 'x' + H + '|' + lastGoal;
+  const sig = [...inv2El.children, ...inv3El.children].filter(c => !c.hidden).length + '|' + inv2El.hidden + inv3El.hidden + $('bossBar').hidden + '|' + W + 'x' + H + '|' + lastGoal + '|' + tutSig;
   if (sig === hudSig) return; hudSig = sig;
-  const r = $('goal').getBoundingClientRect(); if (r.height) document.documentElement.style.setProperty('--tt', Math.round(r.bottom + 10) + 'px');
+  const r = (document.body.classList.contains('tutOn') ? $('coach') : $('goal')).getBoundingClientRect(); if (r.height) document.documentElement.style.setProperty('--tt', Math.round(r.bottom + 10) + 'px');
 }
 function updateHUD(){
   for (const [id, v] of [['hp', P.hp], ['hunger', P.hunger], ['thirst', P.thirst], ['warmth', P.warmth]]){
@@ -2326,7 +2404,7 @@ function save(){
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v: 2, wv: 2, T, zone: Z.id, zones: Object.assign({}, zoneSave, { [Z.id]: packObjs() }), left: zoneLeft,
-      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx, lairs: P.lairs, relic: P.relic, fill: P.fill, gear: P.gear, bag: P.bag, gx: P.gx },
+      p: { x: P.x, y: P.y, hp: P.hp, hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, inv: P.inv, tools: P.tools, equip: P.equip, auto: P.auto, lv: P.lv, armor: P.armor, seen: P.seen, buffs: P.buffs, stats: P.stats, built: P.built, boat: P.boat, boatLv: P.boatLv, lantern: P.lantern, seed: P.seed, ev: P.ev, evPlan: P.evPlan, evRoll: P.evRoll, st: P.st, fatigue: P.fatigue, rod: P.rod, pot: P.pot, xp: P.xp, level: P.level, perkPts: P.perkPts, perk: P.perk, offer: P.offer, xpDone: P.xpDone, visited: P.visited, bossKills: P.bossKills, job: P.job, jobCd: P.jobCd, jobFx: P.jobFx, free: P.free, hx: P.hx, lairs: P.lairs, relic: P.relic, fill: P.fill, gear: P.gear, bag: P.bag, gx: P.gx, tut: P.tut },
       drops: pickups.map(p => [p.k, p.n, Math.round(p.x), Math.round(p.y), Math.round(p.age), p.gear || 0])
     }));
   } catch (_) {}
@@ -2353,7 +2431,7 @@ function loadGame(s){
 
 /* ================= game flow ================= */
 function startRun(){
-  running = true; paused = false; sleeping = false; actHeld = false; resetJoy(); fishStop();
+  running = true; paused = false; sleeping = false; actHeld = false; resetJoy(); fishStop(); titleScene = false;
   lastDay = dayOf(); lastPhase = phaseOf(dayT()); wolfTimer = 5; respawnTimer = 5; eliteNight = 0; saveTimer = 8; goalTimer = 0; lastGoal = ''; bossTimer = 4; target = null; lastLabel = '';
   cam.x = P.x; cam.y = P.y;
   $('title').hidden = true; $('end').hidden = true; $('jobs').hidden = true; $('hud').hidden = false;
@@ -2361,7 +2439,9 @@ function startRun(){
   setBuild(false); buildEquip(); updateHUD(); save();
 }
 function newGame(job){
-  clearSave(); genWorld(); P.job = JOBS[job] ? job : 'survivor'; giveKit(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.'); setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200);
+  clearSave(); genWorld(); P.job = JOBS[job] ? job : 'survivor'; giveKit(); T = DAY_LEN * .08; startRun(); toast('폭풍에 휩쓸려 무인도에 표류했습니다.');
+  P.tut = window.__noTut || tutSeen() ? -1 : 0; tutS = { x: P.x, y: P.y }; tutT = 0; tutSig = '';
+  if (P.tut < 0) setTimeout(() => toast('주변의 나무와 돌부터 모아보세요.'), 2200);
   const J = jobDef(); if (J.skill) setTimeout(() => toast(J.icon + ' ' + J.name + '의 고유 기술 ' + J.skill.icon + ' ' + J.skill.name + ': 건축 버튼 옆의 동그란 버튼 (R)'), 4600);
 }
 function continueGame(){ const s = readSave(); if (!s){ newGame(); return; } try { loadGame(s); startRun(); toast(dayOf() + '일차, 다시 시작합니다.'); } catch (_) { newGame(); } }
@@ -2390,16 +2470,45 @@ function refreshTitle(){
   $('btnContinue').hidden = !s; $('btnNew').textContent = '새 게임';
   if (s) $('btnContinue').textContent = '이어하기 (' + (Math.floor(s.T / DAY_LEN) + 1) + '일차)';
 }
-function demoWorld(){
-  genWorld(); T = DAY_LEN * .6;
-  addObj({ t: 'fire', x: P.x + 40, y: P.y + 24, r: 9, fuel: 1e9 });
-  creatures = []; cam.x = P.x; cam.y = P.y;
+let titleScene = false, titleCam = { x: 0, y: 0 };
+function demoWorld(){              // behind the title: a camp by a lake at dusk, a fire, a shelter, a fence, the survivor with a sword
+  genWorld(); T = DAY_LEN * .56; creatures = []; titleScene = true;
+  const C = WORLD / 2, w = objs.filter(o => o.t === 'water' && o.r > 40 && Math.hypot(o.x - C, o.y - C) < C * .45).sort((a, b) => b.r - a.r)[0];
+  const cx = w ? w.x + w.r + 170 : P.x, cy = w ? w.y + 20 : P.y;
+  for (const o of objs.filter(o => (o.t === 'tree' || o.t === 'rock' || o.t === 'bush' || o.t === 'wreck') && Math.hypot(o.x - cx, o.y - cy) < 175)) removeObj(o);
+  addObj({ t: 'fire', x: cx + 46, y: cy - 10, r: 9, fuel: 1e9 });
+  addObj({ t: 'shelter', x: cx - 40, y: cy - 82, r: 26 });
+  const ci = Math.floor(cx / GRID), cj = Math.floor(cy / GRID), wall = (kind, i, j) => { if (!wallMap.has(i + ',' + j)) addObj({ t: 'wall', kind, i, j, x: i * GRID + GRID / 2, y: j * GRID + GRID / 2, r: 15, hp: wallMax(kind), max: wallMax(kind), hit: 0, ammo: kind === 'tower' ? 10 : 0, lv: 1, cd: 0, fire: 0, aim: 0 }); };
+  for (let d = -4; d <= 0; d++) wall('wood', ci + d, cj + 4);
+  for (let d = -3; d <= 2; d++) wall('stone', ci + 5, cj + d);
+  wall('tower', ci + 5, cj + 4);
+  P.x = cx; P.y = cy + 4; P.fx = 1; P.fy = -.2; P.flip = 1; P.tools.sword = true; P.equip = 'sword';
+  titleCam = { x: cx + 6, y: cy - 20 }; cam.x = titleCam.x; cam.y = titleCam.y;
+}
+function titleTick(dt){            // the camera drifts slowly round the camp; embers lift off the fire
+  const a = anim * .07; cam.x = titleCam.x + Math.sin(a) * 64; cam.y = titleCam.y + Math.sin(a * .8 + 1) * 40 - 20;
+  updateParts(dt); emitAmbient(dt);
 }
 $('btnNew').addEventListener('click', () => {
   if (readSave() && !confirmNew){ confirmNew = true; $('btnNew').textContent = '저장 기록이 지워져요. 한 번 더 누르세요'; return; }
   openJobs();
 });
 $('btnContinue').addEventListener('click', continueGame);
+const LITE_KEY = 'island.lite';
+function setLite(on){ lowFx = on; dprCap = on ? 1.5 : 2; document.body.classList.toggle('lowfx', on); resize(); syncSettings(); }
+function syncSettings(){ $('setLite').textContent = '가벼운 화면  ' + (lowFx ? '켜짐' : '꺼짐'); }
+function openSheet(id){ $(id).hidden = false; $(id).querySelector('.sheet').scrollTop = 0; if (running && !paused){ paused = true; $(id).dataset.paused = '1'; } }
+function closeSheet(id){ $(id).hidden = true; if ($(id).dataset.paused){ delete $(id).dataset.paused; paused = !$('menu').hidden; } }
+$('btnHelp').addEventListener('click', () => openSheet('help'));
+$('menuHelp').addEventListener('click', () => openSheet('help'));
+$('helpClose').addEventListener('click', () => closeSheet('help'));
+$('help').addEventListener('click', e => { if (e.target === $('help')) closeSheet('help'); });
+$('btnSettings').addEventListener('click', () => { syncSettings(); $('setTut').textContent = '튜토리얼 다시 보기'; openSheet('settings'); });
+$('setClose').addEventListener('click', () => closeSheet('settings'));
+$('settings').addEventListener('click', e => { if (e.target === $('settings')) closeSheet('settings'); });
+$('setLite').addEventListener('click', () => { const on = !lowFx; try { on ? localStorage.setItem(LITE_KEY, '1') : localStorage.removeItem(LITE_KEY); } catch (_) {} setLite(on); });
+$('setTut').addEventListener('click', () => { try { localStorage.removeItem(TUT_KEY); } catch (_) {} $('setTut').textContent = '다음 새 게임에서 튜토리얼이 나와요'; });
+try { if (localStorage.getItem(LITE_KEY) === '1'){ lowFx = true; dprCap = 1.5; document.body.classList.add('lowfx'); } } catch (_) {}
 $('btnAgain').addEventListener('click', openJobs);
 $('btnHome').addEventListener('click', toTitle);
 $('craftClose').addEventListener('click', closeCraft);
@@ -3573,6 +3682,7 @@ function render(){
     }
   }
   if (buildMode && running) drawBuildGrid();
+  drawTutRing();
   if (running && target && !buildMode){
     const o = target.o; let tx2 = o.x, ty2 = o.y, rr = o.r + 8;
     if (o.t === 'water'){ const d = Math.hypot(P.x - o.x, P.y - o.y) || 1; tx2 = o.x + (P.x - o.x) / d * o.r; ty2 = o.y + (P.y - o.y) / d * o.r; rr = 14; }
@@ -3583,7 +3693,7 @@ function render(){
   const draws = list.map(o => ({ k: o.x + o.y, x: o.x, y: o.y, o }));       // painter's order: things nearer the bottom of the screen (larger x + y) are drawn later
   for (const c of creatures) if (seen(c.x, c.y)) draws.push({ k: c.x + c.y, x: c.x, y: c.y, c });
   for (const o of corpses) if (seen(o.x, o.y)) draws.push({ k: o.x + o.y - 2, x: o.x, y: o.y, corpse: o });
-  if (running) draws.push({ k: P.x + P.y, x: P.x, y: P.y, p: 1 });
+  if (running || titleScene) draws.push({ k: P.x + P.y, x: P.x, y: P.y, p: 1 });
   draws.sort((a, b) => a.k - b.k);
   drawAuras(draws); drawBossGround(); drawBossTelegraphs(draws); drawBuffRings(); drawJobFx(); drawHiddenFx();
   castShadows(draws, vx0, vy0, vx1, vy1, dk);
@@ -3596,7 +3706,7 @@ function render(){
     ctx.restore();
   }
   if (buildMode && running){ drawPlan(); drawGhost(); }
-  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawPlumFx(); drawWeaponFx(); drawLandFx();
+  drawFishing(); drawFlames(); drawBoulders(); drawMeteors(); drawBolts(); drawPlumFx(); drawTutMark(); drawWeaponFx(); drawLandFx();
 
   uprightT();
   drawParts(); drawBullets();
@@ -5981,15 +6091,98 @@ const SND = (() => {
   };
   function sync(){
     const b = $('sndBtn'); if (b){ b.textContent = st.muted ? '🔇' : '🔊'; b.setAttribute('aria-pressed', st.muted ? 'true' : 'false'); b.title = st.muted ? '소리 켜기 (N)' : '소리 끄기 (N)'; }
-    const a = $('optSfx'), m = $('optMusic'); if (a) a.textContent = '효과음·환경음  ' + (st.muted ? '꺼짐' : '켜짐'); if (m) m.textContent = '음악  ' + (st.music ? '켜짐' : '꺼짐');
+    for (const [a, m] of [[$('optSfx'), $('optMusic')], [$('setSfx'), $('setMusic')]]){ if (a) a.textContent = '효과음·환경음  ' + (st.muted ? '꺼짐' : '켜짐'); if (m) m.textContent = '음악  ' + (st.music ? '켜짐' : '꺼짐'); }
   }
   $('sndBtn').addEventListener('click', () => api.setMuted(!st.muted));
   $('optSfx').addEventListener('click', () => api.setMuted(!st.muted));
   $('optMusic').addEventListener('click', () => api.setMusic(!st.music));
+  $('setSfx').addEventListener('click', () => api.setMuted(!st.muted));
+  $('setMusic').addEventListener('click', () => api.setMusic(!st.music));
   document.addEventListener('pointerdown', e => { const b = e.target && e.target.closest && e.target.closest('button'); if (b && b.id !== 'btnAct' && b.id !== 'sndBtn') play('ui'); }, true);
   sync();
   return api;
 })();
+
+/* ================= the first-day coach: one step at a time, an arrow at the button to press and a ring on the tree to cut ================= */
+const TUT_KEY = 'island.tut';
+const tutSeen = () => { try { return localStorage.getItem(TUT_KEY) === 'done'; } catch (_) { return false; } };
+const tutLack = n => P.inv.wood < n[0] ? 'tree' : P.inv.stone < n[1] ? 'rock' : null;
+const tutMats = n => '나무 ' + Math.min(P.inv.wood, n[0]) + ' / ' + n[0] + ' · 돌 ' + Math.min(P.inv.stone, n[1]) + ' / ' + n[1];
+const TUT = [
+  { t: '걸어 보기', x: '화면 아무 곳이나 누른 채 드래그하면 그쪽으로 걸어요.', ok: () => Math.hypot(P.x - tutS.x, P.y - tutS.y) > 110, hand: 1 },
+  { t: '나무 베기', x: '나무 앞에 서서 오른쪽 아래 <b>행동</b> 버튼을 누르세요. 꾹 누르고 있으면 계속 베요.', p: () => '나무 ' + Math.min(P.inv.wood, 3) + ' / 3', ok: () => P.inv.wood >= 3, aim: 'tree' },
+  { t: '돌 캐기', x: '바위 앞에서 <b>행동</b> 버튼을 눌러 돌을 모으세요.', p: () => '돌 ' + Math.min(P.inv.stone, 2) + ' / 2', ok: () => P.inv.stone >= 2, aim: 'rock' },
+  { t: '돌도끼 만들기', x: '<b>제작</b> 버튼을 누르고 돌도끼를 만드세요. 도끼를 들면 나무를 두 배로 얻어요.', ok: () => !!P.tools.axe, craft: 'axe', need: [3, 2] },
+  { t: '모닥불 피우기', x: '해가 지기 전에 <b>모닥불</b>을 만드세요. 늑대는 불 곁으로 들어오지 못해요.', ok: () => !!P.built.fire, craft: 'fire', need: [5, 2] },
+  { t: '움막 짓기', x: '<b>움막</b>이 있으면 밤에 잠을 자서 아침으로 넘어갈 수 있어요.', ok: () => !!P.built.shelter, craft: 'shelter', need: [12, 5] },
+  { t: '첫 밤 버티기', x: '밤에는 모닥불 곁에 머무르세요. 움막 앞에서 <b>행동</b> 버튼을 누르면 잠들어 아침이 와요.', p: () => isNight() ? '밤이에요. 불 곁을 떠나지 마세요' : '해가 지기를 기다려요', ok: () => dayOf() >= 2 }
+];
+let tutS = { x: 0, y: 0 }, tutT = 0, tutSig = '', tutAim = null, tutAimT = 0, tutScrolled = '';
+function tutEnd(skipped){
+  P.tut = -1; tutT = 0; tutAim = null; lastGoal = ''; try { localStorage.setItem(TUT_KEY, 'done'); } catch (_) {}
+  $('coach').hidden = true; $('tutArrow').hidden = true; $('tutHand').hidden = true; document.body.classList.remove('tutOn');
+  if (skipped) toast('튜토리얼을 건너뛰었어요. 도움말은 일시정지 메뉴(☰)에 있어요');
+  else { toast('튜토리얼 끝! 이제 ' + RAFT_DAY + '일을 버텨 보세요'); SND.play('levelup', { key: 1 }); }
+}
+function tutTarget(s){             // the DOM element the arrow points at, if any
+  const lack = s.craft ? tutLack(s.need) : s.aim, craftOpen = !$('craft').hidden;
+  if (s.hand) return null;
+  if (lack || s.aim) return craftOpen ? $('craftClose') : $('btnAct');
+  if (s.craft) return !craftOpen ? $('btnCraft') : craftTab !== 'make' ? $('tabMake') : document.querySelector('#craftList .recipe[data-id="' + s.craft + '"] .btn');
+  return null;
+}
+function tutTick(dt){
+  const on = !!P && P.tut >= 0 && P.tut < TUT.length, coach = $('coach'), arrow = $('tutArrow'), hand = $('tutHand');
+  if (document.body.classList.contains('tutOn') !== on) document.body.classList.toggle('tutOn', on);
+  if (!on){ if (!coach.hidden){ coach.hidden = true; arrow.hidden = true; hand.hidden = true; } tutAim = null; return; }
+  let s = TUT[P.tut];
+  if (tutT > 0){
+    tutT -= dt;
+    if (tutT <= 0){
+      P.tut++; tutS = { x: P.x, y: P.y }; tutScrolled = ''; tutAim = null;
+      while (P.tut < TUT.length && TUT[P.tut].ok()) P.tut++;                // already done (a carpenter starts with an axe): straight past it
+      if (P.tut >= TUT.length){ tutEnd(false); return; } s = TUT[P.tut];
+    }
+  } else if (s.ok()){ tutT = .9; SND.play('perk'); fx('glow', P.x, P.y, 24, 8, '160,220,120'); }
+  const done = tutT > 0, prog = done ? '✓ 잘했어요!' : s.p ? s.p() : s.craft ? tutMats(s.need) : '';
+  const sig = P.tut + '|' + done + '|' + prog;
+  if (sig !== tutSig){
+    tutSig = sig; coach.classList.toggle('ok', done);
+    coach.innerHTML = `<div class="ch"><span class="cn">${P.tut + 1} / ${TUT.length}</span><b>${s.t}</b><button id="coachSkip">건너뛰기</button></div><p>${s.x}</p>${prog ? `<small>${prog}</small>` : ''}`;
+  }
+  if (coach.hidden) coach.hidden = false;
+  hand.hidden = !s.hand || done;
+  // the arrow: hidden behind other sheets, and while a step is being cheered
+  const other = [...document.querySelectorAll('.modal')].some(m => !m.hidden && m.id !== 'craft'), el = done || other ? null : tutTarget(s);
+  if (el && !$('craft').hidden && s.craft && tutScrolled !== s.craft && el.closest('#craftList')){ el.scrollIntoView({ block: 'center' }); tutScrolled = s.craft; }
+  const r = el && el.getBoundingClientRect();
+  if (r && r.width){ const up = r.top < 70; arrow.classList.toggle('up', up); arrow.style.transform = 'translate(' + Math.round(r.left + r.width / 2) + 'px,' + Math.round(up ? r.bottom + 6 : r.top - 6) + 'px)'; if (arrow.hidden) arrow.hidden = false; }
+  else if (!arrow.hidden) arrow.hidden = true;
+  // the ring in the world: the nearest tree or rock with something left
+  const want = done ? null : s.craft ? tutLack(s.need) : s.aim;
+  tutAimT -= dt;
+  if (!want) tutAim = null;
+  else if (tutAimT <= 0 || !tutAim || tutAim.t !== want || !(tutAim.amt > 0) || !objs.includes(tutAim)){
+    tutAimT = .5; let best = null, bd = 640;
+    gridQuery(P.x - 640, P.y - 640, P.x + 640, P.y + 640, o => { if (o.t === want && o.amt > 0){ const d = Math.hypot(o.x - P.x, o.y - P.y); if (d < bd){ bd = d; best = o; } } });
+    tutAim = best;
+  }
+}
+function drawTutRing(){            // on the ground, round the thing to cut
+  const o = tutAim; if (!o || !running) return;
+  const k = .5 + .5 * Math.sin(anim * 6);
+  ctx.strokeStyle = 'rgba(242,184,75,' + (.45 + .4 * k).toFixed(2) + ')'; ctx.lineWidth = 3; ctx.setLineDash([10, 7]); ctx.lineDashOffset = -anim * 20;
+  ctx.beginPath(); ctx.arc(o.x, o.y, o.r + 12 + k * 5, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+}
+function drawTutMark(){            // and a bobbing marker over it, upright on screen
+  const o = tutAim; if (!o || !running) return;
+  ctx.save(); uprightT();
+  const x = ux(o.x, o.y), y = uy(o.x, o.y) - (o.t === 'tree' ? 92 : 40) - Math.abs(Math.sin(anim * 4)) * 8;
+  ctx.fillStyle = '#f2b84b'; ctx.strokeStyle = 'rgba(20,12,4,.85)'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x - 11, y - 14); ctx.lineTo(x + 11, y - 14); ctx.lineTo(x, y); ctx.closePath(); ctx.stroke(); ctx.fill();
+  ctx.restore();
+}
+$('coach').addEventListener('click', e => { if (e.target.closest('#coachSkip')) tutEnd(true); });
 
 /* ================= main loop ================= */
 let last = 0;
@@ -6001,6 +6194,8 @@ function frame(ts){
     if (++frameN > 150 && frameEma > 34){ lowFx = true; dprCap = 1.5; document.body.classList.add('lowfx'); resize(); }
   }
   if (running && !paused && !sleeping) update(dt);
+  else if (!running && titleScene) titleTick(dt);
+  if (running) tutTick(Math.min(.25, raw / 1000 || 0));                   // (the coach keeps real time, however slow the frames)
   try { SND.tick(dt); } catch (_) {}
   render();
 }
@@ -6019,6 +6214,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 // debug/test hook (read-only view of the running game)
 window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
 Object.assign(window.__game, { ZONES, LAIR, RELICS, relic, lairCheck, lairObj, lairCenter, lairSpot, placeLair, fillRing, migrateWorld, loadGame, BOSS_AI, foxOrbs, hookShots, skyFalls, upgradeBoat3, BOAT_UPG3, DEST, inside, setZone, genWorld, GEN, updateLands, lairDef, renderPerk }); Object.defineProperty(window.__game, 'WORLD', { get: () => WORLD });
+Object.assign(window.__game, { TUT, tutTick, tutEnd, demoWorld, setLite }); Object.defineProperty(window.__game, 'tutAim', { get: () => tutAim }); Object.defineProperty(window.__game, 'titleScene', { get: () => titleScene });
 Object.assign(window.__game, { firePetals, plumMark, blossom, plumDmg, get swordCtx(){ return swordCtx; }, plumBursts: () => plumBursts, jobSpeed, hasTool, ownedTools });
 Object.assign(window.__game, { GRADE, GOPT, GUNIQ, GTRANS, G_MUL, G_ARM, makeGear, dropGear, rollGearDrop, gearPick, equipGear, unequipGear, salvageGear, transcend, gearOpt, gearHas, gearAtk, gearHurtMul, gearFull, gearName, gearLines, renderGear, BAG_MAX, TRANS_COST, bumpGear: () => { gearVer++; }, attack: c => attack(c) });
 })();

@@ -1623,7 +1623,7 @@ function bossAI(c, sp, dt, dx, dy, d, night){      // returns the move [x, y, sp
   else if (c.k === 'plaguegiant'){ const r = bossPlague(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
   else if (c.k === 'frostgiant'){ const r = bossFrost(c, sp, dt, dx, dy, d); sx = r[0]; sy = r[1]; spd = r[2]; }
   else {                                          // mountain king: heavy slams that light up red first, faster when hurt
-    if (!c.enraged && c.hp < c.max * .5){ c.enraged = true; c.spdMul = 1.35; toast('산군이 분노했어요! 더 빠르고 더 자주 내리쳐요'); shakeT = .3; }
+    if (!c.enraged && c.hp < c.max * .5){ c.enraged = true; c.spdMul = 1.35; toast('산군이 분노했어요! 더 빠르고 더 자주 내리쳐요', 2); shakeT = .3; }
     if (c.cast > 0){ c.cast -= dt; if (c.cast <= 0) bossSlam(c, sp); }
     else {
       sx = dx / d; sy = dy / d; spd = sp.speed;
@@ -3980,7 +3980,7 @@ function drawCrate(o){
 
 /* ================= the other three bosses: a vampire bat queen (night 3), a plague giant (night 6), a frost giant (night 9) ================= */
 function bossBatQueen(c, sp, dt, dx, dy, d){       // circles you over the walls, swoops along a red lane, drinks blood, calls bats
-  const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('흡혈 박쥐 여왕이 피에 굶주렸어요! 더 자주 덮쳐요'); shakeT = .25; }
+  const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('흡혈 박쥐 여왕이 피에 굶주렸어요! 더 자주 덮쳐요', 2); shakeT = .25; }
   let sx = 0, sy = 0, spd = 0;
   if (c.dash > 0){
     c.dash -= dt; sx = c.dvx; sy = c.dvy; spd = 440;
@@ -4002,7 +4002,7 @@ function bossBatQueen(c, sp, dt, dx, dy, d){       // circles you over the walls
 function bossStrike(c, sp, mul){ if (c.atk <= 0){ hurt(Math.round(sp.dmg * mul)); c.atk = sp.atkCd; } }
 function bossSmash(c, sp, sx, sy){ if (c.atk <= 0){ const w = wallAhead(c, sx, sy); if (w){ damageWall(w, sp.wallDmg); c.atk = sp.atkCd; } } }
 function bossPlague(c, sp, dt, dx, dy, d){   // slow; spits poison that leaves a pool; its blows infect
-  const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('역병 거인이 부풀어 올랐어요! 독을 세 번씩 뱉어요'); shakeT = .25; }
+  const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('역병 거인이 부풀어 올랐어요! 독을 세 번씩 뱉어요', 2); shakeT = .25; }
   let sx = 0, sy = 0, spd = 0;
   if (c.cast > 0){
     c.cast -= dt;
@@ -4023,7 +4023,7 @@ function spitLand(c, x, y){
   if (Math.hypot(P.x - x, P.y - y) < 52 + PLAYER_R){ const h = hitSrc; hitSrc = c; hurt(12); hitSrc = h; afflict('poison', 6); }
 }
 function bossFrost(c, sp, dt, dx, dy, d){    // throws ice at where you stand and freezes everything around it
-  const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; c.spdMul = 1.25; toast('서리 거상이 분노했어요! 얼음을 더 자주 던져요'); shakeT = .3; }
+  const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; c.spdMul = 1.25; toast('서리 거상이 분노했어요! 얼음을 더 자주 던져요', 2); shakeT = .3; }
   let sx = 0, sy = 0, spd = 0;
   if (c.cast > 0){
     c.cast -= dt;
@@ -5278,7 +5278,7 @@ const BOSS_AI = {
     return [sx, sy, sp.speed * (rage ? 1.2 : 1)];
   },
   yeti(c, sp, dt, dx, dy, d){                     // throws snowballs, roars to freeze you
-    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; c.spdMul = 1.2; toast('설인이 분노했어요! 눈덩이를 두 개씩 던져요'); shakeT = .3; }
+    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; c.spdMul = 1.2; toast('설인이 분노했어요! 눈덩이를 두 개씩 던져요', 2); shakeT = .3; }
     if (c.cast > 0){
       c.cast -= dt;
       if (c.cast <= 0){
@@ -5299,7 +5299,7 @@ const BOSS_AI = {
     return [sx, sy, sp.speed];
   },
   lavagiant(c, sp, dt, dx, dy, d){                // fire from the sky, lava left behind, a blast of flame up close
-    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('용암 거인이 분노했어요! 불덩이가 더 많이 떨어져요'); shakeT = .3; }
+    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('용암 거인이 분노했어요! 불덩이가 더 많이 떨어져요', 2); shakeT = .3; }
     if (c.cast > 0){
       c.cast -= dt;
       if (c.cast <= 0){
@@ -5392,7 +5392,7 @@ const BOSS_AI = {
     return [dx / d, dy / d, sp.speed * (rage ? 1.2 : 1)];
   },
   turtle(c, sp, dt, dx, dy, d){                   // hides in its shell and rolls at you; dizzy (and soft) after a roll; the ground shakes
-    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('고대 거북이 분노했어요! 두 번 연달아 굴러요'); shakeT = .3; }
+    const rage = c.hp < c.max * .5; if (rage && !c.enraged){ c.enraged = true; toast('고대 거북이 분노했어요! 두 번 연달아 굴러요', 2); shakeT = .3; }
     if (c.dizzy > 0){ c.dizzy -= dt; if (Math.random() < dt * 6) fx('spark', c.x, c.y, 40, 1); if (c.dizzy <= 0) c.vuln = false; return [0, 0, 0]; }
     if (c.spin > 0){
       c.spin -= dt; c.shell = true; c.dr = .85;

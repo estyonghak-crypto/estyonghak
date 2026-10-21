@@ -2088,11 +2088,11 @@ function toast(msg, p){            // two at a time; a repeat bumps a counter in
   if (same){ const n = (+same.dataset.n || 1) + 1; same.dataset.n = n; let b = same.querySelector('.tn'); if (!b){ b = document.createElement('b'); b.className = 'tn'; same.appendChild(b); } b.textContent = '×' + n; toastLife(same, msg); return; }
   if (live.length >= 2){
     const victim = live.slice().sort((a, b) => a.dataset.p - b.dataset.p)[0], vp = +victim.dataset.p;
-    if (vp > pri || (vp === pri && pri < 2 && performance.now() - victim._at < 1200)){      // nothing pushes off something more important, or one that has only just appeared: it waits a moment
+    if (vp > pri){      // nothing pushes off something more important: it waits a moment
       if (!toastWait.some(w => w.msg === msg)) toastWait.push({ msg, p: pri, at: performance.now() }); toastWait = toastWait.slice(-3); return; }
     toastGone(victim);
   }
-  const d = document.createElement('div'); d.className = 'toast' + (pri ? ' p' + pri : ''); d.dataset.msg = msg; d.dataset.p = pri; d._at = performance.now(); d.textContent = msg; box.appendChild(d);
+  const d = document.createElement('div'); d.className = 'toast' + (pri ? ' p' + pri : ''); d.dataset.msg = msg; d.dataset.p = pri; d.textContent = msg; box.appendChild(d);
   toastLife(d, msg);
 }
 function toastLife(d, msg){ clearTimeout(d._t); d._t = setTimeout(() => toastGone(d), Math.min(4200, Math.max(2500, 1500 + msg.length * 45))); }

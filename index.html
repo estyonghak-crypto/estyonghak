@@ -293,6 +293,7 @@ body.building #ctx{display:none}
 #cineT,#cineB{position:fixed;left:0;right:0;height:0;background:#050307;z-index:24;pointer-events:none;transition:height .5s cubic-bezier(.3,.8,.3,1)}
 #cineT{top:0}#cineB{bottom:0}
 body.cine #cineT,body.cine #cineB{height:11vh}
+#hud{transition:opacity .45s}body.cine #hud{opacity:0}
 #fxPlum{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;transition:opacity .25s;background:radial-gradient(ellipse at 50% 55%,rgba(40,0,22,0) 30%,rgba(40,0,22,.58) 100%)}
 body.plumArt #fxPlum,body.cine #fxPlum{opacity:1}
 body.plumBloom #fxPlum{opacity:1;background:radial-gradient(ellipse at 50% 55%,rgba(255,170,210,.38) 0%,rgba(40,0,22,.5) 100%);transition:none}
@@ -843,7 +844,7 @@ function makeNoise(){
 /* ================= state ================= */
 const cv = $('cv'), ctx = cv.getContext('2d');
 const lc = document.createElement('canvas'), lx = lc.getContext('2d');   // darkness layer (half res)
-let lowFx = false, autoQ = !window.__noAutoQ, frameEma = 16, frameN = 0, dprCap = 2;     // adaptive quality: slow devices drop to cheaper effects
+let lowFx = false, midFx = false, autoQ = !window.__noAutoQ, frameEma = 16, frameN = 0, dprCap = 2;     // midFx: the first step down (no coloured light, no swaying crowns), lowFx the second     // adaptive quality: slow devices drop to cheaper effects
 let W = 0, H = 0, dpr = 1, zoom = 1;
 const offD = () => Math.hypot(W / zoom / 2, H / (zoom * .78) / 2) + 50;     // roughly a screen away: creatures chase from this far and give up beyond it
 /* ---- isometric view: a world circle of radius r shows as an ellipse r wide and r/2 tall; world +x runs down-right, +y down-left ---- */
@@ -2081,22 +2082,23 @@ function arrive(id){
 /* ================= UI ================= */
 const toastPri = m => /^⚠|보스|각성|✦/.test(m) ? 2 : /엘리트|처치|레전드|초월|유물|✨|🏆|튜토리얼|레벨/.test(m) ? 1 : 0;
 let toastWait = [];
-function toast(msg){               // two at a time; a repeat bumps a counter instead of a new line; the least important one makes way
-  const box = $('toasts'), live = [...box.children].filter(d => !d.classList.contains('out')), pri = toastPri(msg);
+function toast(msg, p){            // two at a time; a repeat bumps a counter instead of a new line; the least important one makes way
+  const box = $('toasts'), live = [...box.children].filter(d => !d.classList.contains('out')), pri = Math.max(toastPri(msg), p || 0);
   const same = live.find(d => d.dataset.msg === msg);
   if (same){ const n = (+same.dataset.n || 1) + 1; same.dataset.n = n; let b = same.querySelector('.tn'); if (!b){ b = document.createElement('b'); b.className = 'tn'; same.appendChild(b); } b.textContent = '×' + n; toastLife(same, msg); return; }
   if (live.length >= 2){
-    const victim = live.slice().sort((a, b) => a.dataset.p - b.dataset.p)[0];
-    if (+victim.dataset.p === 2 && pri < 2){ if (!toastWait.some(w => w.msg === msg)) toastWait.push({ msg, at: performance.now() }); toastWait = toastWait.slice(-3); return; }      // two warnings on screen: anything else waits a moment
+    const victim = live.slice().sort((a, b) => a.dataset.p - b.dataset.p)[0], vp = +victim.dataset.p;
+    if (vp > pri || (vp === pri && pri < 2 && performance.now() - victim._at < 1200)){      // nothing pushes off something more important, or one that has only just appeared: it waits a moment
+      if (!toastWait.some(w => w.msg === msg)) toastWait.push({ msg, p: pri, at: performance.now() }); toastWait = toastWait.slice(-3); return; }
     toastGone(victim);
   }
-  const d = document.createElement('div'); d.className = 'toast' + (pri ? ' p' + pri : ''); d.dataset.msg = msg; d.dataset.p = pri; d.textContent = msg; box.appendChild(d);
+  const d = document.createElement('div'); d.className = 'toast' + (pri ? ' p' + pri : ''); d.dataset.msg = msg; d.dataset.p = pri; d._at = performance.now(); d.textContent = msg; box.appendChild(d);
   toastLife(d, msg);
 }
 function toastLife(d, msg){ clearTimeout(d._t); d._t = setTimeout(() => toastGone(d), Math.min(4200, Math.max(2500, 1500 + msg.length * 45))); }
 function toastGone(d){
   if (d.classList.contains('out')) return; clearTimeout(d._t); d.classList.add('out');
-  setTimeout(() => { d.remove(); const now = performance.now(); toastWait = toastWait.filter(w => now - w.at < 3500); const w = toastWait.shift(); if (w) toast(w.msg); }, 230);
+  setTimeout(() => { d.remove(); const now = performance.now(); toastWait = toastWait.filter(w => now - w.at < 3500); const w = toastWait.sort((a, b) => b.p - a.p || a.at - b.at).shift(); if (w) toast(w.msg, w.p); }, 230);
 }
 const invEl = $('inv'), inv2El = $('inv2'), inv3El = $('inv3');
 for (const k in ITEMS){
@@ -2870,7 +2872,7 @@ function objDraw(name, x, y, alpha, flash, dx, dy, sway){
   return true;
 }
 let windNow = .6;
-const swayOf = (o, k) => lowFx || Z.cave ? 0 : Math.sin(anim * (1.5 + (o.v || 0) * .6) + o.x * .021 + o.y * .013) * windNow * k + Math.sin(anim * 4.3 + o.x * .05) * windNow * k * .25;
+const swayOf = (o, k) => lowFx || midFx || Z.cave ? 0 : Math.sin(anim * (1.5 + (o.v || 0) * .6) + o.x * .021 + o.y * .013) * windNow * k + Math.sin(anim * 4.3 + o.x * .05) * windNow * k * .25;
 const jit = o => o.shake > 0 ? Math.sin(o.shake * 70) * 1.5 : 0;
 function drawTreePix(o){
   if (!OBJ.img) return false;
@@ -3716,7 +3718,7 @@ function footprint(i){             // a print in the snow, the sand by the sea o
   if (!kind) return;
   const a = Math.atan2(P.fy, P.fx), side = i % 2 ? 1 : -1, ox = -Math.sin(a) * 3 * side, oy = Math.cos(a) * 3 * side;
   if (decals.length > 150) decals.shift();
-  decals.push({ x: P.x + ox, y: P.y + 4 + oy, r: 2.6, rot: a, col: kind[0], a: kind[1], life: Z.ground === 'snow' ? 40 : 26 });
+  decals.push({ x: P.x + ox, y: P.y + 4 + oy, r: 3.4, rot: a, col: kind[0], a: kind[1] * 1.15, life: Z.ground === 'snow' ? 40 : 26 });
 }
 function updateWind(dt){           // gusts swell and fade; rain and storms blow harder; leaves ride the wind in the woods
   const target = .55 + .25 * Math.sin(anim * .23) + rainAmt() * 1.1 + (evOn('storm') ? 1.6 : 0);
@@ -3831,7 +3833,7 @@ function render(){
       else if (s.t === 'shelter') punch(s.x, s.y, 80, 10);
     }
     ctx.imageSmoothingEnabled = true; ctx.drawImage(lc, 0, 0, cv.width, cv.height);
-    if (!lowFx) colourLights(list, lavas, dk, vx0, vy0, vx1, vy1);
+    if (!lowFx && !midFx) colourLights(list, lavas, dk, vx0, vy0, vx1, vy1);
   }
   uprightT(); drawPickups(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   updateAtmosphere(t, dk); drawMini();
@@ -3895,7 +3897,7 @@ function startEvent(k){
   else if (k === 'camp'){ const s = spotAway(260, 600, (x, y) => !blocked(x, y, 60)); if (!s) return false; addObj({ t: 'fire', x: s.x, y: s.y, r: 9, fuel: 150 }); addObj({ t: 'crate', x: s.x + 34, y: s.y + 14, r: 12, v: Math.random() }); }
   else if (k === 'raid' || k === 'horde'){ P.evPlan.push({ k: k + '!', at: T + 7 }); SND.play('howl', { key: 1, v: k === 'raid' ? 1 : .5, r: k === 'raid' ? .9 : .6 }); }
   if (E.dur || E.night) P.ev = { k, until: E.night ? day * DAY_LEN + DAY_LEN * .02 : T + E.dur };
-  toast(E.icon + ' ' + E.name + ': ' + E.say); SND.play('event', { key: 1 });
+  toast(E.icon + ' ' + E.name + ': ' + E.say, 1); SND.play('event', { key: 1 });          // (an event is news: it does not give way to a passing hint)
   return true;
 }
 function spawnWave(kind, day){       // a pack from one side, so walls and traps on that side matter
@@ -5844,10 +5846,10 @@ const FISH_KIND = {
 const FISH_ODDS = { lake: [[70, 'small'], [20, 'big'], [4, 'rare'], [6, 'chest']], sea: [[48, 'small'], [30, 'big'], [16, 'rare'], [6, 'chest']] };
 const CHEST_LOOT = [[{ tonic: 1 }, '피로회복제'], [{ bandage: 2 }, '붕대'], [{ herb: 2 }, '약초'], [{ ammo: 8 }, '탄약'], [{ scrap: 3 }, '고철'], [{ hide: 2 }, '가죽'], [{ heal: 1 }, '치유약'], [{ swift: 1 }, '신속약'], [{ berry: 6 }, '열매']];
 const fish = { on: false, st: 'wait', t: 0, bx: 0, by: 0, water: 'lake', cur: 0, dir: 1, sp: 1, zc: .5, zw: .3, prog: 0, miss: 0, kind: 'small', armed: true, spot: null, bobT: 0, nib: 0, dip: 0, scan: 0, caught: 0, msg: '', msgT: 0 };
-let waterList = [], waterAt = -9;
+let waterList = [], waterAt = -9, waterN = -1;
 function fishSpotNow(){
   if (Z.cave || !P.rod) return null;
-  if (anim - waterAt > 1.5){ waterAt = anim; waterList = objs.filter(o => o.t === 'water'); }
+  if (anim - waterAt > 1.5 || objs.length !== waterN){ waterAt = anim; waterN = objs.length; waterList = objs.filter(o => o.t === 'water'); }      // (a pond dug or filled shows at once)
   let best = null, bd = 1e9;
   for (const o of waterList){ const d = Math.hypot(o.x - P.x, o.y - P.y) - o.r; if (d < 48 && d < bd && o.r >= 26){ bd = d; best = o; } }
   if (best){
@@ -6548,9 +6550,10 @@ let last = 0;
 function frame(ts){
   requestAnimationFrame(frame);
   const raw = ts - last, dt = Math.min(.05, raw / 1000 || 0); last = ts; anim += dt;
-  if (autoQ && !lowFx && raw > 0 && raw < 200){                  // sustained < 30 fps -> cheaper rendering for the rest of the session
+  if (autoQ && !lowFx && raw > 0 && raw < 200 && running){        // sustained < 38 fps -> drop the extras; still < 30 fps -> cheaper rendering for the rest of the session
     frameEma = frameEma * .94 + raw * .06;
-    if (++frameN > 150 && frameEma > 34){ lowFx = true; dprCap = 1.5; document.body.classList.add('lowfx'); resize(); }
+    if (++frameN > 150 && !midFx && frameEma > 26){ midFx = true; frameN = 0; frameEma = 24; }
+    else if (frameN > 150 && frameEma > 34){ lowFx = true; dprCap = 1.5; document.body.classList.add('lowfx'); resize(); }
   }
   const rdt = Math.min(.1, raw / 1000 || 0);
   if (running && !paused && !sleeping){ plumWarp = warpNow(); if (hitStop > 0){ hitStop -= rdt; if (plumArt) updatePlumArt(rdt); } else update(dt * plumWarp); }          // hit-stop: the world holds still for a few hundredths of a second; the plum swordsman's art slows it
@@ -6573,7 +6576,7 @@ try {   // when hosted as an artifact, keep the run alive across a page update
 } catch (_) { boot({}); }
 
 // debug/test hook (read-only view of the running game)
-window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
+window.__game = { get P(){ return P; }, get T(){ return T; }, set T(v){ T = v; }, creatures: () => creatures, objs: () => objs, craft: id => craft(RECIPES.find(r => r.id === id)), act, spawn: (k, a, b, e) => spawnCreature(k, a, b, e === undefined ? false : e, false, true), elite: (c, a) => makeElite(c, a), pickups: () => pickups, useItem, hurt, get target(){ return target; }, get cam(){ return cam; }, snd: SND, saveNow2: () => save(), startEvent, planEvents, EVENTS, meteors, evOn, openCrate, get flashT(){ return flashT; }, bossOf, pools, boulders, spawnBoss, setHitSrc: c => { hitSrc = c; }, addTrap, trapMap, updateTraps, tryBuild: (i, j, k) => { buildSel = k; tryBuild(i, j); }, damageWall, WALLS, hurtFrom: (c, n) => { hitSrc = c; hurt(n); hitSrc = null; }, saveNow: () => save(), afflict, cure, STATUS, CATCH, fatigueLv, statusSpeed, treatStatus, get hitSrc(){ return hitSrc; }, addXp, PERKS, perk, xpNeed, xpTotal, choosePerk, openPerk, closePerk, levelInfo, rollOffer, lightR, fishWait, KILL_XP, MAXLV, fireGun, fish, fishStart, fishStop, fishTap, fishEnd, fishSpotNow, FISH_KIND, FISH_ODDS, COOK, cookIt, canCook, nearFire, openCook, eatFood, FOOD, updateFish, mini: () => ({ get mode(){ return miniMode; }, cv: miniCv, get tf(){ return miniTf; }, draw: () => drawMini(true), tap: e => miniTap(e) }), sheets: () => SHEET, corpses: () => corpses, get zoom(){ return zoom; }, w2s: (x, y) => ({ x: w2sx(x, y), y: w2sy(x, y) }), s2w, autoQuality: v => { autoQ = v; }, get lowFx(){ return lowFx; }, get midFx(){ return midFx; }, set midFx(v){ midFx = v; }, parts: () => parts, walls: () => [...wallMap.values()], remove: o => removeObj(o), render,  hit: (c, d, kx, ky, by) => hitCreature(c, d, kx, ky, by), upgrade: upgradeItem, buildEquip, stat, tw, bullets: () => bullets, get aim(){ return aim; }, clearArea: (x, y, r) => objs.filter(o => Math.hypot(o.x - x, o.y - y) < r).forEach(removeObj), toggleBuild, selectBuild, get buildMode(){ return buildMode; }, zone: () => Z.id, enter: enterZone, decals: () => decals, rainAmt, bloodAt, lightAt: (wx, wy, h) => { render(); const x = Math.round(w2sx(wx, wy) / 2), y = Math.round((w2sy(wx, wy) - (h || 0)) / 2); return lx.getImageData(Math.max(0, Math.min(lc.width - 1, x)), Math.max(0, Math.min(lc.height - 1, y)), 1, 1).data[3]; }, boss: tier => spawnBoss(BOSSES[tier - 1], tier * BOSS_EVERY), BOSSES, bossAI, bossSlam, SPECS, zoneLeft, lightR, sail, arrive, seaSpot, openSail, renderSail, SAIL_T, smelt, nearFurnace, buildList, add: o => addObj(o), mkOre, ORE, ITEMS, zoneSave, get Z(){ return Z; }, JOBS, JOB_ORDER, useSkill, SKILL_FN, skillCd, buildCost, wallMax, giveKit, openJobs, newGame, updateJob, isJob, awaken, HIDDEN_ORDER, onBossDown, hiddenPhase, hiddenDay, phoenixRise, get bolts(){ return bolts; }, endGame, fireRanged, weaponHit, chainMine, autoRanged, bestFor, get zaps(){ return zaps; }, TOOLS, RECIPES, renderCraft, openCraft, closeCraft, upgradeItem: t => upgradeItem(t), get craftTab(){ return craftTab; }, set craftTab(v){ craftTab = v; }, plan, planAt, confirmPlan, cancelPlan, planCost };
 Object.assign(window.__game, { ZONES, LAIR, RELICS, relic, lairCheck, lairObj, lairCenter, lairSpot, placeLair, fillRing, migrateWorld, loadGame, BOSS_AI, foxOrbs, hookShots, skyFalls, upgradeBoat3, BOAT_UPG3, DEST, inside, setZone, genWorld, GEN, updateLands, lairDef, renderPerk }); Object.defineProperty(window.__game, 'WORLD', { get: () => WORLD });
 Object.assign(window.__game, { footprint, swayOf, colourLights }); Object.defineProperty(window.__game, 'wind', { get: () => windNow });
 Object.assign(window.__game, { feelBlow, impact, nudge, swings: () => swings, impacts: () => impacts, MATTER }); Object.defineProperty(window.__game, 'hitStop', { get: () => hitStop, set: v => { hitStop = v; } }); Object.defineProperty(window.__game, 'kick', { get: () => [kickX, kickY] });
